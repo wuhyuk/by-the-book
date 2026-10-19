@@ -1,7 +1,8 @@
 # MVP_SPEC — 기준대로
 
 > 상태: **초안**. 현재 단계에 필요한 결정이 끝나기 전에는 그 단계를 구현하지 않는다. 결정이 나면 이 문서를 먼저 갱신한다.
-> **현재 단계: 0 (고시 원문 확인)**
+> **현재 단계: 0 (고시 원문 확인, 미완료)**
+> 완료한 단계: 1 (저장소 뼈대, 2026-10-19). 단계 0과 병행해 먼저 끝냈으며, 단계 0이 끝나기 전에는 단계 2로 넘어가지 않는다.
 
 ## 1. MVP 한 줄
 
@@ -82,7 +83,7 @@ MVP(품목 1개)에서는 조항 검색 없이 품목 ID(`gym_refund`)로 이 �
 | 단계 | 내용 | 산출물 |
 |---|---|---|
 | 0 | 헬스장 관련 고시·위약금 산정기준 원문 확인 (사람이 확인, Claude Code는 정리 보조) | 규칙 JSON 초안, 출처 목록 |
-| 1 | 저장소 뼈대: 폴더, `backend/pyproject.toml`, FastAPI health, Vite react-ts 앱, `.env.example`(`LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL`), CI 없이 pytest 1건 | 실행 확인 |
+| 1 | 저장소 뼈대: 폴더, `backend/pyproject.toml`, FastAPI health, Vite react-ts 앱, `.env.example`(`LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL`), CI 없이 pytest 1건 | 실행 확인 — ✅ 완료 (2026-10-19) |
 | 2 | 규칙 엔진 + 테스트 (LLM 없음) | `rules/gym.py`, tests |
 | 3 | 정보 추출 (LLM 어댑터, JSON 스키마, few-shot, temperature 0) | `/api/analyze` |
 | 4 | 계산 API + 상태 배지 + 가드레일 | `/api/calculate` |

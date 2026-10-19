@@ -35,7 +35,7 @@
 
 | 영역 | 선택 |
 |---|---|
-| Backend | Python 3.12 이상 (개발 환경 3.13), FastAPI, Pydantic v2, pytest |
+| Backend | Python 3.12, FastAPI, Pydantic v2, pytest |
 | Frontend | React + TypeScript, Vite |
 | LLM | 무료 티어 API, `backend/llm/`의 어댑터 뒤에 둔다 (모델 교체 가능) |
 | 검색 | MVP(품목 1개)에서는 품목 ID로 규칙 파일을 직접 조회한다. 업종 필터 + 키워드 → Chroma + 한국어 임베딩 검색은 품목이 2개 이상이 되는 단계 7에서 도입한다 |
