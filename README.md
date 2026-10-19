@@ -105,11 +105,11 @@ LLM_MODEL=사용할_모델_이름
 
 ### 2. 백엔드 실행
 
-의존성은 `backend/pyproject.toml`에 정의되어 있습니다 (Python 3.12 이상, 개발 환경 3.13).
+의존성은 `backend/pyproject.toml`에 정의되어 있습니다 (Python 3.12).
 
 ```powershell
 cd backend
-py -3.13 -m venv .venv
+py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
 uvicorn main:app --reload
