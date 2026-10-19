@@ -35,7 +35,8 @@
 
 ## 마일스톤 태그
 
-주차 목표를 마치면 `main`에 태그를 단다: `m1-data`, `m2-rules`, `m3-rag`, `m4-ui`, `m5-freeze`, `v0.1.0`.
+주차 목표를 마치면 `main`에 태그를 단다: `m1-data`, `m2-rules`, `m3-api`, `m4-ui`, `m5-rag-freeze`, `v0.1.0`.
+(README 로드맵 기준: 1주차 데이터, 2주차 계산 엔진, 3주차 정보 추출·계산 API·배지, 4주차 화면, 5주차 RAG·확장·기능 동결, 6주차 배포)
 
 ## Claude Code용 Git 규칙
 
