@@ -37,13 +37,13 @@
 - **근거가 없는 문장은 내보내지 않습니다.** 답변이 인용한 조항이 검색 결과에 없으면 그 문장을 제거합니다.
 - **모든 결과에 기준일을 표시합니다.** 고시가 개정되면 규칙 파일만 교체합니다.
 
-## 🗂 지원 품목 (MVP)
+## 🗂 지원 품목
 
-| 품목 | 대표 분쟁 | 계산 규칙 |
-|---|---|---|
-| 세탁업 | 세탁 사고로 인한 훼손·분실 | 구입가격 × 배상비율 (내용연수 대비 사용일수) |
-| 가전·전자제품 | 반복 고장, 부품 미보유로 수리 불가 | 동일 하자 반복 시 교환·환급 요건, 정액 감가상각 + 가산금 |
-| 체육시설업 (헬스장) | 중도 해지 시 환급 거부·과다 공제 | 계약금액 − 이용분 − 위약금 (상한 적용) |
+| 구분 | 품목 | 대표 분쟁 | 계산 규칙 |
+|---|---|---|---|
+| **MVP** | 체육시설업 (헬스장) | 중도 해지 시 환급 거부·과다 공제 | 계약금액 − 이용분 − 위약금 (상한 적용) |
+| MVP 이후 확장 | 세탁업 | 세탁 사고로 인한 훼손·분실 | 구입가격 × 배상비율 (내용연수 대비 사용일수) |
+| MVP 이후 확장 | 가전·전자제품 | 반복 고장, 부품 미보유로 수리 불가 | 동일 하자 반복 시 교환·환급 요건, 정액 감가상각 + 가산금 |
 
 > 계산 규칙의 세부 내용은 고시 원문을 기준으로 정리하며, 각 규칙 파일에 출처와 기준일을 기록합니다.
 
@@ -53,7 +53,7 @@
 flowchart LR
     A["상황 입력"] --> B["개인정보 마스킹"]
     B --> C["정보 추출<br>(LLM)"]
-    C --> D["조항 검색<br>(RAG)"]
+    C --> D["조항 조회<br>(MVP: 품목 ID 직접 조회, 이후 RAG)"]
     D --> E["금액 계산<br>(규칙 엔진)"]
     E --> F["불확실성 분류"]
     F --> G["설명·문안 생성<br>(LLM)"]
@@ -65,7 +65,7 @@ flowchart LR
 
 | 구분 | 기술 |
 |---|---|
-| Frontend | React (Vite) |
+| Frontend | React + TypeScript (Vite) |
 | Backend | FastAPI, Pydantic |
 | AI | LLM API (모델 교체 가능한 어댑터 구조) |
 | 검색 | Chroma (벡터 DB), 한국어 지원 임베딩 모델 |
@@ -93,26 +93,33 @@ by-the-book/
 
 ### 1. 환경 변수
 
-`backend/.env` 파일을 만들고 다음 값을 설정합니다. API 키는 코드나 저장소에 올리지 마세요.
+명령은 Windows PowerShell 기준입니다.
+
+`backend/.env.example`을 `backend/.env`로 복사하고 값을 채웁니다. API 키는 코드나 저장소에 올리지 마세요.
 
 ```env
+LLM_PROVIDER=사용할_LLM_제공자
 LLM_API_KEY=발급받은_API_키
 LLM_MODEL=사용할_모델_이름
 ```
 
 ### 2. 백엔드 실행
 
-```bash
+의존성은 `backend/pyproject.toml`에 정의되어 있습니다 (Python 3.12 이상, 개발 환경 3.13).
+
+```powershell
 cd backend
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+py -3.13 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
 uvicorn main:app --reload
 ```
 
+`Activate.ps1` 실행이 막히면 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`를 한 번 실행한 뒤 다시 시도하세요.
+
 ### 3. 프론트엔드 실행
 
-```bash
+```powershell
 cd frontend
 npm install
 npm run dev
@@ -120,8 +127,9 @@ npm run dev
 
 ### 4. 테스트
 
-```bash
+```powershell
 cd backend
+.venv\Scripts\Activate.ps1
 pytest
 ```
 
@@ -139,10 +147,10 @@ pytest
 ## 🗺 로드맵
 
 - [ ] **1주차** 기획, 고시 원문 수집, 규칙 데이터 정리, 테스트 사례 30건 구축
-- [ ] **2주차** 계산 엔진과 단위 테스트, 정보 추출
-- [ ] **3주차** 고시 조항 검색(RAG)과 조항 매칭
+- [ ] **2주차** 계산 엔진과 단위 테스트
+- [ ] **3주차** 정보 추출·계산 API·배지
 - [ ] **4주차** 근거 카드·요약 문안·가드레일, 화면 연결
-- [ ] **5주차** 테스트 사례 평가, 개선, 기능 동결
+- [ ] **5주차** 세탁·가전 확장과 고시 조항 검색(RAG), 테스트 사례 평가, 개선, 기능 동결
 - [ ] **6주차** 배포, 발표 준비
 
 ## ⚖️ 유의사항

@@ -1,0 +1,29 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# node
+node_modules/
+dist/
+
+# data artifacts
+chroma/
+*.sqlite
+*.db
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# claude code (personal)
+.claude/settings.local.json
