@@ -1,0 +1,254 @@
+{
+  "id": "gym_refund",
+  "title": "체육시설업 중도 해지 환급",
+  "source": {
+    "name": "계속거래 등의 해지·해제에 따른 위약금 및 대금의 환급에 관한 산정기준",
+    "notice_number": "공정거래위원회고시 제2019-9호",
+    "url": "https://www.law.go.kr/행정규칙/계속거래등의해지·해제에따른위약금및대금의환급에관한산정기준",
+    "effective_date": "2019-11-19",
+    "last_amended": "2019-11-19",
+    "retrieved_at": "2026-10-26"
+  },
+  "verified": false,
+  "industries": [
+    {
+      "id": "fitness",
+      "name": "헬스·피트니스업",
+      "scope_basis": "제3조 ① 3호",
+      "penalty_rule": {
+        "type": "ratio_of_total",
+        "ratio": 0.10,
+        "applies_as": "upper_limit",
+        "basis": "별표 위약금 기준 (상한: 제4조 ①)",
+        "verified": true,
+        "verification": {
+          "method": "공식 HWP 텍스트 추출 ↔ 법제처 별표 이미지 판독 일치",
+          "user_checked": false,
+          "checked_at": "2026-10-26"
+        }
+      }
+    },
+    {
+      "id": "yoga_pilates",
+      "name": "요가·필라테스업",
+      "scope_basis": "제3조 ① 3호",
+      "penalty_rule": {
+        "type": "ratio_of_total",
+        "ratio": 0.10,
+        "applies_as": "upper_limit",
+        "basis": "별표 위약금 기준 (상한: 제4조 ①)",
+        "verified": true,
+        "verification": {
+          "method": "공식 HWP 텍스트 추출 ↔ 법제처 별표 이미지 판독 일치",
+          "user_checked": false,
+          "checked_at": "2026-10-26"
+        }
+      }
+    }
+  ],
+  "params": {
+    "unit_options": [
+      "month",
+      "day",
+      "session",
+      "hour"
+    ],
+    "unused_but_available_counts_as_supplied": true,
+    "deposit_excluded_from_total": true,
+    "deposit_refund": "full_unless_agreed",
+    "returned_add_on_value_added_to_refund": true,
+    "unit_price_method": null,
+    "list_price_deduction_allowed": null,
+    "rounding": {
+      "used_amount": "half_up_won",
+      "order": "multiply_then_divide_round_once",
+      "penalty": "floor_won",
+      "in_source": false,
+      "basis": "프로젝트 결정 (2026-10-26, 사용자 승인). 이용분은 원 단위 half up, 위약금 상한은 원 미만 내림. 고시에 반올림 규정 없음"
+    },
+    "day_count": {
+      "contract_days": "end_date - start_date + 1",
+      "elapsed_days": "notice_date - start_date + 1, 0 이상 contract_days 이하로 제한",
+      "in_source": false,
+      "basis": "프로젝트 결정 (2026-10-26, 사용자 승인). 시작일과 해지 의사표시 도달일을 모두 산입한다. 고시·표준약관에 양끝 산입 규정 없음. 표준약관 제10048호 제8조 ② \"이용개시일\"은 이용 기간이 시작되는 첫날로 정의됨"
+    },
+    "refund_basis": {
+      "fitness": "contract_type",
+      "yoga_pilates": "agreed",
+      "agreed_values": [
+        "period",
+        "session",
+        "unknown"
+      ],
+      "in_source": false,
+      "basis": "요가·필라테스 표준약관 제10083호 제9조 ① \"아래 두 가지 기준 중 사업자와 회원이 계약 체결 시 합의한 기준에 따라 환급\" (원문 확인). 체력단련장 표준약관 제10048호에는 합의 기준 선택 규정이 없어 계약 유형을 쓴다. 고시에는 기준 선택 규정 없음"
+    },
+    "continuous_transaction_criteria": {
+      "source": {
+        "name": "방문판매 등에 관한 법률 제2조 제10호",
+        "law_number": "법률 제22044호",
+        "url": "https://www.law.go.kr/법령/방문판매등에관한법률",
+        "effective_date": "2026-10-02",
+        "retrieved_at": "2026-10-26"
+      },
+      "text": "“계속거래”란 1개월 이상에 걸쳐 계속적으로 또는 부정기적으로 재화등을 공급하는 계약으로서 중도에 해지할 경우 대금 환급의 제한 또는 위약금에 관한 약정이 있는 거래를 말한다.",
+      "requirements": [
+        "1개월 이상에 걸쳐",
+        "계속적으로 또는 부정기적으로 재화등을 공급하는 계약",
+        "중도에 해지할 경우 대금 환급의 제한 또는 위약금에 관한 약정이 있는 거래"
+      ],
+      "verified": true,
+      "period_thresholds_days": {
+        "out_of_scope_below": 28,
+        "needs_review_max": 31,
+        "in_source": false,
+        "basis": "프로젝트 결정 (2026-10-26). 원문은 '1개월 이상'만 정함. 1개월이 28~31일이므로 그 구간은 확인 필요"
+      }
+    }
+  },
+  "scenarios": {
+    "A": {
+      "name": "실제 부담액 기준",
+      "used_amount_base": "total_contract_amount",
+      "formula": "total_contract_amount * elapsed_units / total_units (기간 기준: 경과 일수 / 계약 일수, 횟수 기준: 이용 횟수 / 총 횟수)",
+      "requires": [],
+      "in_source": false,
+      "basis": "고시 제2조 4호 '소비자가 부담하는 금액'을 계약 금액으로 읽은 해석. 원문에 산정 방식 없음"
+    },
+    "B": {
+      "name": "정상가 기준",
+      "used_amount_base": "list_price",
+      "formula": "list_price * elapsed_units / total_units (기간 기준: 경과 일수 / 계약 일수, 횟수 기준: 이용 횟수 / 총 횟수)",
+      "requires": [
+        "list_price",
+        "list_price >= total_contract_amount"
+      ],
+      "in_source": false,
+      "basis": "1372 답변 1 (2026-10-26, 비구속 상담): 정상 금액 기준 이용요금 공제가 타당하다고 판단될 수 있음. 고시 원문 근거 아님"
+    }
+  },
+  "notes": [
+    "verified(최상위)는 unit_price_method가 미확정이므로 false다. 배지는 결과가 쓰는 블록의 verified로 판정한다 (penalty_rule, continuous_transaction_criteria).",
+    "penalty_rule.verified는 별표의 공식 HWP 텍스트 추출(flSeq=50614915)과 법제처 별표 이미지(flSeq=50614923) 판독이 전 행 일치해 true다 (2026-10-26). 사용자 육안 대조는 하지 않았다 (verification.user_checked: false).",
+    "별표 원본에서 헬스·피트니스업과 요가·필라테스업은 한 칸에 병합되어 위약금 기준 하나를 공유한다. clauses의 annex_penalty는 두 줄로 재구성한 것이다.",
+    "scenarios A·B, rounding, day_count, refund_basis, period_thresholds_days는 원문(고시)에 없는 프로젝트 결정(in_source: false)이다.",
+    "비율(ratio)은 Decimal로 읽는다 (json.loads(parse_float=Decimal)).",
+    "related_clauses는 고시 밖의 원문이다. 근거 카드에는 고시 clauses와 related_clauses만 인용한다 (MVP_SPEC 10절).",
+    "law2_10은 params.continuous_transaction_criteria.text와 같은 문장이다. 앞의 것은 인용용, 뒤의 것은 판정용이다 (2026-10-26 법제처 현행본과 대조).",
+    "yoga_terms_art5_2는 공정위 첨부 hwpx(atchmnflNo=54236) 본문 제5조(사업자의 서비스 제공) ②와 글자 단위로 대조했다 (2026-10-26). 유효기간 이후 도달(NOTICE_AFTER_VALIDITY)의 요가·필라테스 근거로만 인용하고 평가 문구는 붙이지 않는다."
+  ],
+  "clauses": [
+    {
+      "id": "art2_2",
+      "label": "제2조 2호",
+      "text": "\"총계약대금\"이란 소비자가 계약의 내용에 따라 사업자에게 지급하기로 한 금액을 말하며, 계약금, 입회금, 가입비, 설치비, 입학금 등의 금액을 모두 포함한다. 단, 보증금은 총계약대금에 포함되지 않는다."
+    },
+    {
+      "id": "art2_3",
+      "label": "제2조 3호",
+      "text": "\"단위\"란 당사자 사이의 약정으로 사업자가 계약의 주된 목적에 따라 소비자에게 제공하기로 한 재화등의 이행 기본단위를 정한 것으로서 1월(月), 1일(日), 1회 또는 1시간 등이 1단위가 된다. 단위의 내용에 관하여 다툼이 있는 경우에는 사업자가 이를 입증하여야 한다."
+    },
+    {
+      "id": "art2_4",
+      "label": "제2조 4호",
+      "text": "\"단위대금\"이란 소비자가 공급받은 재화등의 단위에 대해 소비자가 부담하는 금액을 말한다."
+    },
+    {
+      "id": "art3_1",
+      "label": "제3조 ①",
+      "text": "이 고시는 법 제2조제10호 및 제11호에서 정하고 있는 계속거래 또는 사업권유거래에 해당하는 계약으로서 다음 각 호의 업에 한하여 적용한다. 단, 「학원의 설립·운영 및 과외교습에 관한 법률 시행령」제18조의 규정이 적용되는 경우는 제외한다.\n1. 「결혼중개업의 관리에 관한 법률」 제2조제3호에 따른 국내결혼중개업\n2. 「이러닝(전자학습)산업 발전법」 제2조제1호에 따른 이러닝 서비스를 제공하는 컴퓨터 통신교육업\n3. 「체육시설의 설치·이용에 관한 법률」 제10조제1항제2호에 따른 체력단련장업 또는 종합체육시설업(체력단련장 시설을 설치한 경우에 한한다)에 해당하는 헬스·피트니스업, 명상·호흡·스트레칭 등이 결합된 신체 단련 운동인 요가·필라테스업\n4. 「공중위생관리법」 제2조제1항제5호에 따른 미용업\n5. 어학 기타 학습을 위하여 정기적으로 간행물을 발행·판매하는 학습지업"
+    },
+    {
+      "id": "art3_2",
+      "label": "제3조 ②",
+      "text": "제1항에도 불구하고, 소비자가 법 제8조 또는 제17조,「할부거래 등에 관한 법률」제8조 또는 제24조, 「전자상거래 등에서의 소비자보호에 관한 법률」제17조에 따라 청약을 철회하는 경우에는 이 고시를 적용하지 않는다."
+    },
+    {
+      "id": "art4_1",
+      "label": "제4조 ①",
+      "text": "계약이 사업자의 귀책사유 없이 해지 또는 해제된 경우 사업자는 소비자에게 위약금을 청구할 수 있다. 이때 위약금은 별표의 금액을 초과하지 못한다."
+    },
+    {
+      "id": "art5_1",
+      "label": "제5조 ①",
+      "text": "소비자는 사업자에게 지급한 계약대금에서 계약의 해지 또는 해제의 의사표시가 사업자에게 도달한 시점까지 공급받은 단위에 해당하는 단위대금, 부가상품의 가액, 제4조에 따른 위약금을 공제한 나머지의 환급을 청구할 수 있다. 이 때 소비자가 재화등을 직접 이용하지 않았으나 기한의 도래로 소비자가 이용할 수 있었던 경우에는 재화등의 공급이 있었던 것으로 본다."
+    },
+    {
+      "id": "art5_2",
+      "label": "제5조 ②",
+      "text": "사업자가 소비자로부터 받은 보증금이 있는 경우, 별도의 약정이 없는 한 수령한 보증금 전액을 환급하여야 한다."
+    },
+    {
+      "id": "art6_1",
+      "label": "제6조 ①",
+      "text": "사업자는 소비자가 법 제32조제2항에 따라 부가상품 등 반환할 수 있는 재화(이하 \"부가상품등\"이라 한다)를 반환하는 경우 부가상품등의 가치에 상당하는 금액을 계약을 해지 또는 해제에 따라 지급해야 할 환급금에 더하거나, 청구할 수 있는 부가상품등의 대금 또는 위약금에서 감액하여야 한다."
+    },
+    {
+      "id": "annex_penalty",
+      "label": "별표",
+      "text": "헬스·피트니스업 | - | 총계약대금의 10%\n요가·필라테스업 | - | 총계약대금의 10%"
+    }
+  ],
+  "related_clauses": [
+    {
+      "id": "law32_1",
+      "label": "방문판매법 제32조 ①",
+      "source": {
+        "name": "방문판매 등에 관한 법률",
+        "law_number": "법률 제22044호",
+        "url": "https://www.law.go.kr/법령/방문판매등에관한법률",
+        "effective_date": "2026-10-02",
+        "retrieved_at": "2026-10-26"
+      },
+      "text": "계속거래업자등은 자신의 책임이 없는 사유로 계속거래등의 계약이 해지 또는 해제된 경우 소비자에게 해지 또는 해제로 발생하는 손실을 현저하게 초과하는 위약금을 청구하여서는 아니 되고, 가입비나 그 밖에 명칭에 상관없이 실제 공급된 재화등의 대가를 초과하여 수령한 대금의 환급을 부당하게 거부하여서는 아니 된다."
+    },
+    {
+      "id": "law2_10",
+      "label": "방문판매법 제2조 제10호",
+      "source": {
+        "name": "방문판매 등에 관한 법률",
+        "law_number": "법률 제22044호",
+        "url": "https://www.law.go.kr/법령/방문판매등에관한법률",
+        "effective_date": "2026-10-02",
+        "retrieved_at": "2026-10-26"
+      },
+      "text": "“계속거래”란 1개월 이상에 걸쳐 계속적으로 또는 부정기적으로 재화등을 공급하는 계약으로서 중도에 해지할 경우 대금 환급의 제한 또는 위약금에 관한 약정이 있는 거래를 말한다."
+    },
+    {
+      "id": "gym_terms_art8_2_def",
+      "label": "체력단련장(헬스장) 이용 표준약관 제8조 ② (이용료·위약금 정의)",
+      "source": {
+        "name": "체력단련장(헬스장) 이용 표준약관",
+        "terms_number": "표준약관 제10048호",
+        "url": "https://www.ftc.go.kr/www/selectBbsNttView.do?key=202&bordCd=201&nttSn=46118",
+        "revised": "2025-05-23",
+        "retrieved_at": "2026-10-26"
+      },
+      "text": "이용료: 일반이용자가 사업자에게 계약 시 납부한 총 금액을 말하며, 계약금·입회금·가입비·부대시설 이용료 등의 금액을 모두 포함함. 다만, 보증금은 이용료에 포함되지 않음.\n위약금: 이용료의 1/10에 해당하는 금액을 말함"
+    },
+    {
+      "id": "yoga_terms_art9_1_def",
+      "label": "요가·필라테스 표준약관 제9조 ① (환급 기준 합의·이용료·위약금)",
+      "source": {
+        "name": "요가·필라테스 표준약관",
+        "terms_number": "표준약관 제10083호",
+        "url": "https://www.ftc.go.kr/www/selectBbsNttView.do?key=202&bordCd=201&nttSn=47762",
+        "enacted": "2026-07-16",
+        "retrieved_at": "2026-10-26"
+      },
+      "text": "아래 두 가지 기준 중 사업자와 회원이 계약 체결 시 합의한 기준에 따라 환급\n이용료는 회원이 제3조제1항에 따라 납부한 총 금액(실 결제금액)을 말하며, 계약금ㆍ입회금ㆍ가입비ㆍ부대시설 이용료 등의 금액을 모두 포함하지만, 보증금은 포함하지 아니함\n위약금은 이용료의 1/10에 해당하는 금액으로 함"
+    },
+    {
+      "id": "yoga_terms_art5_2",
+      "label": "요가·필라테스 표준약관 제5조 ② (등록기간 만료 후 잔여 횟수)",
+      "source": {
+        "name": "요가·필라테스 표준약관",
+        "terms_number": "표준약관 제10083호",
+        "url": "https://www.ftc.go.kr/www/selectBbsNttView.do?key=202&bordCd=201&nttSn=47762",
+        "enacted": "2026-07-16",
+        "retrieved_at": "2026-10-26"
+      },
+      "text": "등록기간이 만료되면 아직 수강하지 않은 수업횟수는 모두 소멸하며, 회원은 이에 대해 환불이나 보강을 요청할 수 없습니다."
+    }
+  ]
+}
