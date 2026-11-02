@@ -1,8 +1,8 @@
 # MVP_SPEC — 기준대로
 
 > 상태: **초안**. 현재 단계에 필요한 결정이 끝나기 전에는 그 단계를 구현하지 않는다. 결정이 나면 이 문서를 먼저 갱신한다.
-> **현재 단계: 0 (고시 원문 확인, 미완료)**
-> 완료한 단계: 1 (저장소 뼈대, 2026-10-19). 단계 0과 병행해 먼저 끝냈으며, 단계 0이 끝나기 전에는 단계 2로 넘어가지 않는다.
+> **현재 단계: 2 (규칙 엔진 + 테스트, 구현 완료·커밋 전)**
+> 완료한 단계: 0 (고시 원문 확인, 2026-10-26), 1 (저장소 뼈대, 2026-10-19).
 
 ## 1. MVP 한 줄
 
@@ -126,7 +126,7 @@ MVP(품목 1개)에서는 조항 검색 없이 품목 ID(`gym_refund`)로 이 �
 | `used_sessions` | `int \| None` | 횟수 기준이면 필수 | 도달일까지 이용한 횟수. 요가·필라테스 표준약관을 쓴 계약이면 받지 않은 보강수업도 이용 횟수에 넣는다 [원문] 요가·필라테스 표준약관 제9조 ② |
 | `add_on_value` | `int` | 선택 (기본 0) | 부가상품 가액 [원문] 고시 제5조 ① |
 | `add_on_returned` | `bool` | 선택 (기본 `False`) | 부가상품 반환 여부 [원문] 고시 제6조 ① |
-| `returned_add_on_value` | `int` | 반환 시 필수 | 반환한 부가상품등의 가치 상당액 (계약서 기재 금액 등, 사용자 입력) |
+| `returned_add_on_value` | `int \| None` (기본 `None`) | 반환 시 필수 | 반환한 부가상품등의 가치 상당액 (계약서 기재 금액 등, 사용자 입력) |
 | `deposit` | `int` | 선택 (기본 0) | 보증금 [원문] 고시 제5조 ② |
 | `has_refund_limit_clause` | `bool \| None` | 선택 | 중도 해지 시 환급 제한·위약금 약정 유무 [원문] 법 제2조 제10호 |
 | `list_price` | `int \| None` | 선택 | 정상가: 같은 계약의 정상가 총액(할인·프로모션 적용 전, 같은 기간·같은 이용권 기준) [결정 2026-10-26 #3, #5 선택 입력] |
@@ -135,7 +135,7 @@ MVP(품목 1개)에서는 조항 검색 없이 품목 ID(`gym_refund`)로 이 �
 | `had_postponement` | `bool \| None` | 선택 | 이용 연기(일시정지) 여부 [원문] 체력단련장 표준약관 제7조, 요가·필라테스 표준약관 제8조. 경과 일수 반영 방식은 원문에 없음 [결정 2026-10-26 #8] |
 | `is_pt_only` | `bool \| None` | 선택 (기본 `None`) | PT(퍼스널 트레이닝)만 계약했는지. 헬스·피트니스 + 횟수제일 때 입력 단계에서 묻는다 (5.5 `PT_ONLY_QUESTION`, 예 → `True` / 아니오 → `False` / 모름 → `None`). `True`이면 헬스·피트니스 규칙으로 계산하고 `SCOPE_UNCERTAIN_PT_ONLY`(🔍)를 붙인다 [결정 2026-10-26 질문 답 4, Q3] |
 
-필수 판정에 쓰는 "환급 기준(`basis`)": 헬스·피트니스는 `contract_type`, 요가·필라테스는 `refund_basis`(없으면 `unknown`). `unknown`이면 기간 기준과 횟수 기준 입력을 모두 요구한다.
+필수 판정에 쓰는 "환급 기준(`basis`)": 헬스·피트니스는 `contract_type`, 요가·필라테스는 `refund_basis`(필수, `unknown`이면 기간 기준과 횟수 기준 입력을 모두 요구). 요가·필라테스의 `refund_basis = None`은 누락(`MISSING_REQUIRED`)이고, `unknown`은 사용자가 "모름"으로 답한 값이다 [결정 2026-10-26 단계 2].
 
 입력 검증 (실패하면 `🔍` 계산 안 함, `INVALID_INPUT`): 금액이 음수, `total_contract_amount` ≤ 0, `paid_amount` > `total_contract_amount`, `end_date` < `start_date`, `total_sessions` ≤ 0, `used_sessions`가 0 미만이거나 `total_sessions` 초과.
 
@@ -151,7 +151,7 @@ MVP(품목 1개)에서는 조항 검색 없이 품목 ID(`gym_refund`)로 이 �
 | 4 | `is_withdrawal` | ❔ `WITHDRAWAL` + 청약철회 안내 문구 (아래) | [원문] 고시 제3조 ② |
 | 5 | `termination_cause = business` | ❔ `BUSINESS_FAULT` | [원문] 고시 제4조 ① |
 | 6 | `termination_cause = force_majeure` | ❔ `FORCE_MAJEURE` (확장 후보) | [원문] 체력단련장 표준약관 제11조, 요가·필라테스 표준약관 제11조 |
-| 7 | 계약 일수 < 28 (날짜가 있을 때) | ❔ `PERIOD_UNDER_28_DAYS` | [원문] 법 제2조 제10호 "1개월 이상", 경계값은 [결정 2026-10-26 #2] |
+| 7 | 계약 일수 < 28 (`start_date`·`end_date`가 둘 다 있고 `end_date ≥ start_date`일 때) | ❔ `PERIOD_UNDER_28_DAYS` | [원문] 법 제2조 제10호 "1개월 이상", 경계값은 [결정 2026-10-26 #2] |
 | 8 | `has_refund_limit_clause = False` | ❔ `NO_REFUND_LIMIT_CLAUSE` | [원문] 법 제2조 제10호 |
 | 9 | 필수 입력 누락, `termination_cause = unknown` | 🔍 `MISSING_REQUIRED` (계산 안 함) | 배지 순서 2 |
 | 10 | 입력 검증 실패 | 🔍 `INVALID_INPUT` (계산 안 함) | 배지 순서 2 |
@@ -178,6 +178,8 @@ MVP(품목 1개)에서는 조항 검색 없이 품목 ID(`gym_refund`)로 이 �
 | 32 이상 | 통과 |
 | 날짜 없음 (횟수제 유효기간 미입력) | 🔍 `SESSION_VALIDITY_MISSING` (계산은 함) |
 
+- 날짜 역전(`end_date < start_date`)은 순서 7을 건너뛰고 순서 10에서 🔍 `INVALID_INPUT`(계산 안 함)이 된다. `end_date = start_date`(계약 일수 1)는 유효한 입력이라 순서 7의 ❔ [결정 2026-10-26 단계 2].
+- 계약 일수 판정(순서 7, 28~31일 구간)은 `start_date`·`end_date`가 둘 다 있을 때만 한다. 하나라도 없고 기준에 `session`이 있으면 `SESSION_VALIDITY_MISSING`(🔍). 순서 11은 `end_date`·`notice_date`가 둘 다 있을 때 판정한다 [결정 2026-10-26 단계 2 Q7].
 - 28·31·32일 경계는 [결정 2026-10-19·2026-10-26 유지]. 민법 제160조 역 계산은 쓰지 않는다 (`related_laws.md`).
 - 1372 답변 1은 "1개월 이상의 헬스장 이용계약은 … 계속거래"라고 안내했다. 원문은 약정 요건(③)이 더 있어 더 엄격하다. 엔진은 원문을 따른다.
 - 시행령 제37조(10만원·3개월)는 계속거래 정의가 아니다. 쓰지 않는다.
@@ -260,7 +262,7 @@ deposit_refund = deposit                                       ← 별도 약정
 
 결정 순서 (4절과 같음, 먼저 걸리는 것이 이긴다): ❔ → 🔍(필수 정보 누락·입력 오류·유효기간 이후 도달, 계산 안 함) → ⚠️(강건) → 🔍(해석 의존·미검증·확인 필요) → ✅.
 
-블록 단위 검증: 강건한 ⚠️와 ✅는 결과가 쓰는 블록 `industries[].penalty_rule`, `params.continuous_transaction_criteria`가 모두 `verified: true`일 때만 켠다. 최상위 `verified`(현재 `false`)는 배지 판정에 쓰지 않는다. 블록이 `false`이면 `RULE_UNVERIFIED`(🔍)가 붙는다.
+블록 단위 검증: 강건한 ⚠️와 ✅는 결과가 쓰는 블록 `industries[].penalty_rule`, `params.continuous_transaction_criteria`가 모두 `verified: true`일 때만 켠다. 최상위 `verified`(현재 `false`)는 배지 판정에 쓰지 않는다. 블록이 `false`이면 `RULE_UNVERIFIED`(🔍)가 붙고, ⚠️ 코드(`OFFER_BELOW_B`, `PENALTY_ABOVE_CAP`)는 `flags`에서 뺀다 [결정 2026-10-26 단계 2 Q6].
 
 강건한 ⚠️ (해석과 무관하게 성립하는 신호만):
 
@@ -277,7 +279,7 @@ deposit_refund = deposit                                       ← 별도 약정
 | `PERIOD_28_TO_31_DAYS` | 1개월 경계 구간 | 계약 일수 28~31 | "계약 기간이 1개월 경계(28~31일)에 있어 이 기준이 적용되는지 확인이 필요합니다." |
 | `REFUND_LIMIT_CLAUSE_UNKNOWN` | 약정 미확인 | `has_refund_limit_clause is None` | "계약서에 중도 해지 시 환급 제한이나 위약금 조항이 있는지 확인이 필요합니다." |
 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 청약철회 미확인 | `withdrawal_cleared`가 `True`가 아님 | "청약철회 대상이 아니거나 철회 기간이 지났는지 확인되지 않았습니다." |
-| `SESSION_VALIDITY_MISSING` | 유효기간 미입력 | 횟수제인데 유효기간 날짜 없음 | "횟수제 이용권의 유효기간을 입력하지 않아 이 기준의 적용 여부를 확인하지 못했습니다." |
+| `SESSION_VALIDITY_MISSING` | 유효기간 미입력 | 기준에 `session`이 있고 `start_date`·`end_date` 중 하나라도 없음 (5.2) | "횟수제 이용권의 유효기간을 입력하지 않아 이 기준의 적용 여부를 확인하지 못했습니다." |
 | `REFUND_BASIS_UNKNOWN` | 기준 미상 | 요가·필라테스 `refund_basis = unknown` | "계약할 때 정한 환급 기준(기간 또는 횟수)을 알 수 없어 두 기준으로 모두 계산했습니다." |
 | `RULE_UNVERIFIED` | 규칙 미검증 | 쓰는 블록이 `verified: false` | "계산에 쓴 기준 값 중 원문 확인이 끝나지 않은 값이 있습니다." |
 | `LIST_PRICE_NOT_USABLE` | 정상가 미입력·확인 필요 | 정상가 없음 또는 정상가 < 총계약대금. 단, 시작 전 해지(`notice_date < start_date`이고 모든 기준의 이용분 0)에서 정상가가 없는 것은 사유가 아니다 [결정 2026-10-26 추가 수정 2] | "정상가(할인 전 가격)를 쓸 수 없어 정상가 기준 계산을 하지 못했습니다." |
@@ -299,7 +301,7 @@ deposit_refund = deposit                                       ← 별도 약정
 - 안내 코드 `MINIMUM_REFUND` → `PENALTY_INPUT_MISSING` (결과 라벨 `refund_kind = minimum` "최소 환급액"은 그대로)
 - 안내 코드 `OFFER_NEAR_LIST_PRICE_BASIS` → `OFFER_BETWEEN_A_AND_B` (문구도 조건에 맞춰 바꿈)
 
-화면 표시 우선순위 [결정 2026-10-26 추가 수정 3]: 결과의 `flags` 중 아래 표에서 가장 위에 있는 코드 1개만 배지 옆에 한 줄로 보여 주고, 나머지는 "다른 확인 사항 n개" 아래에 접어서 우선순위 순으로 보여 준다. 배지 판정에는 쓰지 않는다 (배지는 결정 순서로만 정한다). 배지와 같은 등급의 코드가 항상 먼저 오도록 등급 순(❔ → 🔍 계산 안 함 → ⚠️ → 🔍 계산함)으로 묶었다. 등급 안의 순서는 초안이다: 고시 적용 여부를 흔드는 사유 → 계산 기준을 흔드는 사유 → 금액 해석 사유 → 참고 사유.
+화면 표시 우선순위 [결정 2026-10-26 추가 수정 3]: 코드에서는 `rules/badge.py`의 순서 있는 상수 `DISPLAY_PRIORITY` 하나로 둔다. 단계 6에서 순서를 바꾸면 이 상수만 고친다. 결과의 `flags` 중 아래 표에서 가장 위에 있는 코드 1개만 배지 옆에 한 줄로 보여 주고, 나머지는 "다른 확인 사항 n개" 아래에 접어서 우선순위 순으로 보여 준다. 배지 판정에는 쓰지 않는다 (배지는 결정 순서로만 정한다). 배지와 같은 등급의 코드가 항상 먼저 오도록 등급 순(❔ → 🔍 계산 안 함 → ⚠️ → 🔍 계산함)으로 묶었다. 등급 안의 순서는 초안이다: 고시 적용 여부를 흔드는 사유 → 계산 기준을 흔드는 사유 → 금액 해석 사유 → 참고 사유.
 
 | 우선순위 | 코드 | 등급 |
 |---|---|---|
@@ -350,6 +352,8 @@ deposit_refund = deposit                                       ← 별도 약정
 
 배지 판정의 입력이 아니다. 화면 설명용이다.
 
+부여 규칙 [결정 2026-10-26 단계 2 Q5]: 안내 코드는 계산한 결과에만 붙인다. ❔·계산 안 함 🔍의 상담 창구 안내와 청약철회 ❔ 안내 문구는 엔진이 안내 코드로 만들지 않고 단계 4·5에서 `flags`를 보고 처리한다. `PT_ONLY_QUESTION`은 입력 단계 질문이라 Enum에만 두고 엔진은 내지 않는다.
+
 | 코드 | 조건 | 문구 |
 |---|---|---|
 | `NO_LIST_PRICE` | 정상가 없음. 단, 시작 전 해지(`notice_date < start_date`이고 모든 기준의 이용분 0)이면 표시하지 않음 [결정 2026-10-26 후속 Q2] | 5.3 표 |
@@ -371,9 +375,9 @@ deposit_refund = deposit                                       ← 별도 약정
 | `calculated` | `bool` | 계산했는지 |
 | `results` | `dict[Basis, BasisResult]` | 기준(`period`/`session`)별 결과. `BasisResult = {elapsed, units, A: ScenarioResult, B: ScenarioResult \| None}` |
 | `ScenarioResult` | — | `used_amount: int`, `raw_refund: int`, `refund: int` |
-| `penalty` | `int` | 공제한 위약금 |
-| `penalty_cap` | `int` | 상한 (내림 후) |
-| `refund_kind` | `str` | `minimum`(최소 환급액) / `computed`(환급액) |
+| `penalty` | `int \| None` | 공제한 위약금 (계산 안 하면 `None`) |
+| `penalty_cap` | `int \| None` | 상한 (내림 후, 계산 안 하면 `None`) |
+| `refund_kind` | `RefundKind \| None` | `minimum`(최소 환급액) / `computed`(환급액), 계산 안 하면 `None` |
 | `deposit_refund` | `int` | 보증금 환급액 (환급액과 별도) |
 | `contract_days` | `int \| None` | 계약 일수 |
 | `steps` | `list[Step]` | 항목명·계산식·금액, 고정 줄 포함 (5.3) |
@@ -402,6 +406,11 @@ deposit_refund = deposit                                       ← 별도 약정
 | 표준약관 위약금 안내 (`STANDARD_TERMS_PENALTY`) | `gym_terms_art8_2_def` (헬스·피트니스), `yoga_terms_art9_1_def` (요가·필라테스) |
 | 환급 기준 합의 (`refund_basis`) | `yoga_terms_art9_1_def` |
 
+부여 규칙 [결정 2026-10-26 단계 2 Q5]:
+- 계산한 결과: `art2_2`, `art2_3`, `art2_4`, `art3_1`, `art4_1`, `annex_penalty`, `art5_1`, `law32_1`은 항상. 보증금 > 0이면 `art5_2`, 부가상품 반환이면 `art6_1`, `STANDARD_TERMS_PENALTY`를 붙이면 업종별 표준약관 ID, 요가·필라테스면 `yoga_terms_art9_1_def`(환급 기준 합의), `PERIOD_28_TO_31_DAYS`·`REFUND_LIMIT_CLAUSE_UNKNOWN`이 있으면 `law2_10`.
+- 계산 안 한 결과: 걸린 코드에 맞는 ID만. `WITHDRAWAL` → `art3_2`, `PERIOD_UNDER_28_DAYS`·`NO_REFUND_LIMIT_CLAUSE` → `law2_10`, 요가·필라테스 `NOTICE_AFTER_VALIDITY` → `yoga_terms_art5_2`. 그 밖의 코드는 인용 없음.
+- 중복은 한 번만, 위 순서대로. 모든 ID는 규칙 JSON의 `clauses`·`related_clauses`에 있어야 한다.
+
 인용하지 않는 조문: 약관법 제9조 (위약금 과다를 직접 다루지 않음, `related_laws.md`), 방문판매법 제52조, 민법 기간 조문. 계속거래 정의(법 제2조 제10호)는 판정용 `params.continuous_transaction_criteria`와 인용용 `related_clauses[law2_10]`에 같은 문장으로 둔다.
 
 ### 5.8 함수 시그니처 (단계 2)
@@ -417,7 +426,7 @@ def load_rule(rule_id: str) -> GymRule                                  # json.l
 # backend/rules/gym.py
 def contract_days(start: date, end: date) -> int                        # end − start + 1
 def elapsed_days(start: date, notice: date, total_days: int) -> int      # clamp(notice − start + 1, 0, total_days)
-def classify_period(days: int | None) -> Literal["out_of_scope", "needs_review", "ok", "unknown"]
+def classify_period(days: int | None, rule: GymRule) -> Literal["out_of_scope", "needs_review", "ok", "unknown"]  # 경계는 JSON에서
 def resolve_basis(inp: GymInput) -> Literal["period", "session", "unknown"]
 def check_scope(inp: GymInput, rule: GymRule) -> ScopeResult           # ❔ 코드, 누락 필드, 입력 오류
 def calc_penalty(total: int, cap: int, contract_penalty: int | None) -> tuple[int, RefundKind]
@@ -431,6 +440,12 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
                  robust_warnings: list[str], review_flags: list[str]) -> Badge
 ```
 
+타입 [결정 2026-10-26 단계 2 Q3·Q9]:
+- `rules/badge.py`: `Badge`(`StrEnum`, 값 "❔ 판단 불가" / "🔍 추가 확인 필요" / "⚠️ 주의 신호" / "✅ 기준 확인"), `FlagCode`(`StrEnum`, 5.2·5.4 사유 코드), `NoticeCode`(`StrEnum`, 5.5 안내 코드), `DISPLAY_PRIORITY: tuple[FlagCode, ...]`, `screen_line(flags) -> FlagCode | None`.
+- `rules/gym.py`: `Basis`(`StrEnum`: `period`/`session`), `RefundKind`(`StrEnum`: `minimum`/`computed`), `GymInput`, `ScopeResult{stop_code, missing, period_class, contract_days, bases}`, `ScenarioResult`, `BasisResult`, `OfferComparison{robust: bool, notice: NoticeCode | None}`, `Step{label, formula, amount: int | None}`, `GymResult`.
+- `rules/loader.py`: `GymRule`와 하위 모델은 JSON 키 이름 그대로. 반올림·일수 규칙 문자열(`half_up_won`, `floor_won`, `multiply_then_divide_round_once`, `end_date - start_date + 1` 등)과 `penalty_rule.type`·`applies_as`는 Pydantic `Literal`로 검증해 예상 밖 값이면 로드 시점에 오류를 낸다. 다른 방식은 구현하지 않는다.
+- 필수 필드(`total_contract_amount` 등)는 5.1 타입 그대로 non-optional이라 값이 없으면 모델 생성 단계에서 오류가 난다. 엔진의 `MISSING_REQUIRED`는 조건부 필수(날짜, 횟수, 요가·필라테스 `refund_basis`, 반환 시 `returned_add_on_value`)와 `termination_cause = unknown`에 쓴다.
+
 `rules/`는 `llm/`을 import하지 않는다. 새 의존성 없음 (표준 라이브러리 `datetime`, `decimal`, `fractions`, `json` + 기존 `pydantic`, `pytest`).
 
 ### 5.9 테스트 구성 (단계 2, 테스트 먼저)
@@ -443,9 +458,11 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 | `tests/test_gym_scope.py` | 5.2 표의 행마다 1건, 경계 27/28/31/32일 (B1~B4) |
 | `tests/test_gym_calc.py` | `gym_cases_draft.md`의 계산 케이스 (사용자 검증 후) |
 | `tests/test_gym_badge.py` | 5.4 진리표 16조합, ✅ 조건 각각을 하나씩 깨는 케이스 |
-| `tests/test_import_direction.py` | `rules/`가 `llm/`을 import하지 않는지 (AST) |
+| `tests/test_import_direction.py` | `rules/`가 `llm/`·`api/`를 import하지 않는지 (AST) |
+| `tests/test_gym_integration.py` | `calculate_refund` 경로로 검증 완료·승인 케이스 35건, 블록 미검증 시 ⚠️ → 🔍 |
+| `tests/test_gym_oracle.py` | 엔진과 구조가 다른 기준 계산기와 고정 시드 난수 비교, 불변식 |
 
-테스트 기대값은 사용자가 검증한 `gym_cases_draft.md`에서만 가져온다.
+테스트 기대값은 고시 원문 또는 '사용자 검증 완료(손계산)'·'사용자 승인(보고서 검토)' 케이스에서만 가져온다. 케이스는 `gym_cases_draft.md`의 검증 상태로 판단한다.
 
 ### 5.10 구현 순서 (단계 2)
 
@@ -486,7 +503,7 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 ## 7. 완료 기준 (MVP)
 
 - [ ] 규칙 파일의 모든 값에 원문 출처가 있고 `verified=true`
-- [ ] 규칙 엔진 pytest 케이스 10건 이상 전부 통과 (정답은 손계산)
+- [x] 규칙 엔진 pytest 케이스 10건 이상 전부 통과 (정답은 '사용자 검증 완료(손계산)'·'사용자 승인(보고서 검토)' 케이스)
 - [ ] 입력 → 결과 화면이 끝까지 동작 (가상 사례 5건)
 - [ ] 승패·법적 효력 질문 5건이 모두 `❔ 판단 불가`로 처리
 - [ ] 결과 화면에 기준일·출처·"권고 기준" 고지 표시
@@ -524,7 +541,7 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 | 입력 방식·일수·배지 결정 (질문 8건 + 보충 7건) | 완료 | 사용자 (결정) | 5절 반영 |
 | 새 질문 (청약철회 14일 ❔ 방안, 청약철회권 없는 계약, 유효기간 후 잔여 횟수, PT 단독 범위, 법 제2조 제10호 인용) | 완료 (2026-10-26) | 사용자 (결정) | 5절 반영, 5.2 "해결한 질문" |
 | 후속 질문 5건 (권유 뒤 매장 계약 풀이, 횟수 기준 `notice_date`, 시작 전 해지 `NO_LIST_PRICE`, `USAGE_STARTED`, CLAUDE.md 배지 문구) | 완료 (2026-10-26), 전화 권유 뒤 매장 계약만 [미결] | 사용자 (결정) | 5절 반영 |
-| 손계산 케이스 검증 (`gym_cases_draft.md`, 35건: 사용자 검증 완료 7, 재계산 일치(Claude) 20, 검증 대기 8) | 사용자 대기 | 사용자 | 검증 전에는 테스트 코드로 옮기지 않는다 |
+| 케이스 검증 (`gym_cases_draft.md`, 35건: 사용자 검증 완료(손계산) 7, 사용자 승인(보고서 검토) 28) | 완료 (2026-10-26) | 사용자 | 두 상태 모두 테스트 기대값으로 쓴다 |
 
 ## 9. 결정 사항과 남은 결정
 
@@ -550,6 +567,7 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 - 결과 화면 고정 안내: 정상가 미입력 안내(5.3), 표준약관 위약금 안내(5.5 `STANDARD_TERMS_PENALTY`), 기간·연기 확인 안내(5.5 `PERIOD_CHECK`).
 - 입력 화면: 연기했다고 답하면 종료일 입력란에 "연장된 종료일을 입력" 안내를 붙인다 (5.5 `POSTPONEMENT_INPUT`).
 - `refund_basis = unknown` 결과는 "일수 기준", "횟수 기준"으로 묶어서 보여 준다 (5.3).
+- 단계 6 입력 화면에서 요가·필라테스의 `refund_basis` 질문에 "모름" 선택지를 제공해야 한다 ("모름" → `unknown`, 답하지 않음 → `None` = 누락) [결정 2026-10-26 단계 2].
 - 사유 한 줄 표시 문제: 케이스 기준으로 계산한 🔍 24건 중 20건의 화면 한 줄이 `WITHDRAWAL_STATUS_UNCONFIRMED`라 화면에 같은 문구만 보인다. 단계 6에서 결정: 사유 상위 2개와 "외 N개" 펼침, 또는 확인 체크리스트. 단계 2에서는 5.4 우선순위 규칙(1개 표시)을 바꾸지 않는다 [2026-10-26 기록].
 
 ## 11. 평가 메모 (단계 7)

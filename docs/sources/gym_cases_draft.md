@@ -2,15 +2,16 @@
 
 - 금액 재계산: 별도 계산기로 일치 확인(2026-10-26), 해석 검증은 사용자 몫
 - 작성일: 2026-10-26 (날짜 입력 방식으로 전면 재계산: 2026-10-26)
-- 상태: 테스트 기대값은 '사용자 검증 완료' 케이스에서만 가져온다 (CLAUDE.md 5절 "사용자가 확인한 값"). '재계산 일치(Claude)'와 '검증 대기' 케이스는 사용자가 검증 완료로 바꾸기 전에는 테스트 코드(`backend/tests/`)로 옮기지 않는다.
+- 상태: 테스트 기대값은 고시 원문 또는 '사용자 검증 완료(손계산)'·'사용자 승인(보고서 검토)' 케이스에서만 가져온다. '재계산 일치(Claude)'와 '검증 대기' 케이스는 사용자가 두 상태 중 하나로 바꾸기 전에는 테스트 코드(`backend/tests/`)로 옮기지 않는다.
 - 기준 문서: `docs/MVP_SPEC.md` 5절 (입력 5.1, 범위 5.2, 계산식 5.3, 배지 5.4, 안내 5.5).
 - 근거: 고시 제5조 ①(환급 공식), 제5조 ②(보증금), 제6조 ①(부가상품 반환), 제4조 ①·별표(위약금 상한 10%). 시나리오 A·B, 일수 계산, 반올림·내림은 원문에 없는 결정이다.
 - 모든 금액은 원 단위 정수. 가상 사례다.
 - 재검산: scratchpad의 참고 계산기 두 개(`Fraction` 정수 연산, `Decimal` ROUND_HALF_UP)로 30건을 각각 계산해 일치를 확인했다 (2026-10-26). 추가한 계산 케이스 V3·C4와 결과 표시를 바꾼 K1도 같은 방식으로 확인했다 (2026-10-26). 스크립트는 저장소에 두지 않았다.
-- 검증 상태 (2026-10-26): 케이스마다 아래 셋 중 하나를 적는다.
+- 검증 상태: 케이스마다 아래 넷 중 하나를 적는다. 앞의 두 상태만 테스트 기대값으로 쓴다.
   - **사용자 검증 완료**: 사용자가 손계산으로 확인 (P1, N3, R1, R2, R3, S2, U1, 7건)
-  - **재계산 일치(Claude)**: Claude의 별도 계산기 두 개로 금액 일치만 확인, 해석은 사용자 미검증 (20건)
-  - **검증 대기**: 2026-10-26에 새로 만들거나 내용을 고친 케이스 (C4, V1~V4, K1·P2·S3 수정분, 8건)
+  - **사용자 승인(보고서 검토)**: Claude가 독립 검증(서브에이전트 독립 도출, 일수 2방식, 금액 3방식)한 검토 시트를 사용자가 읽고 승인 (28건, 2026-10-26 승인. 사용자 검증 완료 7건을 뺀 나머지 전부)
+  - **재계산 일치(Claude)**: Claude의 별도 계산기 두 개로 금액 일치만 확인, 해석은 사용자 미검증 (0건)
+  - **검증 대기**: 새로 만들거나 내용을 고친 뒤 아직 검증·승인하지 않은 케이스 (0건)
 - 코드·필드 이름 변경 (2026-10-26, 조건은 같음): 이전 이름은 MVP_SPEC 5.4 "코드 이름 변경 기록"에만 남긴다.
 
 ## 공통 계산식
@@ -58,7 +59,7 @@
 - 사유 코드: `WITHDRAWAL_STATUS_UNCONFIRMED` (시작 전 해지라 정상가가 없어도 `LIST_PRICE_NOT_USABLE`이 붙지 않음, 2026-10-26 추가 수정 2)
 - 추가 안내: 없음 (시작 전 해지라 `NO_LIST_PRICE`를 표시하지 않음, 2026-10-26 후속 Q2)
 - 기대 배지: **🔍**
-- 검증 상태: 검증 대기
+- 검증 상태: 사용자 승인(보고서 검토)
 - 이전 값 (월 단위 계산): 540,000
 
 ### P3. 요가·필라테스 90일, 미이용 간주
@@ -71,7 +72,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 - 이전 값 (월 단위 계산): 510,000
 
 ### P4. 분할 납부 중 해지 + 약정 유무 미상
@@ -84,7 +85,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `REFUND_LIMIT_CLAUSE_UNKNOWN`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 - 이전 값 (월 단위 계산): 280,000
 
 ### P5. 부가상품 미반환 + 보증금
@@ -97,7 +98,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 - 이전 값 (월 단위 계산): 450,000
 
 ### S1. 횟수제 기본
@@ -110,7 +111,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 - 이전 값 (월 단위 계산): 325,000
 
 ### S2. 부가상품 반환
@@ -137,7 +138,7 @@
 - 화면 한 줄: `SCOPE_UNCERTAIN_PT_ONLY` (나머지 접음)
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 검증 대기
+- 검증 상태: 사용자 승인(보고서 검토)
 - 이전 값 (월 단위 계산): 750,000
 
 ### E1. 음수 환급
@@ -150,7 +151,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`, `NEGATIVE_REFUND_ZEROED`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 - 이전 값 (월 단위 계산): 0
 
 ### E2. 계약서상 위약금 < 상한
@@ -163,7 +164,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 - 이전 값 (월 단위 계산): 840,000
 
 ### N1. 할인 계약, 제시액이 A와 B 사이
@@ -177,7 +178,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `USAGE_STARTED`
 - 추가 안내: `OFFER_BETWEEN_A_AND_B`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 - 이전 값 (월 단위 계산): A 780,000 / B 630,000
 
 ### N2. 할인 횟수제, 제시액 < B
@@ -190,7 +191,7 @@
 - 결과 표시: 최소 환급액
 - 사유 코드: `OFFER_BELOW_B`, `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `USAGE_STARTED`
 - 기대 배지: **⚠️**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 - 이전 값 (월 단위 계산): A 340,000 / B 240,000
 
 ### N3. 반올림 + 시나리오 B만 음수
@@ -256,7 +257,7 @@
 - 입력: 업종 헬스·피트니스 / 사유 consumer / 계약 기간제 / 총계약대금 100,000 / 지급 100,000 / 시작일 2026-03-01 / 종료일 2026-03-27 / 도달일 2026-03-10 / 정상가 없음 / 계약서상 위약금 없음 / 약정 있음 / 청약철회 미확인
 - 판정: 계산하지 않음 — `PERIOD_UNDER_28_DAYS` (계약 일수 27)
 - 기대 배지: **❔**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### B2. 계약 28일 (2월)
 
@@ -268,7 +269,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_28_TO_31_DAYS`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### B3. 계약 31일
 
@@ -280,7 +281,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_28_TO_31_DAYS`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### B4. 계약 32일
 
@@ -292,7 +293,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ## 그 밖의 경계 (6건)
 
@@ -306,7 +307,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `LIST_PRICE_BELOW_TOTAL` (안내 코드라 사유 코드에서 옮김, 2026-10-26. 🔍 사유는 `LIST_PRICE_NOT_USABLE`)
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### K1. 계약서상 위약금 > 상한
 
@@ -319,7 +320,7 @@
 - 사유 코드: `PENALTY_ABOVE_CAP`, `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **⚠️**
-- 검증 상태: 검증 대기
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### X1. 종료일 이후 도달 (계약 일수로 제한)
 
@@ -331,7 +332,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`, `NEGATIVE_REFUND_ZEROED`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### U1. 요가·필라테스 환급 기준 미상 (기준별 묶음)
 
@@ -358,14 +359,14 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `POSTPONEMENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### H1. 환급 제한·위약금 약정 없음 확인
 
 - 입력: 업종 헬스·피트니스 / 사유 consumer / 계약 기간제 / 총계약대금 600,000 / 지급 600,000 / 시작일 2026-03-01 / 종료일 2026-08-31 / 도달일 2026-04-01 / 정상가 없음 / 계약서상 위약금 없음 / 약정 없음 / 청약철회 미확인
 - 판정: 계산하지 않음 — `NO_REFUND_LIMIT_CLAUSE`
 - 기대 배지: **❔**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ## ✅ 판정과 청약철회 확인 (4건)
 
@@ -381,7 +382,7 @@
 - 결과 표시: 최소 환급액
 - 사유 코드: 없음
 - 기대 배지: **✅**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### C2. 청약철회 미확인 → 🔍
 
@@ -393,7 +394,7 @@
 - 결과 표시: 최소 환급액
 - 사유 코드: `WITHDRAWAL_STATUS_UNCONFIRMED`
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### C3. ✅ + 연기 있음 (시작 전 해지는 연기와 무관)
 
@@ -405,7 +406,7 @@
 - 결과 표시: 최소 환급액
 - 사유 코드: 없음
 - 기대 배지: **✅**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### C4. ✅ 시작 전 해지, 정상가 없음
 
@@ -417,7 +418,7 @@
 - 사유 코드: 없음 (시작 전 해지라 정상가가 없어도 `LIST_PRICE_NOT_USABLE`이 붙지 않음, 2026-10-26 추가 수정 2)
 - 추가 안내: 없음 (시작 전 해지라 `NO_LIST_PRICE`를 표시하지 않음, 2026-10-26 후속 Q2)
 - 기대 배지: **✅**
-- 검증 상태: 검증 대기
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ## 필수 정보 누락 (1건)
 
@@ -426,7 +427,7 @@
 - 입력: 업종 요가·필라테스 / 사유 consumer / 계약 기간제 / 환급 기준 period / 총계약대금 600,000 / 지급 600,000 / 시작일 2026-03-01 / 도달일 2026-04-01 / 정상가 없음 / 계약서상 위약금 없음 / 약정 있음 / 청약철회 미확인
 - 판정: 계산하지 않음 — `MISSING_REQUIRED`, 누락: end_date
 - 기대 배지: **🔍**
-- 검증 상태: 재계산 일치(Claude)
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ## 유효기간 이후 도달 (4건)
 
@@ -438,7 +439,7 @@
 - 판정: 계산하지 않음 — `NOTICE_AFTER_VALIDITY` (계약 일수 92, 도달일 > 종료일) + 상담 창구 안내
 - 인용: `yoga_terms_art5_2` (평가 문구 없음)
 - 기대 배지: **🔍**
-- 검증 상태: 검증 대기
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### V2. 헬스·피트니스 횟수제, 유효기간 이후 도달
 
@@ -446,7 +447,7 @@
 - 판정: 계산하지 않음 — `NOTICE_AFTER_VALIDITY` (계약 일수 122, 도달일 > 종료일) + 상담 창구 안내
 - 인용: 없음 (헬스·피트니스는 해당 원문 없음)
 - 기대 배지: **🔍**
-- 검증 상태: 검증 대기
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### V3. 요가·필라테스 횟수제, 도달일 = 유효기간 종료일 (계산함)
 
@@ -458,7 +459,7 @@
 - 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 검증 대기
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ### V4. 요가·필라테스 환급 기준 미상, 유효기간 이후 도달 (전체 계산 안 함)
 
@@ -466,7 +467,7 @@
 - 판정: 계산하지 않음 — `NOTICE_AFTER_VALIDITY` (계약 일수 120, 횟수 기준이 포함되어 기간 기준도 계산하지 않음) + 상담 창구 안내. `REFUND_BASIS_UNKNOWN`은 계산하지 않아 평가하지 않음
 - 인용: `yoga_terms_art5_2` (평가 문구 없음)
 - 기대 배지: **🔍**
-- 검증 상태: 검증 대기
+- 검증 상태: 사용자 승인(보고서 검토)
 
 ## 요약
 
@@ -475,40 +476,40 @@
 | ID | 내용 | 환급액_A | 환급액_B | 결과 표시 | 기대 배지 | 화면 한 줄 | 검증 상태 |
 |---|---|---|---|---|---|---|---|
 | P1 | 기본 (12개월, 3개월 경과) | 784,110 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
-| P2 | 이용 시작 전 해지, 정상가 없음 | 540,000 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 검증 대기 |
-| P3 | 요가·필라테스 90일, 미이용 간주 | 510,000 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
-| P4 | 분할 납부 중 해지 + 약정 유무 미상 | 286,027 | — | 최소 환급액 | 🔍 | `REFUND_LIMIT_CLAUSE_UNKNOWN` | 재계산 일치(Claude) |
-| P5 | 부가상품 미반환 + 보증금 | 455,263 (+ 보증금 100,000) | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
-| S1 | 횟수제 기본 | 325,000 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
+| P2 | 이용 시작 전 해지, 정상가 없음 | 540,000 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| P3 | 요가·필라테스 90일, 미이용 간주 | 510,000 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| P4 | 분할 납부 중 해지 + 약정 유무 미상 | 286,027 | — | 최소 환급액 | 🔍 | `REFUND_LIMIT_CLAUSE_UNKNOWN` | 사용자 승인(보고서 검토) |
+| P5 | 부가상품 미반환 + 보증금 | 455,263 (+ 보증금 100,000) | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| S1 | 횟수제 기본 | 325,000 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
 | S2 | 부가상품 반환 | 500,000 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
-| S3 | PT 단독 횟수제, 유효기간 미입력, 제시액 < A | 750,000 | — | 최소 환급액 | 🔍 | `SCOPE_UNCERTAIN_PT_ONLY` | 검증 대기 |
-| E1 | 음수 환급 | 0 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
-| E2 | 계약서상 위약금 < 상한 | 844,110 | — | 환급액 (계약서상 위약금 사용) | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
-| N1 | 할인 계약, 제시액이 A와 B 사이 | 784,110 | 636,164 | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
-| N2 | 할인 횟수제, 제시액 < B | 340,000 | 240,000 | 최소 환급액 | ⚠️ | `OFFER_BELOW_B` | 재계산 일치(Claude) |
+| S3 | PT 단독 횟수제, 유효기간 미입력, 제시액 < A | 750,000 | — | 최소 환급액 | 🔍 | `SCOPE_UNCERTAIN_PT_ONLY` | 사용자 승인(보고서 검토) |
+| E1 | 음수 환급 | 0 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| E2 | 계약서상 위약금 < 상한 | 844,110 | — | 환급액 (계약서상 위약금 사용) | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| N1 | 할인 계약, 제시액이 A와 B 사이 | 784,110 | 636,164 | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| N2 | 할인 횟수제, 제시액 < B | 340,000 | 240,000 | 최소 환급액 | ⚠️ | `OFFER_BELOW_B` | 사용자 승인(보고서 검토) |
 | N3 | 반올림 + 시나리오 B만 음수 | 118,508 | 0 | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
 | R1 | 365일, 31일 경과 (나누어떨어지지 않음) | 806,918 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
 | R2 | half up 정확히 .5 | 220,002 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
 | R3 | 위약금 원 미만 내림 | 605,883 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
-| B1 | 계약 27일 | — | — | 계산 안 함 | ❔ | `PERIOD_UNDER_28_DAYS` | 재계산 일치(Claude) |
-| B2 | 계약 28일 (2월) | 54,286 | — | 최소 환급액 | 🔍 | `PERIOD_28_TO_31_DAYS` | 재계산 일치(Claude) |
-| B3 | 계약 31일 | 57,742 | — | 최소 환급액 | 🔍 | `PERIOD_28_TO_31_DAYS` | 재계산 일치(Claude) |
-| B4 | 계약 32일 | 58,750 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
-| L1 | 정상가 < 총계약대금 | 784,110 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
-| K1 | 계약서상 위약금 > 상한 | 784,110 | — | 최소 환급액 (상한 공제) | ⚠️ | `PENALTY_ABOVE_CAP` | 검증 대기 |
-| X1 | 종료일 이후 도달 (계약 일수로 제한) | 0 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
+| B1 | 계약 27일 | — | — | 계산 안 함 | ❔ | `PERIOD_UNDER_28_DAYS` | 사용자 승인(보고서 검토) |
+| B2 | 계약 28일 (2월) | 54,286 | — | 최소 환급액 | 🔍 | `PERIOD_28_TO_31_DAYS` | 사용자 승인(보고서 검토) |
+| B3 | 계약 31일 | 57,742 | — | 최소 환급액 | 🔍 | `PERIOD_28_TO_31_DAYS` | 사용자 승인(보고서 검토) |
+| B4 | 계약 32일 | 58,750 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| L1 | 정상가 < 총계약대금 | 784,110 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| K1 | 계약서상 위약금 > 상한 | 784,110 | — | 최소 환급액 (상한 공제) | ⚠️ | `PENALTY_ABOVE_CAP` | 사용자 승인(보고서 검토) |
+| X1 | 종료일 이후 도달 (계약 일수로 제한) | 0 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
 | U1 | 요가·필라테스 환급 기준 미상 (기준별 묶음) | 일수: 156,667 / 횟수: 280,000 | 일수: 105,833 / 횟수: 260,000 | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
-| T1 | 이용 연기 (연장된 종료일 입력) | 807,273 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
-| H1 | 환급 제한·위약금 약정 없음 확인 | — | — | 계산 안 함 | ❔ | `NO_REFUND_LIMIT_CLAUSE` | 재계산 일치(Claude) |
-| C1 | ✅ 기준 확인 | 540,000 | 540,000 | 최소 환급액 | ✅ | — | 재계산 일치(Claude) |
-| C2 | 청약철회 미확인 → 🔍 | 540,000 | 540,000 | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 재계산 일치(Claude) |
-| C3 | ✅ + 연기 있음 (시작 전 해지는 연기와 무관) | 540,000 | 540,000 | 최소 환급액 | ✅ | — | 재계산 일치(Claude) |
-| C4 | ✅ 시작 전 해지, 정상가 없음 | 540,000 | — | 최소 환급액 | ✅ | — | 검증 대기 |
-| M1 | 기간 기준인데 종료일 없음 | — | — | 계산 안 함 | 🔍 | `MISSING_REQUIRED` | 재계산 일치(Claude) |
-| V1 | 요가·필라테스 횟수제, 유효기간 이후 도달 | — | — | 계산 안 함 | 🔍 | `NOTICE_AFTER_VALIDITY` | 검증 대기 |
-| V2 | 헬스·피트니스 횟수제, 유효기간 이후 도달 | — | — | 계산 안 함 | 🔍 | `NOTICE_AFTER_VALIDITY` | 검증 대기 |
-| V3 | 요가·필라테스 횟수제, 도달일 = 유효기간 종료일 | 75,000 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 검증 대기 |
-| V4 | 요가·필라테스 환급 기준 미상, 유효기간 이후 도달 | — | — | 계산 안 함 | 🔍 | `NOTICE_AFTER_VALIDITY` | 검증 대기 |
+| T1 | 이용 연기 (연장된 종료일 입력) | 807,273 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| H1 | 환급 제한·위약금 약정 없음 확인 | — | — | 계산 안 함 | ❔ | `NO_REFUND_LIMIT_CLAUSE` | 사용자 승인(보고서 검토) |
+| C1 | ✅ 기준 확인 | 540,000 | 540,000 | 최소 환급액 | ✅ | — | 사용자 승인(보고서 검토) |
+| C2 | 청약철회 미확인 → 🔍 | 540,000 | 540,000 | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| C3 | ✅ + 연기 있음 (시작 전 해지는 연기와 무관) | 540,000 | 540,000 | 최소 환급액 | ✅ | — | 사용자 승인(보고서 검토) |
+| C4 | ✅ 시작 전 해지, 정상가 없음 | 540,000 | — | 최소 환급액 | ✅ | — | 사용자 승인(보고서 검토) |
+| M1 | 기간 기준인데 종료일 없음 | — | — | 계산 안 함 | 🔍 | `MISSING_REQUIRED` | 사용자 승인(보고서 검토) |
+| V1 | 요가·필라테스 횟수제, 유효기간 이후 도달 | — | — | 계산 안 함 | 🔍 | `NOTICE_AFTER_VALIDITY` | 사용자 승인(보고서 검토) |
+| V2 | 헬스·피트니스 횟수제, 유효기간 이후 도달 | — | — | 계산 안 함 | 🔍 | `NOTICE_AFTER_VALIDITY` | 사용자 승인(보고서 검토) |
+| V3 | 요가·필라테스 횟수제, 도달일 = 유효기간 종료일 | 75,000 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| V4 | 요가·필라테스 환급 기준 미상, 유효기간 이후 도달 | — | — | 계산 안 함 | 🔍 | `NOTICE_AFTER_VALIDITY` | 사용자 승인(보고서 검토) |
 
 배지 분포 (35건): ✅ 3건 (C1, C3, C4), ⚠️ 2건 (N2, K1), ❔ 2건 (B1, H1), 🔍 계산 안 함 4건 (M1, V1, V2, V4), 🔍 24건.
 
@@ -548,5 +549,4 @@
 
 - [x] 사용자 손계산 확인 (사용자 검증 완료): P1, N3, R1, R2, R3, S2, U1 (확인일: 2026-10-26)
 - [x] 반올림·내림 결과 확인: R1, R2, R3, N3
-- 재계산 일치(Claude): 위 7건과 아래 검증 대기 8건을 뺀 20건. Claude 별도 계산기 두 개로 금액 일치만 확인했다 (사용자 손계산 아님, 해석 검증은 사용자 몫)
-- [ ] 검증 대기 8건: C4, V1, V2, V3, V4 (신규), K1, P2, S3 (2026-10-26 수정분). V3·C4·K1 금액은 Claude 재계산과 일치
+- [x] 사용자 승인(보고서 검토) 28건: P2, P3, P4, P5, S1, S3, E1, E2, N1, N2, B1, B2, B3, B4, L1, K1, X1, T1, H1, C1, C2, C3, C4, M1, V1, V2, V3, V4 (승인일: 2026-10-26). 검토 시트: 새 컨텍스트 서브에이전트가 입력·고시 제5조·MVP_SPEC 5.1~5.4 발췌만 보고 독립 도출한 배지·사유 코드·금액과, 일수 2방식(date 연산, 월별 일수 합산)·금액 3방식(Fraction, Decimal, 정수 산술)이 모두 기존 기대값과 일치. 해석 결정(일수 양끝 포함, 반올림 방향, 시나리오 A·B, 28/32일 경계, ✅ 조건)은 이 방식으로 검증되지 않는다
