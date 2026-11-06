@@ -1,0 +1,601 @@
+{
+  "id": "appliance_warranty",
+  "title": "가전·전자제품 품질보증·수리·교환·환급",
+  "status": "draft_stage0",
+  "source": {
+    "name": "소비자분쟁해결기준",
+    "notice_number": "공정거래위원회고시 제2025-14호",
+    "url": "https://www.law.go.kr/행정규칙/소비자분쟁해결기준",
+    "permalink": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000270136",
+    "effective_date": "2025-12-18",
+    "last_amended": "2025-12-18",
+    "retrieved_at": "2026-11-02",
+    "annex": "[별표 Ⅱ] ① 전자제품, 사무용기기 / [별표 Ⅲ] / [별표 Ⅳ]",
+    "annex_files": {
+      "annex2_hwpx_flSeq": "159469939",
+      "annex2_pdf_flSeq": "159470209",
+      "annex2_pdf_pages": "7-8",
+      "annex3_hwpx_flSeq": "159470211",
+      "annex3_pdf_flSeq": "159470219",
+      "annex4_hwpx_flSeq": "159470221",
+      "annex4_pdf_flSeq": "159470225",
+      "annex1_hwpx_flSeq": "159469923"
+    }
+  },
+  "verified": false,
+  "items": {
+    "basis": "별표 Ⅲ 5. 가전제품… 1) 완제품 (가전 관련 행만)",
+    "parts_period_start": "해당 제품의 제조일자(제조연도 또는 제조연월만 기재된 경우 제조연도 또는 제조월의 말일을 제조일자로 봄)를 기산점으로 한다.",
+    "rows": [
+      {
+        "id": "aircon_cooling",
+        "annex3_label": "에어컨(냉방 전용)",
+        "members": [
+          "에어컨(냉방 전용)"
+        ],
+        "warranty_months": 24,
+        "parts_years": 8,
+        "annex4_listed": true,
+        "annex1_listed": true
+      },
+      {
+        "id": "aircon_dual",
+        "annex3_label": "에어컨(냉난방 겸용)",
+        "members": [
+          "에어컨(냉난방 겸용)"
+        ],
+        "warranty_months": 12,
+        "parts_years": 8,
+        "annex4_listed": true,
+        "annex1_listed": true
+      },
+      {
+        "id": "heater_fan_group",
+        "annex3_label": "난로(전기, 가스, 기름), 선풍기, 냉풍기, 전기장판",
+        "members": [
+          "난로(전기, 가스, 기름)",
+          "선풍기",
+          "냉풍기",
+          "전기장판"
+        ],
+        "warranty_months": 24,
+        "parts_years": 5,
+        "annex4_listed": true,
+        "annex1_listed": null
+      },
+      {
+        "id": "tv_fridge",
+        "annex3_label": "TV, 냉장고",
+        "members": [
+          "TV",
+          "냉장고"
+        ],
+        "warranty_months": 12,
+        "parts_years": 9,
+        "annex4_listed": true,
+        "annex1_listed": true
+      },
+      {
+        "id": "audio_microwave_group",
+        "annex3_label": "전축, 전자레인지, 정수기, 가습기, 제습기, 전기청소기",
+        "members": [
+          "전축",
+          "전자레인지",
+          "정수기",
+          "가습기",
+          "제습기",
+          "전기청소기"
+        ],
+        "warranty_months": 12,
+        "parts_years": 7,
+        "annex4_listed": true,
+        "annex1_listed": null
+      },
+      {
+        "id": "washer",
+        "annex3_label": "세탁기",
+        "members": [
+          "세탁기"
+        ],
+        "warranty_months": 12,
+        "parts_years": 7,
+        "annex4_listed": true,
+        "annex1_listed": true
+      },
+      {
+        "id": "dryer_styler",
+        "annex3_label": "의류건조기, 의류관리기",
+        "members": [
+          "의류건조기",
+          "의류관리기"
+        ],
+        "warranty_months": 12,
+        "parts_years": 7,
+        "annex4_listed": false,
+        "annex1_listed": true
+      },
+      {
+        "id": "video_oven_group",
+        "annex3_label": "비디오플레이어, DVD플레이어, 전기(가스)오븐, 비데, 전기압력밥솥, 가스레인지, 유․무선전화기, 믹서기, 전기온수기, 냉온수기, 캠코더,홈시어터, 안마의자, 족욕기, 망원경 ,현미경",
+        "members": null,
+        "warranty_months": 12,
+        "parts_years": 6,
+        "annex4_listed": true,
+        "annex1_listed": null
+      },
+      {
+        "id": "navi_camera_piano",
+        "annex3_label": "네비게이션, 카메라, 디지털피아노",
+        "members": null,
+        "warranty_months": 12,
+        "parts_years": 5,
+        "annex4_listed": true,
+        "annex1_listed": null
+      },
+      {
+        "id": "pc_group",
+        "annex3_label": "데스크탑(완성품) 및 주변기기, 노트북, 태블릿, 휴대용 음향기기(MP3,카세트,CD플레이어)",
+        "members": null,
+        "warranty_months": 12,
+        "parts_years": 4,
+        "annex4_listed": null,
+        "annex1_listed": null
+      },
+      {
+        "id": "shaver_cooker_group",
+        "annex3_label": "전기면도기, 전기조리기기 (멀티쿠커, 튀김기, 다용도식품조리기, 전기토스터, 전기냄비, 전기프라이팬 등), 헤어드라이어",
+        "members": null,
+        "warranty_months": 12,
+        "parts_years": 3,
+        "annex4_listed": true,
+        "annex1_listed": null
+      }
+    ],
+    "unlisted_default": {
+      "warranty_text": "유사품목에 따름 / 1년",
+      "parts_text": "유사품목에 따름 / 제조일로부터 5년",
+      "basis": "별표 Ⅲ 6."
+    },
+    "verified": false,
+    "verification": {
+      "method": "HWPX 표 추출 ↔ PDF 2~3쪽 이미지 판독 일치. annex1_listed는 별표 Ⅰ 전자제품 품목 목록과 대조한 결과(행 전체가 확인되면 true, 일부만이면 null). 지원 품목은 Q-A7. 사용자 육안 대조 전이라 false",
+      "user_checked": false,
+      "checked_at": "2026-11-02"
+    }
+  },
+  "resolution_table": {
+    "basis": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1)·(2-2)",
+    "line_alignment": "분쟁유형 칸과 해결기준 칸의 줄 대응은 PDF 이미지의 같은 높이 배치를 따른다 (해석)",
+    "verified": false,
+    "verification": {
+      "method": "HWPX 텍스트 ↔ PDF 7~8쪽 이미지 판독 일치. 사용자 육안 대조 전이라 false",
+      "user_checked": false,
+      "checked_at": "2026-11-02"
+    }
+  },
+  "repair_impossible_rule": {
+    "basis": "별표 Ⅱ ① 비고 각주 1)",
+    "same_defect_repairs_before_recurrence": 2,
+    "multi_defect_repairs_before_recurrence": 4,
+    "multi_defect_count_method": null,
+    "multi_defect_count_method_in_source": false,
+    "verified": false,
+    "verification": {
+      "method": "HWPX 텍스트 ↔ PDF 7쪽 이미지 판독 일치. 사용자 육안 대조 전이라 false",
+      "user_checked": false,
+      "checked_at": "2026-11-02"
+    }
+  },
+  "lifespan_rule": {
+    "basis": "별표 Ⅳ 품목별 내용연수표",
+    "text": "사업자가 품질보증서에 표시한 부품보유기간으로 함. 다만, 그 기간이 [별표Ⅲ]의 부품보유기간에 기재된 기간보다 짧거나 미기재한 경우 [별표Ⅲ]의 부품보유기간으로 함",
+    "default_years_unlisted_no_similar": 5,
+    "years_to_months": null,
+    "years_to_months_in_source": false,
+    "unlisted_items_rule": null,
+    "unlisted_items_note": "의류건조기·의류관리기·태블릿은 별표 Ⅲ에는 있고 별표 Ⅳ 품목 칸에는 없다 (Q-A4)",
+    "verified": false,
+    "verification": {
+      "method": "HWPX 병합 칸(r1 c1 rs8) 추출 ↔ PDF 1쪽 이미지 판독 일치. 사용자 육안 대조 전이라 false",
+      "user_checked": false,
+      "checked_at": "2026-11-02"
+    }
+  },
+  "depreciation": {
+    "basis": "별표 Ⅱ ① 비고",
+    "method": "straight_line",
+    "monthly": true,
+    "depreciation_text": "(사용연수/내용연수)×구입가",
+    "residual_text": "구입가-감가상각비",
+    "add_on": {
+      "repair_impossible_after_warranty": {
+        "text": "정액 감가상각한 금액에 10%를 가산하여 환급",
+        "rule": null,
+        "candidates": [
+          "residual_plus_10pct_of_price",
+          "residual_times_1_1"
+        ],
+        "cap": null
+      },
+      "lost_after_warranty": {
+        "text": "정액 감가상각한 금액에 10%를 가산하여 환급 (한도：구입가격)",
+        "rule": null,
+        "candidates": [
+          "residual_plus_10pct_of_price",
+          "residual_times_1_1"
+        ],
+        "cap": "purchase_price"
+      },
+      "no_parts_after_warranty": {
+        "text": "정액 감가 상각한 잔여 금액에 구입가의 10%를 가산하여 환급",
+        "rule": "residual_plus_10pct_of_price",
+        "cap": null
+      },
+      "add_on_percent": 10,
+      "in_source": "partial",
+      "note": "3)·4)의 가산 대상은 원문 문장만으로 정해지지 않음 (Q-A2). 5)는 원문 명시"
+    },
+    "parts_period_limit": {
+      "text": "다만, 부품보유기간(내용년수)에 한정하여 적용",
+      "applies_to": [
+        "repair_impossible_after_warranty"
+      ],
+      "applies_to_others": null,
+      "note": "4)·5)에도 적용할지 원문에 없음 (Q-A6)"
+    },
+    "used_months": {
+      "start": null,
+      "end": null,
+      "partial_month": null,
+      "in_source": false,
+      "basis": "원문은 '사용연수', '월할계산'만 정함 (Q-A1)"
+    },
+    "rounding": {
+      "amount": null,
+      "candidates": [
+        "floor_won",
+        "half_up_won"
+      ],
+      "in_source": false
+    },
+    "verified": false,
+    "verification": {
+      "method": "HWPX 텍스트 ↔ PDF 7~8쪽 이미지 판독 일치. 사용자 육안 대조 전이라 false",
+      "user_checked": false,
+      "checked_at": "2026-11-02"
+    }
+  },
+  "params": {
+    "period_counting": {
+      "first_day_included": null,
+      "month_end_rule": null,
+      "in_source": false,
+      "basis": "'구입 후 10일 이내', '1개월 이내', 품질보증기간 만료일, '제조일…부터 3월이 지난 날' 계산 방식이 원문에 없음 (Q-A5)"
+    },
+    "warranty_judgment_date": {
+      "rule": "received_date",
+      "in_source": true,
+      "basis": "별표 Ⅱ ① 비고 '수리 등이 사업자측에 접수된 날을 기준으로 판단함'"
+    }
+  },
+  "notes": [
+    "초안(사전 조사, 2026-11-02). 모든 verified는 false다.",
+    "items.rows는 별표 Ⅲ 5. 1) 완제품 중 가전·전자 관련 행만 옮겼다. 복사기·신발·라켓·헬스기구·우산류·전구류·문구·완구·가발·스마트폰 행과 2) 핵심부품은 제외했다 (스마트폰은 별표 Ⅱ ③ 별도 품목).",
+    "members가 null인 행은 annex3_label을 그대로 쓰고 품목 분해를 하지 않았다.",
+    "annex1_listed: 별표 Ⅰ 전자제품 품목 목록에 행의 모든 품목이 있으면 true, 일부만 있거나 확인하지 않았으면 null. 예: 가스레인지·망원경은 별표 Ⅰ 전자제품 목록에 없다.",
+    "시행령 별표 1(일반적 기준) 4.가~마는 related_clauses에 원문으로 넣었다 (HWP ↔ PDF 1,931자 일치)."
+  ],
+  "clauses": [
+    {
+      "id": "elec_1",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1) 1)",
+      "text": "분쟁유형: 1) 구입 후 10일 이내에 정상적인 사용 상태에서 발생한 성능․기능상의 하자로 중요한 수리를 요할 때\n해결기준: o 제품교환 또는 구입가 환급"
+    },
+    {
+      "id": "elec_2",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1) 2)",
+      "text": "분쟁유형: 2) 구입 후 1개월 이내에 정상적인 사용 상태에서 발생한 성능‧기능상의 하자로 중요한 수리를 요할 때\n해결기준: o 제품교환 또는 무상수리"
+    },
+    {
+      "id": "elec_3",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1) 3)",
+      "text": "분쟁유형: 3) 품질보증기간 이내에 정상적인 사용 상태에서 발생한 성능․기능상의 하자\n- 품질보증기간 이내\nㆍ하자발생 시\nㆍ수리불가능 시1)\nㆍ교환불가능 시\nㆍ교환된 제품이 1개월 이내에 중요한 수리를 요할 때\n- 품질보증기간 경과 후\nㆍ수리 불가능 시1)\n해결기준: o 무상수리\no 제품교환 또는 구입가 환급\no 구입가 환급\no 구입가 환급\nㅇ 정액 감가상각한 금액에 10%를 가산하여 환급2)"
+    },
+    {
+      "id": "elec_4",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1) 4)",
+      "text": "분쟁유형: 4) 소비자가 수리 의뢰한 제품을 사업자가 분실한 경우\n- 품질보증기간 이내\n- 품질보증기간 경과 후\n해결기준: o 제품교환 또는 구입가 환급\no 정액 감가상각한 금액에 10%를 가산하여 환급\n(한도：구입가격)"
+    },
+    {
+      "id": "elec_5",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-2) 5)",
+      "text": "분쟁유형: 5) 부품보유기간 이내에 수리용 부품을 보유하고 있지 않아 발생한 피해\n- 품질보증기간 이내\nㆍ정상적인 사용상태에서 성능․기능상의 하자로 인해 발생된 경우\nㆍ소비자의 고의‧과실로 인한 고장인 경우\n- 품질보증기간 경과 후\n해결기준: o 제품교환 또는 구입가 환급\no 유상수리에 해당하는 금액 징수 후 제품교환\no 정액 감가 상각한 잔여 금액에 구입가의 10%를 가산하여 환급"
+    },
+    {
+      "id": "elec_6",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-2) 6)",
+      "text": "분쟁유형: 6) 제품구입 시 운송과정에서 발생된 피해\n해결기준: o 제품교환\n(단, 전문 운송기관에 위탁한 경우는 판매자가 운송사에 대해 구상권 행사)"
+    },
+    {
+      "id": "elec_7",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-2) 7)",
+      "text": "분쟁유형: 7) 사업자가 제품설치 중 발생된 피해\n해결기준: o 제품교환"
+    },
+    {
+      "id": "elec_note_dep",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1) 비고 (감가상각방법)",
+      "text": "* 감가상각방법：정액법, 내용연수는 별표Ⅳ 품목별 내용연수표(월할계산) 적용\nㆍ감가상각비 계산：(사용연수/내용연수)×구입가\nㆍ감가상각 잔여금 계산：구입가-감가상각비"
+    },
+    {
+      "id": "elec_note_fn1",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1) 비고 각주 1) (수리 불가능 간주)",
+      "text": "* 1)품질보증기간 이내에 동일하자에 대해 2회까지 수리하였으나 하자가 재발하는 경우 또는 여러 부위 하자에 대해 4회까지 수리하였으나 하자가 재발하는 경우는 수리 불가능한 것으로 봄."
+    },
+    {
+      "id": "elec_note_refurb",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1) 비고 (리퍼부품)",
+      "text": "* 제조사가 리퍼부품을 활용하여 수리한 경우, 수리한 날로부터 1년 이내에 소비자가 정상적으로 사용하는 과정에서 그 수리한 부분에 고장이 재발하면 무상으로 수리함.\nㆍ다만, 리퍼부품으로 수리하는 경우 사업자는 사전에 리퍼적용 대상부품, 각 부품별 가격을 명확히 소비자에게 고지하여야 함\n※ 리퍼부품：기존제품에서 회수된 부품으로서 일정한 가공과정 등을 거침으로써 성능과 품질이 新부품과 동등한 상태로 개선된 부품"
+    },
+    {
+      "id": "elec_note_received",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1) 비고 (접수일 기준)",
+      "text": "* 소비자가 품질보증기간 이내에 수리 등을 요청하였으나 사업자측 사정에 의한 지연 등으로 품질보증기간을 경과하여 완료된 경우, 품질보증기간이 경과되었는지 여부는 수리 등이 사업자측에 접수된 날을 기준으로 판단함"
+    },
+    {
+      "id": "elec_note_fn2",
+      "label": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1) 비고 각주 2) (부품보유기간 한정)",
+      "text": "* 2)다만, 부품보유기간(내용년수)에 한정하여 적용"
+    },
+    {
+      "id": "annex3_parts_start",
+      "label": "별표 Ⅲ 머리 주석 (부품보유기간의 기산)",
+      "text": "※ 부품보유기간의 기산：해당 제품의 제조일자(제조연도 또는 제조연월만 기재된 경우 제조연도 또는 제조월의 말일을 제조일자로 봄)를 기산점으로 한다. 다만, 자동차는 동일한 형식의 자동차를 최종 판매한 날부터 기산한다."
+    },
+    {
+      "id": "annex3_items",
+      "label": "별표 Ⅲ 5. 가전제품… 1) 완제품",
+      "text": "품목별 품질보증기간 및 부품보유기간",
+      "table_ref": "items"
+    },
+    {
+      "id": "annex3_unlisted",
+      "label": "별표 Ⅲ 6. 별도의 기간을 정하지 않은 경우",
+      "text": "품목: 6. 별도의 기간을 정하지 않은 경우\n1) 유사품목에 따를 수 있는 경우\n2) 유사품목에 따를 수 없는 경우\n품질보증기간: ◦ 유사품목에 따름\n◦ 1년\n부품보유기간: ◦ 유사품목에 따름\n◦ 제조일로부터 5년"
+    },
+    {
+      "id": "annex4",
+      "label": "별표 Ⅳ 품목별 내용연수표",
+      "text": "내용연수(품목 8행 공통): 사업자가 품질보증서에 표시한 부품보유기간으로 함. 다만, 그 기간이 [별표Ⅲ]의 부품보유기간에 기재된 기간보다 짧거나 미기재한 경우 [별표Ⅲ]의 부품보유기간으로 함\n품목: 별도의 기간을 정하지 않은 경우로서 유사품목에 따를 수 없는 경우 / 내용연수: 5년"
+    }
+  ],
+  "related_clauses": [
+    {
+      "id": "cpa16_3",
+      "label": "소비자기본법 제16조 ③",
+      "source": {
+        "name": "소비자기본법",
+        "law_number": "법률 제21444호",
+        "url": "https://www.law.go.kr/법령/소비자기본법",
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "제2항의 규정에 따른 소비자분쟁해결기준은 분쟁당사자 사이에 분쟁해결방법에 관한 별도의 의사표시가 없는 경우에 한하여 분쟁해결을 위한 합의 또는 권고의 기준이 된다."
+    },
+    {
+      "id": "cpa_dec9_2",
+      "label": "소비자기본법 시행령 제9조 ②",
+      "source": {
+        "name": "소비자기본법 시행령",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "품목별 소비자분쟁해결기준에서 해당 품목에 대한 분쟁해결기준을 정하고 있지 아니한 경우에는 같은 기준에서 정한 유사품목에 대한 분쟁해결기준을 준용할 수 있다."
+    },
+    {
+      "id": "cpa_dec9_3",
+      "label": "소비자기본법 시행령 제9조 ③",
+      "source": {
+        "name": "소비자기본법 시행령",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "품목별 소비자분쟁해결기준에서 동일한 피해에 대한 분쟁해결기준을 두 가지 이상 정하고 있는 경우에는 소비자가 선택하는 분쟁해결기준에 따른다."
+    },
+    {
+      "id": "gen_1_ga",
+      "label": "소비자기본법 시행령 [별표 1] 1.가",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "가. 품질보증기간 동안의 수리·교환·환급에 드는 비용은 사업자가 부담한다. 다만, 소비자의 취급 잘못이나 천재지변으로 고장이나 손상이 발생한 경우와 제조자 및 제조자가 지정한 수리점·설치점이 아닌 자가 수리·설치하여 물품등이 변경되거나 손상된 경우에는 사업자가 비용을 부담하지 아니한다."
+    },
+    {
+      "id": "gen_1_na",
+      "label": "소비자기본법 시행령 [별표 1] 1.나",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "나. 수리는 지체 없이 하되, 수리가 지체되는 불가피한 사유가 있을 때는 소비자에게 알려야 한다. 소비자가 수리를 의뢰한 날부터 1개월이 지난 후에도 사업자가 수리된 물품등을 소비자에게 인도하지 못할 경우 품질보증기간 이내일 때는 같은 종류의 물품등으로 교환하거나 환급하고, 품질보증기간이 지났을 때에는 구입가를 기준으로 정액 감가상각하고 남은 금액에 품목별 소비자분쟁해결기준에서 정하는 일정금액을 더하여 환급한다."
+    },
+    {
+      "id": "gen_1_da",
+      "label": "소비자기본법 시행령 [별표 1] 1.다",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "다. 물품등을 유상으로 수리한 경우 그 유상으로 수리한 날부터 2개월 이내에 소비자가 정상적으로 물품등을 사용하는 과정에서 그 수리한 부분에 종전과 동일한 고장이 재발한 경우에는 무상으로 수리하되, 수리가 불가능한 때에는 종전에 받은 수리비를 환급하여야 한다."
+    },
+    {
+      "id": "gen_1_ra",
+      "label": "소비자기본법 시행령 [별표 1] 1.라",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "라. 교환은 같은 종류의 물품등으로 하되, 같은 종류의 물품등으로 교환하는 것이 불가능한 경우에는 같은 종류의 유사물품등으로 교환한다. 다만, 같은 종류의 물품등으로 교환하는 것이 불가능하고 소비자가 같은 종류의 유사물품등으로 교환하는 것을 원하지 아니하는 경우에는 환급한다."
+    },
+    {
+      "id": "gen_1_ma",
+      "label": "소비자기본법 시행령 [별표 1] 1.마",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "마. 할인판매된 물품등을 교환하는 경우에는 그 정상가격과 할인가격의 차액에 관계없이 교환은 같은 종류의 물품등으로 하되, 같은 종류의 물품등으로 교환하는 것이 불가능한 경우에는 같은 종류의 유사물품등으로 교환한다. 다만, 같은 종류의 물품등으로 교환하는 것이 불가능하고 소비자가 같은 종류의 유사물품등으로 교환하는 것을 원하지 아니하는 경우에는 환급한다."
+    },
+    {
+      "id": "gen_1_ba",
+      "label": "소비자기본법 시행령 [별표 1] 1.바",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "바. 환급금액은 거래 시 교부된 영수증 등에 적힌 물품등의 가격을 기준으로 한다. 다만, 영수증 등에 적힌 가격에 대하여 다툼이 있는 경우에는 영수증 등에 적힌 금액과 다른 금액을 기준으로 하려는 자가 그 다른 금액이 실제 거래가격임을 입증하여야 하며, 영수증이 없는 등의 사유로 실제 거래가격을 입증할 수 없는 경우에는 그 지역에서 거래되는 통상적인 가격을 기준으로 한다."
+    },
+    {
+      "id": "gen_4_ga",
+      "label": "소비자기본법 시행령 [별표 1] 4.가",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "가. 품질보증기간과 부품보유기간은 해당 사업자가 품질보증서에 표시한 기간으로 한다. 다만, 사업자가 정한 품질보증기간과 부품보유기간이 제8조제3항에 따른 품목별 소비자분쟁해결기준에서 정한 기간보다 짧을 경우에는 품목별 소비자분쟁해결기준에서 정한 기간으로 한다."
+    },
+    {
+      "id": "gen_4_na",
+      "label": "소비자기본법 시행령 [별표 1] 4.나",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "나. 사업자가 품질보증기간과 부품보유기간을 표시하지 아니한 경우에는 품목별 소비자분쟁해결기준에 따른다."
+    },
+    {
+      "id": "gen_4_da",
+      "label": "소비자기본법 시행령 [별표 1] 4.다",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "다. 중고물품등에 대한 품질보증기간은 품목별 분쟁해결기준에 따른다."
+    },
+    {
+      "id": "gen_4_ra",
+      "label": "소비자기본법 시행령 [별표 1] 4.라",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "라. 품질보증기간은 소비자가 물품등을 구입하거나 제공받은 날부터 기산한다. 다만, 계약일과 인도일(용역의 경우에는 제공일을 말한다. 이하 이 목에서 같다)이 다른 경우에는 인도일을 기준으로 하고, 교환받은 물품등의 품질보증기간은 교환받은 날부터 기산한다."
+    },
+    {
+      "id": "gen_4_ma",
+      "label": "소비자기본법 시행령 [별표 1] 4.마",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "마. 품질보증서에 판매일자가 적혀 있지 아니한 경우, 품질보증서 또는 영수증을 받지 아니하거나 분실한 경우 또는 그 밖의 사유로 판매일자를 확인하기 곤란한 경우에는 해당 물품등의 제조일이나 수입통관일부터 3월이 지난 날부터 품질보증기간을 기산하여야 한다. 다만, 물품등 또는 물품등의 포장에 제조일이나 수입통관일이 표시되어 있지 아니한 물품등은 사업자가 그 판매일자를 입증하여야 한다."
+    },
+    {
+      "id": "gen_6",
+      "label": "소비자기본법 시행령 [별표 1] 6.",
+      "source": {
+        "name": "소비자기본법 시행령 [별표 1] 일반적 소비자분쟁해결기준",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "annex_files": {
+          "hwp_flSeq": "168880673",
+          "pdf_flSeq": "168880675"
+        },
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "6. 사업자의 귀책사유로 인한 소비자피해의 처리과정에서 발생되는 운반비용, 시험·검사비용 등의 경비는 사업자가 부담한다."
+    }
+  ]
+}
