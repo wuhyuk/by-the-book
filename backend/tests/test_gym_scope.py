@@ -124,7 +124,8 @@ def test_period_boundaries(end: date, code: F | None) -> None:
     [
         (date(2026, 3, 28), "needs_review"),
         (date(2026, 3, 31), "needs_review"),
-        (date(2026, 4, 1), "ok"),
+        (date(2026, 4, 1), "needs_review"),  # 32일 [결정 2026-11-06 (a)]
+        (date(2026, 4, 2), "ok"),  # 33일
     ],
 )
 def test_period_class_reported(end: date, period_class: str) -> None:

@@ -52,12 +52,13 @@ def test_elapsed_days_clamped(notice: date, expected: int) -> None:
         (27, "out_of_scope"),
         (28, "needs_review"),
         (31, "needs_review"),
-        (32, "ok"),
+        (32, "needs_review"),  # 한쪽 끝만 세면 31일 [결정 2026-11-06 (a)]
+        (33, "ok"),
         (365, "ok"),
     ],
 )
 def test_classify_period(days: int | None, expected: str) -> None:
-    """27 이하 ❔, 28~31 🔍, 32 이상 통과, 날짜 없음은 unknown."""
+    """27 이하 ❔, 28~32 🔍, 33 이상 통과, 날짜 없음은 unknown (5.2)."""
     assert classify_period(days, RULE) == expected
 
 

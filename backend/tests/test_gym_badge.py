@@ -148,6 +148,10 @@ def test_c1_is_confirmed() -> None:
             {"start_date": date(2026, 3, 1), "end_date": date(2026, 3, 31)},
             F.PERIOD_28_TO_31_DAYS,
         ),  # ② 계약 일수 31
+        (
+            {"start_date": date(2026, 3, 1), "end_date": date(2026, 4, 1)},
+            F.PERIOD_28_TO_31_DAYS,
+        ),  # ② 계약 일수 32 (한쪽 끝만 세면 31) [결정 2026-11-06 (a)]
         ({"has_refund_limit_clause": None}, F.REFUND_LIMIT_CLAUSE_UNKNOWN),  # ③
         ({"withdrawal_cleared": None}, F.WITHDRAWAL_STATUS_UNCONFIRMED),  # ④
         ({"withdrawal_cleared": False}, F.WITHDRAWAL_STATUS_UNCONFIRMED),
@@ -159,6 +163,14 @@ def test_breaking_one_confirmed_condition(changes: dict[str, Any], flag: F) -> N
     result = run(**changes)
     assert result.badge == Badge.NEEDS_REVIEW
     assert flag in result.flags
+
+
+def test_contract_33_days_is_confirmed() -> None:
+    """② 계약 일수 33이면 두 방식(양끝 33, 한쪽 끝 32) 모두 32 이상이라 ✅ (5.2)."""
+    result = run(start_date=date(2026, 3, 1), end_date=date(2026, 4, 2))
+    assert result.contract_days == 33
+    assert result.badge == Badge.CONFIRMED
+    assert result.flags == []
 
 
 def test_breaking_robust_condition() -> None:
