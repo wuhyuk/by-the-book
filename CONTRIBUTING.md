@@ -13,20 +13,19 @@
 
 ```text
 <type>(<scope>): <제목, 50자 안팎, 명령형, 마침표 없음>
-
-<본문: 왜 바꿨는지. 필요할 때만>
 ```
 
+- 커밋 메시지는 제목 한 줄만 쓴다 (`-m` 하나, 본문 없음). 왜 바꿨는지는 PR 설명에 적는다.
 - type: `feat` `fix` `docs` `test` `refactor` `chore` `data`
 - scope: `api` `llm` `rag` `rules` `data` `web` `eval` `docs`
 - 제목은 한국어 또는 영어, 한 저장소 안에서 섞지 않고 **한국어**로 통일한다.
-- `data` 타입은 `backend/data/rules/` 변경 전용이다. 본문에 **출처 이름·URL·확인 날짜**를 반드시 적는다.
+- `data` 타입은 `backend/data/rules/` 변경 전용이다. **출처 이름·URL·확인 날짜**는 커밋이 아니라 PR 본문에 반드시 적는다.
 - 예: `data(rules): 헬스장 위약금 상한 규칙 추가` / `test(rules): 중도 해지 환급액 케이스 5건 추가`
 
 ## Pull Request
 
 - `main`으로 합치는 모든 변경은 PR을 거친다 (혼자여도 자기 PR). 머지는 **Squash merge**.
-- PR 설명에 ① 무엇을 ② 왜 ③ 어떻게 확인했는지(실행한 테스트) ④ 남은 위험을 적는다.
+- PR 설명에 ① 무엇을 ② 왜 ③ 어떻게 확인했는지(실행한 테스트) ④ 남은 위험 ⑤ `data` 변경이면 출처 이름·URL·확인일을 적는다.
 - 머지 전 체크: `pytest` 통과, 프론트 변경 시 `npm run build` 통과, `.env`·키 미포함.
 
 ## 커밋하면 안 되는 것
