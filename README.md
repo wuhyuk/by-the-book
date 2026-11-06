@@ -119,19 +119,40 @@ uvicorn main:app --reload
 
 ### 3. 프론트엔드 실행
 
+백엔드를 먼저 띄운 상태에서 다른 터미널로 실행합니다. 개발 서버는 `/api` 요청을 백엔드(`http://127.0.0.1:8000`)로 넘깁니다. 백엔드 주소가 다르면 `$env:BACKEND_URL = "http://127.0.0.1:포트"`를 먼저 설정하세요.
+
 ```powershell
 cd frontend
 npm install
 npm run dev
 ```
 
+브라우저에서 `http://localhost:5173`을 열고 헬스장·요가·필라테스 계약 정보를 입력한 뒤 **기준 금액 확인**을 누릅니다. 지금 단계(VS2)는 입력 폼만 있고 자유 문장 입력·LLM은 쓰지 않습니다.
+
 ### 4. 테스트
 
 ```powershell
 cd backend
 .venv\Scripts\Activate.ps1
+ruff check .
+ruff format --check .
 pytest
+
+cd ..\frontend
+npm run build   # tsc 타입 검사 + 빌드
 ```
+
+### 5. 관통 확인 (VS2)
+
+백엔드와 프론트 개발 서버를 모두 띄운 뒤 저장소 루트에서 실행합니다. 승인 케이스 5건(C1·P1·K1·U1·B1)을 Vite 프록시 → `/api/calculate`로 보내 배지·사유 코드·화면 한 줄·환급액·화면 문구를 케이스 기대값과 비교합니다. 입력값과 응답 본문은 출력하지 않습니다.
+
+```powershell
+$env:PYTHONIOENCODING = "utf-8"
+backend\.venv\Scripts\python eval\vs2_walkthrough.py              # 5/5 통과가 나와야 함
+backend\.venv\Scripts\python eval\vs2_walkthrough.py --checklist  # 화면에서 사람이 확인할 표
+```
+
+`--checklist` 표의 배지·화면 한 줄·금액이 브라우저 결과 카드와 같은지 눈으로 확인합니다. 케이스 입력값은 `backend/tests/test_gym_calc.py`의 같은 ID에 있습니다.
 
 ## 📊 평가 지표
 
