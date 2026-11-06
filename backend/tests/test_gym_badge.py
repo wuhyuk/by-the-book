@@ -146,11 +146,11 @@ def test_c1_is_confirmed() -> None:
         ({"notice_date": date(2026, 3, 1)}, F.USAGE_STARTED),  # ① 시작 전 해지 아님
         (
             {"start_date": date(2026, 3, 1), "end_date": date(2026, 3, 31)},
-            F.PERIOD_28_TO_31_DAYS,
+            F.PERIOD_ONE_MONTH_BOUNDARY,
         ),  # ② 계약 일수 31
         (
             {"start_date": date(2026, 3, 1), "end_date": date(2026, 4, 1)},
-            F.PERIOD_28_TO_31_DAYS,
+            F.PERIOD_ONE_MONTH_BOUNDARY,
         ),  # ② 계약 일수 32 (한쪽 끝만 세면 31) [결정 2026-11-06 (a)]
         ({"has_refund_limit_clause": None}, F.REFUND_LIMIT_CLAUSE_UNKNOWN),  # ③
         ({"withdrawal_cleared": None}, F.WITHDRAWAL_STATUS_UNCONFIRMED),  # ④

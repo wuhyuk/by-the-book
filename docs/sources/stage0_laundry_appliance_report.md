@@ -293,7 +293,7 @@
 
 | 항목 | 답 | 반영한 곳 |
 |---|---|---|
-| 헬스장 ✅ 보정 | **(a)** 계약 일수 두 방식 모두 32일 이상일 때만 ✅, 기존 `PERIOD_28_TO_31_DAYS` 재사용. 엔진은 다음 브랜치에서 고친다 | MVP_SPEC 9절 "확정 (2026-11-06)" 기록만. 헬스장 5절·엔진·테스트·JSON은 고치지 않음 |
+| 헬스장 ✅ 보정 | **(a)** 계약 일수 두 방식 모두 32일 이상일 때만 ✅, 기존 1개월 경계 사유 코드 재사용 (같은 날 `PERIOD_ONE_MONTH_BOUNDARY`로 이름 변경, MVP_SPEC 5.4 변경 기록). 엔진은 다음 브랜치에서 고친다 | MVP_SPEC 9절 "확정 (2026-11-06)" 기록만. 헬스장 5절·엔진·테스트·JSON은 고치지 않음 |
 | Q-L8 한복류 | 사용자에게 넘기지 말고 PDF를 이미지로 바꿔 직접 확인 → **확인됨**: HWPX 셀 병합·분할 없음, 내용연수 문단 1개(다른 다값 행 11개는 모두 문단 수 일치), PDF 125쪽 이미지에서 "4"가 칸 세로 가운데 | JSON `years_applies_to_all_materials_in_source: true`·`years_scope_check`, 민감도 `applies_to`에서 뺌, 명세 L3·L4.1, `laundry_notice.md` 메모 |
 | Q-L9 | ❔ `SET_PARTIAL_UNSUPPORTED`·`ATTACHMENT_UNSUPPORTED` 수락. 문구는 "기준표에 규정은 있으나 이번 버전에서 지원하지 않음" (규정이 없다고 읽히면 안 됨) | 명세 L2, JSON `set_allocation.unsupported_codes`, 케이스 L4 |
 | Q-L10 | `DECISION_SENSITIVE` 수락. 메시지에 원인 결정과 금액 범위 필수. L3(1원 차이)도 🔍, "원 미만 처리에 따른 1원 차이" | 명세 L4.1 메시지 형식·L6 출력 필드, JSON `decision_sensitivity`, 케이스 L2·L3·L14 메시지 |

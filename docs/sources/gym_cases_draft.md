@@ -266,7 +266,7 @@
 - 일수 기준 (경과 10 / 28):
   - 시나리오 A: 이용분 100,000 × 10 ÷ 28 → 35,714 / 환급액 100,000 − 35,714 − 10,000 = **54,286**
 - 결과 표시: 최소 환급액
-- 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_28_TO_31_DAYS`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
+- 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_ONE_MONTH_BOUNDARY`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
 - 검증 상태: 사용자 승인(보고서 검토)
@@ -278,7 +278,7 @@
 - 일수 기준 (경과 10 / 31):
   - 시나리오 A: 이용분 100,000 × 10 ÷ 31 → 32,258 / 환급액 100,000 − 32,258 − 10,000 = **57,742**
 - 결과 표시: 최소 환급액
-- 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_28_TO_31_DAYS`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
+- 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_ONE_MONTH_BOUNDARY`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
 - 검증 상태: 사용자 승인(보고서 검토)
@@ -492,8 +492,8 @@
 | R2 | half up 정확히 .5 | 220,002 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
 | R3 | 위약금 원 미만 내림 | 605,883 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
 | B1 | 계약 27일 | — | — | 계산 안 함 | ❔ | `PERIOD_UNDER_28_DAYS` | 사용자 승인(보고서 검토) |
-| B2 | 계약 28일 (2월) | 54,286 | — | 최소 환급액 | 🔍 | `PERIOD_28_TO_31_DAYS` | 사용자 승인(보고서 검토) |
-| B3 | 계약 31일 | 57,742 | — | 최소 환급액 | 🔍 | `PERIOD_28_TO_31_DAYS` | 사용자 승인(보고서 검토) |
+| B2 | 계약 28일 (2월) | 54,286 | — | 최소 환급액 | 🔍 | `PERIOD_ONE_MONTH_BOUNDARY` | 사용자 승인(보고서 검토) |
+| B3 | 계약 31일 | 57,742 | — | 최소 환급액 | 🔍 | `PERIOD_ONE_MONTH_BOUNDARY` | 사용자 승인(보고서 검토) |
 | B4 | 계약 32일 | 58,750 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
 | L1 | 정상가 < 총계약대금 | 784,110 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
 | K1 | 계약서상 위약금 > 상한 | 784,110 | — | 최소 환급액 (상한 공제) | ⚠️ | `PENALTY_ABOVE_CAP` | 사용자 승인(보고서 검토) |
@@ -526,7 +526,7 @@
 | `PENALTY_ABOVE_CAP` | ⚠️ | 1 | 1 | K1 |
 | `OFFER_BELOW_B` | ⚠️ | 1 | 1 | N2 |
 | `SCOPE_UNCERTAIN_PT_ONLY` | 🔍 | 1 | 1 | S3 |
-| `PERIOD_28_TO_31_DAYS` | 🔍 | 2 | 2 | B2, B3 |
+| `PERIOD_ONE_MONTH_BOUNDARY` | 🔍 | 2 | 2 | B2, B3 |
 | `REFUND_LIMIT_CLAUSE_UNKNOWN` | 🔍 | 1 | 1 | P4 |
 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 🔍 | 26 | 20 | P1–P5, S1–S3, E1, E2, N1–N3, R1–R3, B2–B4, L1, K1, X1, U1, T1, C2, V3 |
 | `SESSION_VALIDITY_MISSING` | 🔍 | 1 | 0 | S3 |
@@ -537,7 +537,7 @@
 | `USAGE_STARTED` | 🔍 | 24 | 0 | `INTERPRETATION_DEPENDENT`와 같은 24건 |
 | `POSTPONEMENT` | 🔍 | 1 | 0 | T1 |
 
-🔍(계산함) 24건의 화면 한 줄: `WITHDRAWAL_STATUS_UNCONFIRMED` 20건, `PERIOD_28_TO_31_DAYS` 2건, `SCOPE_UNCERTAIN_PT_ONLY` 1건, `REFUND_LIMIT_CLAUSE_UNKNOWN` 1건.
+🔍(계산함) 24건의 화면 한 줄: `WITHDRAWAL_STATUS_UNCONFIRMED` 20건, `PERIOD_ONE_MONTH_BOUNDARY` 2건, `SCOPE_UNCERTAIN_PT_ONLY` 1건, `REFUND_LIMIT_CLAUSE_UNKNOWN` 1건.
 
 ## 질문 대기 중인 항목과 관련 케이스
 

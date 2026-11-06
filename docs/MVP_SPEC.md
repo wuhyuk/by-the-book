@@ -175,7 +175,7 @@ MVP(품목 1개)에서는 조항 검색 없이 품목 ID(`gym_refund`)로 이 �
 | 계약 일수 | 판정 |
 |---|---|
 | 27 이하 | ❔ (순서 7) |
-| 28~32 | 🔍 `PERIOD_28_TO_31_DAYS` (계산은 함). 32일은 한쪽 끝만 세면 31일이라 이 구간에 넣는다 [결정 2026-11-06 (a)] |
+| 28~32 | 🔍 `PERIOD_ONE_MONTH_BOUNDARY` (계산은 함). 32일은 한쪽 끝만 세면 31일이라 이 구간에 넣는다 [결정 2026-11-06 (a)] |
 | 33 이상 | 통과 (한쪽 끝만 세도 32 이상) |
 | 날짜 없음 (횟수제 유효기간 미입력) | 🔍 `SESSION_VALIDITY_MISSING` (계산은 함) |
 
@@ -278,7 +278,7 @@ deposit_refund = deposit                                       ← 별도 약정
 | 코드 | 짧은 이름 | 조건 | 화면 한 줄 |
 |---|---|---|---|
 | `SCOPE_UNCERTAIN_PT_ONLY` | 범위 불확실 (PT 단독) | `is_pt_only = True` | "PT만 계약한 경우 이 기준이 적용되는지 확실하지 않아, 헬스·피트니스 기준으로 계산했습니다." |
-| `PERIOD_28_TO_31_DAYS` | 1개월 경계 구간 | 계약 일수 28~32 (양끝 산입. 32일은 한쪽 끝만 세면 31일이라 포함) [결정 2026-11-06 (a)] | "계약 기간이 1개월 경계에 있어(날짜를 세는 방식에 따라 28~31일) 이 기준이 적용되는지 확인이 필요합니다." |
+| `PERIOD_ONE_MONTH_BOUNDARY` | 1개월 경계 구간 | 계약 일수 28~32 (양끝 산입. 32일은 한쪽 끝만 세면 31일이라 포함) [결정 2026-11-06 (a)] | "계약 기간이 1개월 경계에 있어(날짜를 세는 방식에 따라 28~31일) 이 기준이 적용되는지 확인이 필요합니다." |
 | `REFUND_LIMIT_CLAUSE_UNKNOWN` | 약정 미확인 | `has_refund_limit_clause is None` | "계약서에 중도 해지 시 환급 제한이나 위약금 조항이 있는지 확인이 필요합니다." |
 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 청약철회 미확인 | `withdrawal_cleared`가 `True`가 아님 | "청약철회 대상이 아니거나 철회 기간이 지났는지 확인되지 않았습니다." |
 | `SESSION_VALIDITY_MISSING` | 유효기간 미입력 | 기준에 `session`이 있고 `start_date`·`end_date` 중 하나라도 없음 (5.2) | "횟수제 이용권의 유효기간을 입력하지 않아 이 기준의 적용 여부를 확인하지 못했습니다." |
@@ -302,6 +302,7 @@ deposit_refund = deposit                                       ← 별도 약정
 - `WITHDRAWAL_PERIOD_UNCONFIRMED` → `WITHDRAWAL_STATUS_UNCONFIRMED`, 입력 필드 `withdrawal_period_passed` → `withdrawal_cleared`
 - 안내 코드 `MINIMUM_REFUND` → `PENALTY_INPUT_MISSING` (결과 라벨 `refund_kind = minimum` "최소 환급액"은 그대로)
 - 안내 코드 `OFFER_NEAR_LIST_PRICE_BASIS` → `OFFER_BETWEEN_A_AND_B` (문구도 조건에 맞춰 바꿈)
+- (2026-11-06) `PERIOD_28_TO_31_DAYS` → `PERIOD_ONE_MONTH_BOUNDARY`. 1개월 경계 보정 (a)로 범위가 양끝 산입 28~32일이 되어 이름의 숫자가 어긋났다. 이름에 숫자를 넣지 않아 경계가 바뀌어도 이름은 그대로 둔다 [결정 2026-11-06 사용자]. 9절 "기존 헬스장 코드 이름은 바꾸지 않는다"(2026-11-02)의 예외로 사용자가 지시했다
 
 화면 표시 우선순위 [결정 2026-10-26 추가 수정 3]: 코드에서는 `rules/badge.py`의 순서 있는 상수 `DISPLAY_PRIORITY` 하나로 둔다. 단계 6에서 순서를 바꾸면 이 상수만 고친다. 결과의 `flags` 중 아래 표에서 가장 위에 있는 코드 1개만 배지 옆에 한 줄로 보여 주고, 나머지는 "다른 확인 사항 n개" 아래에 접어서 우선순위 순으로 보여 준다. 배지 판정에는 쓰지 않는다 (배지는 결정 순서로만 정한다). 배지와 같은 등급의 코드가 항상 먼저 오도록 등급 순(❔ → 🔍 계산 안 함 → ⚠️ → 🔍 계산함)으로 묶었다. 등급 안의 순서는 초안이다: 고시 적용 여부를 흔드는 사유 → 계산 기준을 흔드는 사유 → 금액 해석 사유 → 참고 사유.
 
@@ -312,7 +313,7 @@ deposit_refund = deposit                                       ← 별도 약정
 | 3 | `PENALTY_ABOVE_CAP` | ⚠️ |
 | 4 | `OFFER_BELOW_B` | ⚠️ |
 | 5 | `SCOPE_UNCERTAIN_PT_ONLY` | 🔍 |
-| 6 | `PERIOD_28_TO_31_DAYS` | 🔍 |
+| 6 | `PERIOD_ONE_MONTH_BOUNDARY` | 🔍 |
 | 7 | `REFUND_LIMIT_CLAUSE_UNKNOWN` | 🔍 |
 | 8 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 🔍 |
 | 9 | `SESSION_VALIDITY_MISSING` | 🔍 |
@@ -403,13 +404,13 @@ deposit_refund = deposit                                       ← 별도 약정
 | 보증금 | `art5_2` |
 | 부가상품 반환 | `art6_1` |
 | 위약금·환급 일반 원칙 (방문판매법) | `law32_1` |
-| 계속거래 요건 (`PERIOD_UNDER_28_DAYS`, `PERIOD_28_TO_31_DAYS`, `NO_REFUND_LIMIT_CLAUSE`, `REFUND_LIMIT_CLAUSE_UNKNOWN`) | `law2_10` [결정 2026-10-26 질문 답 5] |
+| 계속거래 요건 (`PERIOD_UNDER_28_DAYS`, `PERIOD_ONE_MONTH_BOUNDARY`, `NO_REFUND_LIMIT_CLAUSE`, `REFUND_LIMIT_CLAUSE_UNKNOWN`) | `law2_10` [결정 2026-10-26 질문 답 5] |
 | 유효기간 이후 도달 (`NOTICE_AFTER_VALIDITY`, 요가·필라테스만) | `yoga_terms_art5_2` [결정 2026-10-26 질문 답 3] |
 | 표준약관 위약금 안내 (`STANDARD_TERMS_PENALTY`) | `gym_terms_art8_2_def` (헬스·피트니스), `yoga_terms_art9_1_def` (요가·필라테스) |
 | 환급 기준 합의 (`refund_basis`) | `yoga_terms_art9_1_def` |
 
 부여 규칙 [결정 2026-10-26 단계 2 Q5]:
-- 계산한 결과: `art2_2`, `art2_3`, `art2_4`, `art3_1`, `art4_1`, `annex_penalty`, `art5_1`, `law32_1`은 항상. 보증금 > 0이면 `art5_2`, 부가상품 반환이면 `art6_1`, `STANDARD_TERMS_PENALTY`를 붙이면 업종별 표준약관 ID, 요가·필라테스면 `yoga_terms_art9_1_def`(환급 기준 합의), `PERIOD_28_TO_31_DAYS`·`REFUND_LIMIT_CLAUSE_UNKNOWN`이 있으면 `law2_10`.
+- 계산한 결과: `art2_2`, `art2_3`, `art2_4`, `art3_1`, `art4_1`, `annex_penalty`, `art5_1`, `law32_1`은 항상. 보증금 > 0이면 `art5_2`, 부가상품 반환이면 `art6_1`, `STANDARD_TERMS_PENALTY`를 붙이면 업종별 표준약관 ID, 요가·필라테스면 `yoga_terms_art9_1_def`(환급 기준 합의), `PERIOD_ONE_MONTH_BOUNDARY`·`REFUND_LIMIT_CLAUSE_UNKNOWN`이 있으면 `law2_10`.
 - 계산 안 한 결과: 걸린 코드에 맞는 ID만. `WITHDRAWAL` → `art3_2`, `PERIOD_UNDER_28_DAYS`·`NO_REFUND_LIMIT_CLAUSE` → `law2_10`, 요가·필라테스 `NOTICE_AFTER_VALIDITY` → `yoga_terms_art5_2`. 그 밖의 코드는 인용 없음.
 - 중복은 한 번만, 위 순서대로. 모든 ID는 규칙 JSON의 `clauses`·`related_clauses`에 있어야 한다.
 
@@ -565,7 +566,7 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 
 **확정 (2026-11-06, 헬스장 ✅ 보정)**
 
-1. 헬스장 ✅ 보정 결정 (a), 구현은 별도 PR. 계약 일수를 양끝 산입(현재)과 한쪽 끝 산입 두 방식으로 모두 세어 둘 다 32일 이상일 때(양끝 산입 33일 이상)만 ✅를 준다. 결과가 갈리는 32일은 기존 `PERIOD_28_TO_31_DAYS`(🔍)를 재사용한다 (새 코드 없음). 위약금 상한 원 미만 내림은 고시 제4조 ① "초과하지 못한다"에서 따라 나오는 처리로 보고 검사하지 않는다. 이 docs 브랜치에서는 5절·엔진·테스트·`gym_refund.json`을 고치지 않는다. 다음 브랜치에서 5.2·5.4 문구 → 테스트 → 구현 순서로 하고, 기대값이 바뀌는 승인 케이스(B4: 사유 코드·화면 한 줄·인용, 배지는 🔍 그대로)는 사용자 재승인 후 테스트로 옮긴다. 작업량 0.5일 [추정]은 보고서 10절 일정표(16.5~18.5일)에 들어 있지 않다 → 합계 17~19일
+1. 헬스장 ✅ 보정 결정 (a), 구현은 별도 PR. 계약 일수를 양끝 산입(현재)과 한쪽 끝 산입 두 방식으로 모두 세어 둘 다 32일 이상일 때(양끝 산입 33일 이상)만 ✅를 준다. 결과가 갈리는 32일은 기존 1개월 경계 사유 코드(🔍)를 재사용한다 (새 코드 없음. 같은 날 이름을 `PERIOD_ONE_MONTH_BOUNDARY`로 바꿈, 5.4 변경 기록). 위약금 상한 원 미만 내림은 고시 제4조 ① "초과하지 못한다"에서 따라 나오는 처리로 보고 검사하지 않는다. 이 docs 브랜치에서는 5절·엔진·테스트·`gym_refund.json`을 고치지 않는다. 다음 브랜치에서 5.2·5.4 문구 → 테스트 → 구현 순서로 하고, 기대값이 바뀌는 승인 케이스(B4: 사유 코드·화면 한 줄·인용, 배지는 🔍 그대로)는 사용자 재승인 후 테스트로 옮긴다. 작업량 0.5일 [추정]은 보고서 10절 일정표(16.5~18.5일)에 들어 있지 않다 → 합계 17~19일
 
 **제안 상태 (확정 전)**
 
