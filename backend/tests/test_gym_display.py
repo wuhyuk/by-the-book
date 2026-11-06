@@ -140,7 +140,10 @@ def test_display_follows_result(c: Case) -> None:
     assert d.disclaimer == DISCLAIMER
     assert d.rule_source.notice_number == RULE.source.notice_number
     assert d.rule_source.retrieved_at == RULE.source.retrieved_at
-    expect_consult = result.badge == Badge.UNDETERMINABLE or not result.calculated
+    # 상담 창구: ❔와 계산하지 않은 🔍 중 NOTICE_AFTER_VALIDITY만 (2026-11-06 Q2)
+    expect_consult = (
+        result.badge == Badge.UNDETERMINABLE or F.NOTICE_AFTER_VALIDITY in result.flags
+    )
     assert (d.consult is not None) is expect_consult
     assert (d.withdrawal_guide is not None) is (F.WITHDRAWAL in result.flags)
 
@@ -150,6 +153,34 @@ def test_confirmed_case_has_no_flag_line() -> None:
     d = build_display(calculate_refund(c.inp, RULE), RULE)
     assert d.badge == Badge.CONFIRMED
     assert d.screen_line is None and d.consult is None
+
+
+@pytest.mark.parametrize(
+    ("case_id", "consult"),
+    [("M1", False), ("V1", True), ("V2", True), ("B1", True), ("H1", True)],
+)
+def test_consult_only_for_undeterminable_and_after_validity(
+    case_id: str, consult: bool
+) -> None:
+    """MISSING_REQUIRED·INVALID_INPUT에는 상담 창구를 붙이지 않는다 (2026-11-06 Q2)."""
+    c = next(c for c in CASES if c.id == case_id)
+    d = build_display(calculate_refund(c.inp, RULE), RULE)
+    assert (d.consult is not None) is consult
+
+
+def test_invalid_input_has_no_consult() -> None:
+    c = next(c for c in CASES if c.id == "P1")
+    inp = c.inp.model_copy(update={"paid_amount": c.inp.total_contract_amount + 1})
+    result = calculate_refund(inp, RULE)
+    assert result.flags == [F.INVALID_INPUT]
+    assert build_display(result, RULE).consult is None
+
+
+def test_disclaimer_is_reference_not_legal_judgment() -> None:
+    """고시 원문에 구속력 문구가 없어 '참고 결과이며 법적 판단이 아님'으로 쓴다 (2026-11-06 Q1)."""
+    assert "공정거래위원회 고시 기준으로 계산한 참고 결과" in DISCLAIMER
+    assert "법적 판단이 아닙니다" in DISCLAIMER
+    assert "구속력" not in DISCLAIMER
 
 
 def test_citation_cards_use_rule_json_text_and_source() -> None:
