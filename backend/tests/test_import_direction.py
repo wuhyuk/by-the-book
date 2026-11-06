@@ -36,6 +36,7 @@ def test_rules_files_found() -> None:
         "money.py",
         "loader.py",
         "gym.py",
+        "gym_display.py",
         "badge.py",
     }
 
@@ -46,7 +47,7 @@ def test_rules_do_not_import_llm_or_api(path: Path) -> None:
         top = name.lstrip(".").split(".")[0]
         assert top not in FORBIDDEN, f"{path.name}: {name}"
         if name.startswith("."):
-            assert top in {"", "money", "loader", "gym", "badge"}, (
+            assert top in {"", "money", "loader", "gym", "badge", "gym_display"}, (
                 f"{path.name}: {name}"
             )
 
