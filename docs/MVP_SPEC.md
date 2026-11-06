@@ -175,13 +175,14 @@ MVP(품목 1개)에서는 조항 검색 없이 품목 ID(`gym_refund`)로 이 �
 | 계약 일수 | 판정 |
 |---|---|
 | 27 이하 | ❔ (순서 7) |
-| 28~31 | 🔍 `PERIOD_28_TO_31_DAYS` (계산은 함) |
-| 32 이상 | 통과 |
+| 28~32 | 🔍 `PERIOD_28_TO_31_DAYS` (계산은 함). 32일은 한쪽 끝만 세면 31일이라 이 구간에 넣는다 [결정 2026-11-06 (a)] |
+| 33 이상 | 통과 (한쪽 끝만 세도 32 이상) |
 | 날짜 없음 (횟수제 유효기간 미입력) | 🔍 `SESSION_VALIDITY_MISSING` (계산은 함) |
 
 - 날짜 역전(`end_date < start_date`)은 순서 7을 건너뛰고 순서 10에서 🔍 `INVALID_INPUT`(계산 안 함)이 된다. `end_date = start_date`(계약 일수 1)는 유효한 입력이라 순서 7의 ❔ [결정 2026-10-26 단계 2].
-- 계약 일수 판정(순서 7, 28~31일 구간)은 `start_date`·`end_date`가 둘 다 있을 때만 한다. 하나라도 없고 기준에 `session`이 있으면 `SESSION_VALIDITY_MISSING`(🔍). 순서 11은 `end_date`·`notice_date`가 둘 다 있을 때 판정한다 [결정 2026-10-26 단계 2 Q7].
+- 계약 일수 판정(순서 7, 28~32일 구간)은 `start_date`·`end_date`가 둘 다 있을 때만 한다. 하나라도 없고 기준에 `session`이 있으면 `SESSION_VALIDITY_MISSING`(🔍). 순서 11은 `end_date`·`notice_date`가 둘 다 있을 때 판정한다 [결정 2026-10-26 단계 2 Q7].
 - 28·31·32일 경계는 [결정 2026-10-19·2026-10-26 유지]. 민법 제160조 역 계산은 쓰지 않는다 (`related_laws.md`).
+- 2026-11-06 보정 [결정 2026-11-06 (a), 9절]: ✅ 쪽 경계는 계약 일수를 양끝 산입(위 식)과 한쪽 끝 산입(`end_date − start_date`) 두 방식으로 세어 **둘 다 32 이상**일 때만 통과로 본다. 양끝 산입 식 하나로 쓰면 통과가 33 이상, 🔍 구간이 28~32다. 규칙 JSON `needs_review_max`가 31에서 32로 바뀐다. 아래쪽 경계(27 이하 ❔, 28부터 🔍)는 바꾸지 않는다 (28일은 한쪽 끝만 세면 27일이지만 지금처럼 🔍).
 - 1372 답변 1은 "1개월 이상의 헬스장 이용계약은 … 계속거래"라고 안내했다. 원문은 약정 요건(③)이 더 있어 더 엄격하다. 엔진은 원문을 따른다.
 - 시행령 제37조(10만원·3개월)는 계속거래 정의가 아니다. 쓰지 않는다.
 
@@ -277,7 +278,7 @@ deposit_refund = deposit                                       ← 별도 약정
 | 코드 | 짧은 이름 | 조건 | 화면 한 줄 |
 |---|---|---|---|
 | `SCOPE_UNCERTAIN_PT_ONLY` | 범위 불확실 (PT 단독) | `is_pt_only = True` | "PT만 계약한 경우 이 기준이 적용되는지 확실하지 않아, 헬스·피트니스 기준으로 계산했습니다." |
-| `PERIOD_28_TO_31_DAYS` | 1개월 경계 구간 | 계약 일수 28~31 | "계약 기간이 1개월 경계(28~31일)에 있어 이 기준이 적용되는지 확인이 필요합니다." |
+| `PERIOD_28_TO_31_DAYS` | 1개월 경계 구간 | 계약 일수 28~32 (양끝 산입. 32일은 한쪽 끝만 세면 31일이라 포함) [결정 2026-11-06 (a)] | "계약 기간이 1개월 경계에 있어(날짜를 세는 방식에 따라 28~31일) 이 기준이 적용되는지 확인이 필요합니다." |
 | `REFUND_LIMIT_CLAUSE_UNKNOWN` | 약정 미확인 | `has_refund_limit_clause is None` | "계약서에 중도 해지 시 환급 제한이나 위약금 조항이 있는지 확인이 필요합니다." |
 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 청약철회 미확인 | `withdrawal_cleared`가 `True`가 아님 | "청약철회 대상이 아니거나 철회 기간이 지났는지 확인되지 않았습니다." |
 | `SESSION_VALIDITY_MISSING` | 유효기간 미입력 | 기준에 `session`이 있고 `start_date`·`end_date` 중 하나라도 없음 (5.2) | "횟수제 이용권의 유효기간을 입력하지 않아 이 기준의 적용 여부를 확인하지 못했습니다." |
@@ -322,7 +323,7 @@ deposit_refund = deposit                                       ← 별도 약정
 | 14 | `USAGE_STARTED` | 🔍 |
 | 15 | `POSTPONEMENT` | 🔍 |
 
-✅ 조건 [결정 2026-10-26 #6, 보충 2·4·5, 추가 수정 2]: 위 ❔·🔍·⚠️ 사유가 하나도 없을 때. 풀어 쓰면 ① 시작 전 해지(`notice_date < start_date`, 모든 기준의 이용분 0) ② 계약 일수 32 이상 ③ `has_refund_limit_clause = True` ④ `withdrawal_cleared = True` ⑤ 정상가가 있으면 `list_price ≥ total_contract_amount` (시작 전 해지이므로 정상가가 없어도 된다) ⑥ 쓰는 블록 모두 `verified: true` ⑦ 강건한 ⚠️ 없음 ⑧ `is_pt_only`가 `True`가 아님. `had_postponement`는 ✅ 판정에 쓰지 않는다.
+✅ 조건 [결정 2026-10-26 #6, 보충 2·4·5, 추가 수정 2]: 위 ❔·🔍·⚠️ 사유가 하나도 없을 때. 풀어 쓰면 ① 시작 전 해지(`notice_date < start_date`, 모든 기준의 이용분 0) ② 계약 일수 33 이상 (양끝 산입. 한쪽 끝만 세도 32 이상, [결정 2026-11-06 (a)]) ③ `has_refund_limit_clause = True` ④ `withdrawal_cleared = True` ⑤ 정상가가 있으면 `list_price ≥ total_contract_amount` (시작 전 해지이므로 정상가가 없어도 된다) ⑥ 쓰는 블록 모두 `verified: true` ⑦ 강건한 ⚠️ 없음 ⑧ `is_pt_only`가 `True`가 아님. `had_postponement`는 ✅ 판정에 쓰지 않는다.
 
 진리표 (J = ❔ 조건, M = 계산 안 함 🔍 사유(필수 정보 누락·입력 오류·유효기간 이후 도달), R = 강건한 ⚠️ 신호, I = 🔍 사유):
 
