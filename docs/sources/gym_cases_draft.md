@@ -266,7 +266,7 @@
 - 일수 기준 (경과 10 / 28):
   - 시나리오 A: 이용분 100,000 × 10 ÷ 28 → 35,714 / 환급액 100,000 − 35,714 − 10,000 = **54,286**
 - 결과 표시: 최소 환급액
-- 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_28_TO_31_DAYS`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
+- 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_ONE_MONTH_BOUNDARY`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
 - 검증 상태: 사용자 승인(보고서 검토)
@@ -278,7 +278,7 @@
 - 일수 기준 (경과 10 / 31):
   - 시나리오 A: 이용분 100,000 × 10 ÷ 31 → 32,258 / 환급액 100,000 − 32,258 − 10,000 = **57,742**
 - 결과 표시: 최소 환급액
-- 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_28_TO_31_DAYS`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
+- 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_ONE_MONTH_BOUNDARY`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
 - 검증 상태: 사용자 승인(보고서 검토)
@@ -290,10 +290,12 @@
 - 일수 기준 (경과 10 / 32):
   - 시나리오 A: 이용분 100,000 × 10 ÷ 32 → 31,250 / 환급액 100,000 − 31,250 − 10,000 = **58,750**
 - 결과 표시: 최소 환급액
-- 사유 코드: `INTERPRETATION_DEPENDENT`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED`
+- 사유 코드: `INTERPRETATION_DEPENDENT`, `PERIOD_ONE_MONTH_BOUNDARY`, `WITHDRAWAL_STATUS_UNCONFIRMED`, `LIST_PRICE_NOT_USABLE`, `USAGE_STARTED` (화면 한 줄 `PERIOD_ONE_MONTH_BOUNDARY`)
+- 인용: 기본 8개 + `gym_terms_art8_2_def`, `law2_10`
 - 추가 안내: `NO_LIST_PRICE`
 - 기대 배지: **🔍**
-- 검증 상태: 사용자 승인(보고서 검토)
+- 검증 상태: 사용자 승인(보고서 검토), 2026-11-06 재승인
+- 변경 (2026-11-06, 1개월 경계 보정 (a)): 32일은 한쪽 끝만 세면 31일이라 1개월 경계 구간에 든다. 사유 코드에 `PERIOD_ONE_MONTH_BOUNDARY` 추가, 화면 한 줄이 `WITHDRAWAL_STATUS_UNCONFIRMED`에서 바뀜, 인용에 `law2_10` 추가. 배지·금액은 같다
 
 ## 그 밖의 경계 (6건)
 
@@ -492,9 +494,9 @@
 | R2 | half up 정확히 .5 | 220,002 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
 | R3 | 위약금 원 미만 내림 | 605,883 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 검증 완료 |
 | B1 | 계약 27일 | — | — | 계산 안 함 | ❔ | `PERIOD_UNDER_28_DAYS` | 사용자 승인(보고서 검토) |
-| B2 | 계약 28일 (2월) | 54,286 | — | 최소 환급액 | 🔍 | `PERIOD_28_TO_31_DAYS` | 사용자 승인(보고서 검토) |
-| B3 | 계약 31일 | 57,742 | — | 최소 환급액 | 🔍 | `PERIOD_28_TO_31_DAYS` | 사용자 승인(보고서 검토) |
-| B4 | 계약 32일 | 58,750 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
+| B2 | 계약 28일 (2월) | 54,286 | — | 최소 환급액 | 🔍 | `PERIOD_ONE_MONTH_BOUNDARY` | 사용자 승인(보고서 검토) |
+| B3 | 계약 31일 | 57,742 | — | 최소 환급액 | 🔍 | `PERIOD_ONE_MONTH_BOUNDARY` | 사용자 승인(보고서 검토) |
+| B4 | 계약 32일 | 58,750 | — | 최소 환급액 | 🔍 | `PERIOD_ONE_MONTH_BOUNDARY` | 사용자 승인(보고서 검토), 2026-11-06 재승인 |
 | L1 | 정상가 < 총계약대금 | 784,110 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
 | K1 | 계약서상 위약금 > 상한 | 784,110 | — | 최소 환급액 (상한 공제) | ⚠️ | `PENALTY_ABOVE_CAP` | 사용자 승인(보고서 검토) |
 | X1 | 종료일 이후 도달 (계약 일수로 제한) | 0 | — | 최소 환급액 | 🔍 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 사용자 승인(보고서 검토) |
@@ -526,9 +528,9 @@
 | `PENALTY_ABOVE_CAP` | ⚠️ | 1 | 1 | K1 |
 | `OFFER_BELOW_B` | ⚠️ | 1 | 1 | N2 |
 | `SCOPE_UNCERTAIN_PT_ONLY` | 🔍 | 1 | 1 | S3 |
-| `PERIOD_28_TO_31_DAYS` | 🔍 | 2 | 2 | B2, B3 |
+| `PERIOD_ONE_MONTH_BOUNDARY` | 🔍 | 3 | 3 | B2, B3, B4 |
 | `REFUND_LIMIT_CLAUSE_UNKNOWN` | 🔍 | 1 | 1 | P4 |
-| `WITHDRAWAL_STATUS_UNCONFIRMED` | 🔍 | 26 | 20 | P1–P5, S1–S3, E1, E2, N1–N3, R1–R3, B2–B4, L1, K1, X1, U1, T1, C2, V3 |
+| `WITHDRAWAL_STATUS_UNCONFIRMED` | 🔍 | 26 | 19 | P1–P5, S1–S3, E1, E2, N1–N3, R1–R3, B2–B4, L1, K1, X1, U1, T1, C2, V3 |
 | `SESSION_VALIDITY_MISSING` | 🔍 | 1 | 0 | S3 |
 | `REFUND_BASIS_UNKNOWN` | 🔍 | 1 | 0 | U1 |
 | `RULE_UNVERIFIED` | 🔍 | 0 | 0 | — |
@@ -537,7 +539,7 @@
 | `USAGE_STARTED` | 🔍 | 24 | 0 | `INTERPRETATION_DEPENDENT`와 같은 24건 |
 | `POSTPONEMENT` | 🔍 | 1 | 0 | T1 |
 
-🔍(계산함) 24건의 화면 한 줄: `WITHDRAWAL_STATUS_UNCONFIRMED` 20건, `PERIOD_28_TO_31_DAYS` 2건, `SCOPE_UNCERTAIN_PT_ONLY` 1건, `REFUND_LIMIT_CLAUSE_UNKNOWN` 1건.
+🔍(계산함) 24건의 화면 한 줄: `WITHDRAWAL_STATUS_UNCONFIRMED` 19건, `PERIOD_ONE_MONTH_BOUNDARY` 3건, `SCOPE_UNCERTAIN_PT_ONLY` 1건, `REFUND_LIMIT_CLAUSE_UNKNOWN` 1건.
 
 ## 질문 대기 중인 항목과 관련 케이스
 
@@ -549,4 +551,4 @@
 
 - [x] 사용자 손계산 확인 (사용자 검증 완료): P1, N3, R1, R2, R3, S2, U1 (확인일: 2026-10-26)
 - [x] 반올림·내림 결과 확인: R1, R2, R3, N3
-- [x] 사용자 승인(보고서 검토) 28건: P2, P3, P4, P5, S1, S3, E1, E2, N1, N2, B1, B2, B3, B4, L1, K1, X1, T1, H1, C1, C2, C3, C4, M1, V1, V2, V3, V4 (승인일: 2026-10-26). 검토 시트: 새 컨텍스트 서브에이전트가 입력·고시 제5조·MVP_SPEC 5.1~5.4 발췌만 보고 독립 도출한 배지·사유 코드·금액과, 일수 2방식(date 연산, 월별 일수 합산)·금액 3방식(Fraction, Decimal, 정수 산술)이 모두 기존 기대값과 일치. 해석 결정(일수 양끝 포함, 반올림 방향, 시나리오 A·B, 28/32일 경계, ✅ 조건)은 이 방식으로 검증되지 않는다
+- [x] 사용자 승인(보고서 검토) 28건: P2, P3, P4, P5, S1, S3, E1, E2, N1, N2, B1, B2, B3, B4, L1, K1, X1, T1, H1, C1, C2, C3, C4, M1, V1, V2, V3, V4 (승인일: 2026-10-26. B4는 1개월 경계 보정 (a)로 사유 코드·화면 한 줄·인용이 바뀌어 2026-11-06 재승인). 검토 시트: 새 컨텍스트 서브에이전트가 입력·고시 제5조·MVP_SPEC 5.1~5.4 발췌만 보고 독립 도출한 배지·사유 코드·금액과, 일수 2방식(date 연산, 월별 일수 합산)·금액 3방식(Fraction, Decimal, 정수 산술)이 모두 기존 기대값과 일치. 해석 결정(일수 양끝 포함, 반올림 방향, 시나리오 A·B, 28/32일 경계, ✅ 조건)은 이 방식으로 검증되지 않는다

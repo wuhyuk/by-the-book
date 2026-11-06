@@ -100,7 +100,7 @@ def test_in_source_false_marks(rule: GymRule) -> None:
 
 def test_period_thresholds(rule: GymRule) -> None:
     t = rule.params.continuous_transaction_criteria.period_thresholds_days
-    assert (t.out_of_scope_below, t.needs_review_max) == (28, 31)
+    assert (t.out_of_scope_below, t.needs_review_max) == (28, 32)
 
 
 def test_unit_price_method_is_null(rule: GymRule) -> None:

@@ -382,7 +382,7 @@ def collect_review_flags(
     if inp.is_pt_only is True:
         flags.append(F.SCOPE_UNCERTAIN_PT_ONLY)
     if classify_period(_valid_contract_days(inp), rule) == "needs_review":
-        flags.append(F.PERIOD_28_TO_31_DAYS)
+        flags.append(F.PERIOD_ONE_MONTH_BOUNDARY)
     if inp.has_refund_limit_clause is None:
         flags.append(F.REFUND_LIMIT_CLAUSE_UNKNOWN)
     if inp.withdrawal_cleared is not True:
@@ -468,7 +468,10 @@ def _citations(
             ids.append(_STANDARD_TERMS_CITATION[inp.industry])
         if inp.industry == YOGA_PILATES:
             ids.append("yoga_terms_art9_1_def")
-        if F.PERIOD_28_TO_31_DAYS in flags or F.REFUND_LIMIT_CLAUSE_UNKNOWN in flags:
+        if (
+            F.PERIOD_ONE_MONTH_BOUNDARY in flags
+            or F.REFUND_LIMIT_CLAUSE_UNKNOWN in flags
+        ):
             ids.append("law2_10")
     else:
         if F.WITHDRAWAL in flags:

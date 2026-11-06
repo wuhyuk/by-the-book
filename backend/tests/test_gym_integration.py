@@ -137,6 +137,7 @@ BASE_CITATIONS = [
         ("S2", BASE_CITATIONS + ["art6_1", "yoga_terms_art9_1_def"]),
         ("U1", BASE_CITATIONS + ["yoga_terms_art9_1_def"]),
         ("B2", BASE_CITATIONS + ["gym_terms_art8_2_def", "law2_10"]),
+        ("B4", BASE_CITATIONS + ["gym_terms_art8_2_def", "law2_10"]),  # 32일
         ("P4", BASE_CITATIONS + ["gym_terms_art8_2_def", "law2_10"]),
         ("B1", ["law2_10"]),
         ("H1", ["law2_10"]),
