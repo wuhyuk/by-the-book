@@ -897,11 +897,12 @@ CASES: list[Case] = [
             calculated=True,
             flags={
                 F.INTERPRETATION_DEPENDENT,
+                F.PERIOD_ONE_MONTH_BOUNDARY,  # 32일 보정 (a), 2026-11-06 재승인
                 F.WITHDRAWAL_STATUS_UNCONFIRMED,
                 F.LIST_PRICE_NOT_USABLE,
                 F.USAGE_STARTED,
             },
-            top=F.WITHDRAWAL_STATUS_UNCONFIRMED,
+            top=F.PERIOD_ONE_MONTH_BOUNDARY,
             contract_days=32,
             missing=[],
             penalty_cap=10000,
