@@ -1,0 +1,1010 @@
+{
+  "id": "laundry_damage",
+  "title": "세탁업 세탁물 손상·분실 배상",
+  "status": "draft_stage0_decided",
+  "source": {
+    "name": "소비자분쟁해결기준",
+    "notice_number": "공정거래위원회고시 제2025-14호",
+    "url": "https://www.law.go.kr/행정규칙/소비자분쟁해결기준",
+    "permalink": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000270136",
+    "effective_date": "2025-12-18",
+    "last_amended": "2025-12-18",
+    "retrieved_at": "2026-11-02",
+    "annex": "[별표 Ⅱ] 품목별 해결기준 > ⑯세탁업",
+    "annex_files": {
+      "hwpx_flSeq": "159469939",
+      "pdf_flSeq": "159470209",
+      "pdf_pages": "122-125"
+    }
+  },
+  "verified": false,
+  "ratio_table": {
+    "basis": "별표 Ⅱ ⑯세탁업 배상비율표",
+    "use_days_definition": "물품 사용일수(물품 구입일로부터 사용여부에 상관없이 세탁의뢰일 까지 계산한 일수)",
+    "rows": [
+      {
+        "life_years": 1,
+        "bands": [
+          {
+            "min_days": 0,
+            "max_days": 14,
+            "ratio_percent": 95
+          },
+          {
+            "min_days": 15,
+            "max_days": 44,
+            "ratio_percent": 80
+          },
+          {
+            "min_days": 45,
+            "max_days": 89,
+            "ratio_percent": 70
+          },
+          {
+            "min_days": 90,
+            "max_days": 134,
+            "ratio_percent": 60
+          },
+          {
+            "min_days": 135,
+            "max_days": 179,
+            "ratio_percent": 50
+          },
+          {
+            "min_days": 180,
+            "max_days": 224,
+            "ratio_percent": 45
+          },
+          {
+            "min_days": 225,
+            "max_days": 269,
+            "ratio_percent": 40
+          },
+          {
+            "min_days": 270,
+            "max_days": 314,
+            "ratio_percent": 35
+          },
+          {
+            "min_days": 315,
+            "max_days": 365,
+            "ratio_percent": 30
+          },
+          {
+            "min_days": 366,
+            "max_days": 547,
+            "ratio_percent": 20
+          },
+          {
+            "min_days": 548,
+            "max_days": null,
+            "ratio_percent": 10
+          }
+        ]
+      },
+      {
+        "life_years": 2,
+        "bands": [
+          {
+            "min_days": 0,
+            "max_days": 28,
+            "ratio_percent": 95
+          },
+          {
+            "min_days": 29,
+            "max_days": 88,
+            "ratio_percent": 80
+          },
+          {
+            "min_days": 89,
+            "max_days": 178,
+            "ratio_percent": 70
+          },
+          {
+            "min_days": 179,
+            "max_days": 268,
+            "ratio_percent": 60
+          },
+          {
+            "min_days": 269,
+            "max_days": 358,
+            "ratio_percent": 50
+          },
+          {
+            "min_days": 359,
+            "max_days": 448,
+            "ratio_percent": 45
+          },
+          {
+            "min_days": 449,
+            "max_days": 538,
+            "ratio_percent": 40
+          },
+          {
+            "min_days": 539,
+            "max_days": 628,
+            "ratio_percent": 35
+          },
+          {
+            "min_days": 629,
+            "max_days": 730,
+            "ratio_percent": 30
+          },
+          {
+            "min_days": 731,
+            "max_days": 1095,
+            "ratio_percent": 20
+          },
+          {
+            "min_days": 1096,
+            "max_days": null,
+            "ratio_percent": 10
+          }
+        ]
+      },
+      {
+        "life_years": 3,
+        "bands": [
+          {
+            "min_days": 0,
+            "max_days": 43,
+            "ratio_percent": 95
+          },
+          {
+            "min_days": 44,
+            "max_days": 133,
+            "ratio_percent": 80
+          },
+          {
+            "min_days": 134,
+            "max_days": 268,
+            "ratio_percent": 70
+          },
+          {
+            "min_days": 269,
+            "max_days": 403,
+            "ratio_percent": 60
+          },
+          {
+            "min_days": 404,
+            "max_days": 538,
+            "ratio_percent": 50
+          },
+          {
+            "min_days": 539,
+            "max_days": 673,
+            "ratio_percent": 45
+          },
+          {
+            "min_days": 674,
+            "max_days": 808,
+            "ratio_percent": 40
+          },
+          {
+            "min_days": 809,
+            "max_days": 943,
+            "ratio_percent": 35
+          },
+          {
+            "min_days": 944,
+            "max_days": 1095,
+            "ratio_percent": 30
+          },
+          {
+            "min_days": 1096,
+            "max_days": 1642,
+            "ratio_percent": 20
+          },
+          {
+            "min_days": 1643,
+            "max_days": null,
+            "ratio_percent": 10
+          }
+        ]
+      },
+      {
+        "life_years": 4,
+        "bands": [
+          {
+            "min_days": 0,
+            "max_days": 57,
+            "ratio_percent": 95
+          },
+          {
+            "min_days": 58,
+            "max_days": 177,
+            "ratio_percent": 80
+          },
+          {
+            "min_days": 178,
+            "max_days": 357,
+            "ratio_percent": 70
+          },
+          {
+            "min_days": 358,
+            "max_days": 537,
+            "ratio_percent": 60
+          },
+          {
+            "min_days": 538,
+            "max_days": 717,
+            "ratio_percent": 50
+          },
+          {
+            "min_days": 718,
+            "max_days": 897,
+            "ratio_percent": 45
+          },
+          {
+            "min_days": 898,
+            "max_days": 1077,
+            "ratio_percent": 40
+          },
+          {
+            "min_days": 1078,
+            "max_days": 1257,
+            "ratio_percent": 35
+          },
+          {
+            "min_days": 1258,
+            "max_days": 1460,
+            "ratio_percent": 30
+          },
+          {
+            "min_days": 1461,
+            "max_days": 2190,
+            "ratio_percent": 20
+          },
+          {
+            "min_days": 2191,
+            "max_days": null,
+            "ratio_percent": 10
+          }
+        ]
+      },
+      {
+        "life_years": 5,
+        "bands": [
+          {
+            "min_days": 0,
+            "max_days": 72,
+            "ratio_percent": 95
+          },
+          {
+            "min_days": 73,
+            "max_days": 222,
+            "ratio_percent": 80
+          },
+          {
+            "min_days": 223,
+            "max_days": 447,
+            "ratio_percent": 70
+          },
+          {
+            "min_days": 448,
+            "max_days": 672,
+            "ratio_percent": 60
+          },
+          {
+            "min_days": 673,
+            "max_days": 897,
+            "ratio_percent": 50
+          },
+          {
+            "min_days": 898,
+            "max_days": 1122,
+            "ratio_percent": 45
+          },
+          {
+            "min_days": 1123,
+            "max_days": 1347,
+            "ratio_percent": 40
+          },
+          {
+            "min_days": 1348,
+            "max_days": 1572,
+            "ratio_percent": 35
+          },
+          {
+            "min_days": 1573,
+            "max_days": 1825,
+            "ratio_percent": 30
+          },
+          {
+            "min_days": 1826,
+            "max_days": 2737,
+            "ratio_percent": 20
+          },
+          {
+            "min_days": 2738,
+            "max_days": null,
+            "ratio_percent": 10
+          }
+        ]
+      },
+      {
+        "life_years": 6,
+        "bands": [
+          {
+            "min_days": 0,
+            "max_days": 86,
+            "ratio_percent": 95
+          },
+          {
+            "min_days": 87,
+            "max_days": 266,
+            "ratio_percent": 80
+          },
+          {
+            "min_days": 267,
+            "max_days": 536,
+            "ratio_percent": 70
+          },
+          {
+            "min_days": 537,
+            "max_days": 806,
+            "ratio_percent": 60
+          },
+          {
+            "min_days": 807,
+            "max_days": 1076,
+            "ratio_percent": 50
+          },
+          {
+            "min_days": 1077,
+            "max_days": 1346,
+            "ratio_percent": 45
+          },
+          {
+            "min_days": 1347,
+            "max_days": 1616,
+            "ratio_percent": 40
+          },
+          {
+            "min_days": 1617,
+            "max_days": 1886,
+            "ratio_percent": 35
+          },
+          {
+            "min_days": 1887,
+            "max_days": 2190,
+            "ratio_percent": 30
+          },
+          {
+            "min_days": 2191,
+            "max_days": 3285,
+            "ratio_percent": 20
+          },
+          {
+            "min_days": 3286,
+            "max_days": null,
+            "ratio_percent": 10
+          }
+        ]
+      }
+    ],
+    "verified": true,
+    "verification": {
+      "method": "HWPX 표 추출(13열×8행, 병합 주소 포함) ↔ PDF 124쪽 이미지 판독 일치, PDF 텍스트층 숫자 143개 기계 대조 일치, 행별 구간 연속(빈틈·겹침 없음) 기계 확인. 2026-11-02 승격 전 재대조(HWPX 텍스트 ↔ JSON 6행 66칸) 오류 0. 헬스장 선례에 따라 기계 대조 일치로 true, 사용자 표본 대조 전 [결정 2026-11-02 Q-S2]",
+      "user_checked": false,
+      "checked_at": "2026-11-02"
+    }
+  },
+  "lifespan_table": {
+    "basis": "별표 Ⅱ ⑯세탁업 품목별 평균 내용년수",
+    "rows": [
+      {
+        "id": "mens_suit",
+        "category": "외의류",
+        "item": "신사정장",
+        "material_text": "모,모혼방, 견 기타",
+        "use_text": "하복 / 춘추복 / 동복",
+        "examples": null,
+        "variant_by": "use",
+        "variants": [
+          {
+            "key": "summer",
+            "label": "하복",
+            "years": 3
+          },
+          {
+            "key": "spring_fall",
+            "label": "춘추복",
+            "years": 4
+          },
+          {
+            "key": "winter",
+            "label": "동복",
+            "years": 4
+          }
+        ]
+      },
+      {
+        "id": "coat",
+        "category": "외의류",
+        "item": "코트",
+        "material_text": null,
+        "use_text": null,
+        "examples": "오바코트 / 레인코트",
+        "years": 4
+      },
+      {
+        "id": "womens_suit",
+        "category": "외의류",
+        "item": "여성정장",
+        "material_text": "모, 모혼방, 견 기타",
+        "use_text": "하복 / 춘추복 / 동복",
+        "examples": null,
+        "variant_by": "use",
+        "variants": [
+          {
+            "key": "summer",
+            "label": "하복",
+            "years": 3
+          },
+          {
+            "key": "spring_fall",
+            "label": "춘추복",
+            "years": 4
+          },
+          {
+            "key": "winter",
+            "label": "동복",
+            "years": 4
+          }
+        ]
+      },
+      {
+        "id": "skirt_pants_jacket_jumper",
+        "category": "외의류",
+        "item": "스커트, 바지, 자켓, 점퍼",
+        "material_text": "모, 모혼방, 견 기타",
+        "use_text": "하복 / 춘추복 / 동복",
+        "examples": "타이트스커트, 플레어스커트, / 치마바지(큐롯, 잠바스커트) / 바지, 슬랙스, 판탈롱, 팬츠류",
+        "variant_by": "use",
+        "variants": [
+          {
+            "key": "summer",
+            "label": "하복",
+            "years": 3
+          },
+          {
+            "key": "spring_fall",
+            "label": "춘추복",
+            "years": 4
+          },
+          {
+            "key": "winter",
+            "label": "동복",
+            "years": 4
+          }
+        ]
+      },
+      {
+        "id": "sportswear",
+        "category": "외의류",
+        "item": "스포츠웨어",
+        "examples": "트레이닝웨어, 스포츠용 / 유니폼, 수영복",
+        "years": 3
+      },
+      {
+        "id": "shirts",
+        "category": "외의류",
+        "item": "셔츠류",
+        "examples": "면셔츠, T셔츠, 남방, 폴로 / 셔츠, 와이셔츠",
+        "years": 2
+      },
+      {
+        "id": "blouse",
+        "category": "외의류",
+        "item": "블라우스",
+        "material_text": "견 / 기타",
+        "variant_by": "material",
+        "variants": [
+          {
+            "key": "silk",
+            "label": "견",
+            "years": 3
+          },
+          {
+            "key": "other",
+            "label": "기타",
+            "years": 2
+          }
+        ]
+      },
+      {
+        "id": "sweater",
+        "category": "외의류",
+        "item": "스웨터",
+        "examples": "스웨터, 카디건",
+        "years": 3
+      },
+      {
+        "id": "jeans",
+        "category": "외의류",
+        "item": "청바지",
+        "variant_by": "material",
+        "variants": [
+          {
+            "key": "regular",
+            "label": "일반",
+            "years": 4
+          },
+          {
+            "key": "special_wash",
+            "label": "특수워싱*",
+            "years": 3
+          }
+        ],
+        "footnote": "* 특수워싱：본래 제조된 원단 상태가 아니라 인위적으로 외형을 가공(샌드가공, 스톤워싱, 표백제 등 약품처리 가공 등)한 상태의 소재를 말함."
+      },
+      {
+        "id": "uniform",
+        "category": "외의류",
+        "item": "제복",
+        "variant_by": "material",
+        "variants": [
+          {
+            "key": "work",
+            "label": "작업복",
+            "years": 2
+          },
+          {
+            "key": "office",
+            "label": "사무복",
+            "years": 2
+          },
+          {
+            "key": "school",
+            "label": "학생복",
+            "years": 3
+          }
+        ]
+      },
+      {
+        "id": "hanbok",
+        "category": "한복류",
+        "item": "치마, 저고리, 바지, 마고자, 조끼, 두루마기",
+        "material_text": "견, 빌로드 / 기타",
+        "years": 4,
+        "source_note": "원문 내용연수 칸은 행 전체에 걸친 한 칸이고 값은 '4' 하나다 (소재 칸은 두 문단). 두 소재 모두 4 [결정 2026-11-02 Q-L2 → 2026-11-06 원문 칸 구조 확인으로 in_source: true]",
+        "years_applies_to_all_materials": true,
+        "years_applies_to_all_materials_in_source": true,
+        "years_alternative": null,
+        "years_alternative_note": "원문 칸 구조로 확인한 값이라 민감도 검사 대상이 아니다 (2026-11-06, Q-L8)",
+        "years_scope_check": {
+          "method": "① HWPX(첨부 b159469939, Contents/section6.xml) 표 셀 속성: 한복류 행의 6개 셀 모두 cellSpan colSpan=1·rowSpan=1(병합·분할 없음), 소재 셀은 문단 2개('견, 빌로드' / '기타'), 내용연수 셀은 문단 1개('4'). 바로 아래 카페트 행은 소재 문단 2개('모' / '기타')에 내용연수 문단 2개('6' / '5'). ② PDF 125쪽을 4배 이미지로 변환해 판독: 한복류 내용연수 칸 안에 가로선이 없고 '4'가 소재 줄(1·2행 '견, 빌로드', 3행 '기타')에 맞추지 않고 칸 세로 가운데에 있다. 카페트 행은 '6'·'5'가 각 소재 줄에 맞춰 놓였다. 같은 표에서 소재·용도별 값이 다른 행(블라우스, 카페트, 스카프, 피혁 외의, 모포, 쇼파, 커튼, 신사정장 등)은 모두 값 문단을 줄 수만큼 둔다. 두 경로 일치 → 행 전체에 값 4",
+          "limit": "원문 작성 단계의 누락(값 한 줄이 빠졌을 가능성)은 원문을 읽어서는 확인할 수 없다. 이는 다른 모든 칸과 같은 한계로 보고 별도 사유 코드를 두지 않는다",
+          "checked_at": "2026-11-06",
+          "user_checked": false
+        }
+      },
+      {
+        "id": "carpet",
+        "category": "실내장식류",
+        "item": "카페트",
+        "variant_by": "material",
+        "variants": [
+          {
+            "key": "wool",
+            "label": "모",
+            "years": 6
+          },
+          {
+            "key": "other",
+            "label": "기타",
+            "years": 5
+          }
+        ]
+      },
+      {
+        "id": "leather_bag",
+        "category": "가방류",
+        "item": "가죽가방",
+        "material_text": "가죽, 인조가죽 등",
+        "years": 3
+      },
+      {
+        "id": "fabric_bag",
+        "category": "가방류",
+        "item": "일반가방",
+        "material_text": "천 등",
+        "years": 2
+      },
+      {
+        "id": "scarf",
+        "category": "양장용품",
+        "item": "스카프",
+        "variant_by": "material",
+        "variants": [
+          {
+            "key": "silk_wool",
+            "label": "견,모",
+            "years": 3
+          },
+          {
+            "key": "other",
+            "label": "기타",
+            "years": 2
+          }
+        ]
+      },
+      {
+        "id": "muffler",
+        "category": "양장용품",
+        "item": "머플러",
+        "years": 3
+      },
+      {
+        "id": "necktie",
+        "category": "양장용품",
+        "item": "넥타이",
+        "years": 2
+      },
+      {
+        "id": "underwear",
+        "category": "속옷",
+        "item": "파운데이션,란제리,내복",
+        "years": 2
+      },
+      {
+        "id": "leather_outer",
+        "category": "피혁제품",
+        "item": "외의",
+        "variant_by": "material",
+        "variants": [
+          {
+            "key": "pigskin_reptile",
+            "label": "돈피, 파충류",
+            "years": 3
+          },
+          {
+            "key": "other",
+            "label": "기타",
+            "years": 5
+          }
+        ]
+      },
+      {
+        "id": "leather_other",
+        "category": "피혁제품",
+        "item": "기타",
+        "years": 3
+      },
+      {
+        "id": "synthetic_leather",
+        "category": "피혁제품",
+        "item": "인조피혁",
+        "years": 3
+      },
+      {
+        "id": "blanket",
+        "category": "실내장식품",
+        "item": "모포",
+        "variant_by": "material",
+        "variants": [
+          {
+            "key": "wool",
+            "label": "모",
+            "years": 5
+          },
+          {
+            "key": "other",
+            "label": "기타",
+            "years": 4
+          }
+        ]
+      },
+      {
+        "id": "sofa",
+        "category": "실내장식품",
+        "item": "쇼파",
+        "variant_by": "material",
+        "variants": [
+          {
+            "key": "natural_leather",
+            "label": "천연피혁",
+            "years": 5
+          },
+          {
+            "key": "other",
+            "label": "기타",
+            "years": 3
+          }
+        ]
+      },
+      {
+        "id": "curtain",
+        "category": "실내장식품",
+        "item": "커튼",
+        "variant_by": "use",
+        "variants": [
+          {
+            "key": "spring_summer",
+            "label": "춘하용",
+            "years": 2
+          },
+          {
+            "key": "fall_winter",
+            "label": "추동용",
+            "years": 3
+          }
+        ]
+      },
+      {
+        "id": "bedding",
+        "category": "침구류",
+        "item": "이불, 요, 침대커버",
+        "years": 3
+      },
+      {
+        "id": "shoes_leather_special",
+        "category": "신발류",
+        "item": "가죽류 및 특수소재",
+        "examples": "가죽구두, 등산화(경등산화 제외) 등",
+        "years": 3
+      },
+      {
+        "id": "shoes_general",
+        "category": "신발류",
+        "item": "일반 신발류",
+        "examples": "운동화, 고무신 등",
+        "years": 1
+      },
+      {
+        "id": "hat",
+        "category": "모자",
+        "item": null,
+        "years": 1
+      },
+      {
+        "id": "fur_outer",
+        "category": "모피제품",
+        "item": "외의",
+        "variant_by": "material",
+        "variants": [
+          {
+            "key": "rabbit",
+            "label": "토끼털",
+            "years": 3
+          },
+          {
+            "key": "other",
+            "label": "기타",
+            "years": 5
+          }
+        ]
+      },
+      {
+        "id": "fur_other",
+        "category": "모피제품",
+        "item": "기타",
+        "years": 3
+      }
+    ],
+    "verified": true,
+    "verification": {
+      "method": "HWPX 표 추출(병합 주소 포함) ↔ PDF 124~125쪽 이미지 판독 일치, 내용연수 열 숫자 기계 대조 일치. 2026-11-02 승격 전 재대조(HWPX 내용연수 열 47개 ↔ JSON 순서) 오류 0. 한복류 칸은 2026-11-06 HWPX 셀 속성·문단 수와 PDF 125쪽 이미지로 '행 전체에 걸친 한 칸, 값 4 하나'를 확인(rows[hanbok].years_scope_check, Q-L8). 기계 대조 일치로 true, 사용자 표본 대조 전 [결정 2026-11-02 Q-S2]",
+      "user_checked": false,
+      "checked_at": "2026-11-02"
+    }
+  },
+  "set_allocation": {
+    "basis": "별표 Ⅱ ⑯세탁업 7. Set의류의 배상액 배분",
+    "shares_percent": {
+      "top_bottom": {
+        "top": 65,
+        "bottom": 35
+      },
+      "top_mid_bottom": {
+        "top": 55,
+        "bottom": 35,
+        "mid": 10
+      },
+      "hanbok": {
+        "top": 50,
+        "bottom": 50
+      }
+    },
+    "hanbok_scope_text": "한복 중 치마저고리, 바지저고리",
+    "individual_price_overrides": true,
+    "scope_status": "restore_candidate",
+    "scope_note": "세탁 축소 A(2026-11-02 확정)에서 Set 일부 손상·분실과 배분은 제외. 11/8·11/15에 복원 여부 결정",
+    "unsupported_codes": {
+      "set_partial": "SET_PARTIAL_UNSUPPORTED",
+      "attachment": "ATTACHMENT_UNSUPPORTED",
+      "badge": "out_of_scope",
+      "code_status": "accepted",
+      "accepted_at": "2026-11-06",
+      "note": "원문(7.·8.)에 규정이 있으나 이번 버전에서 지원하지 않는 기능이다. 화면 문구가 '규정이 없다'로 읽히지 않게 한다 (laundry_spec_draft.md L2)"
+    },
+    "verified": true,
+    "verification": {
+      "method": "HWPX 텍스트 ↔ PDF 123쪽 이미지 판독 일치. 2026-11-02 승격 전 재대조(배분 비율 문구·값) 일치. 일부 손상 시 적용 방식(해석)은 params.set_partial_damage로 옮김. 기계 대조 일치로 true, 사용자 표본 대조 전 [결정 2026-11-02 Q-S2]",
+      "user_checked": false,
+      "checked_at": "2026-11-02"
+    }
+  },
+  "unproven_fallback": {
+    "basis": "별표 Ⅱ ⑯세탁업 5-1.③",
+    "laundry_fee_multiplier": 20,
+    "verified": true,
+    "verification": {
+      "method": "HWPX 텍스트 ↔ PDF 123쪽 이미지 판독 일치. 2026-11-02 승격 전 재대조('세탁요금의 20배' 문구 ↔ 값 20) 일치. 기계 대조 일치로 true, 사용자 표본 대조 전 [결정 2026-11-02 Q-S2]",
+      "user_checked": false,
+      "checked_at": "2026-11-02"
+    }
+  },
+  "params": {
+    "use_days": {
+      "candidates": {
+        "D0": "request_date - purchase_date",
+        "D1": "request_date - purchase_date + 1"
+      },
+      "selected": "D0",
+      "alternative": "D1",
+      "in_source": false,
+      "basis": "원문은 '구입일로부터 … 세탁의뢰일 까지 계산한 일수'만 정함. 첫날 산입 여부 없음. 구입일부터의 경과 기간으로 보고 구입 당일 = 0일 (표도 0부터 시작) [결정 2026-11-02 Q-L1]. 헬스장의 양끝 산입과 다른 이유는 laundry_spec_draft.md L3"
+    },
+    "rounding": {
+      "amount": "floor_won",
+      "alternative": "half_up_won",
+      "in_source": false,
+      "basis": "원문에 원 미만 처리 없음. 기준 금액을 과대 표시하지 않도록 원 미만 내림 [결정 2026-11-02 Q-C1]"
+    },
+    "set_partial_damage": {
+      "selected": "allocate",
+      "alternative": "whole_set",
+      "scope_status": "restore_candidate",
+      "in_source": false,
+      "basis": "세트 일부만 손상·분실되면 7.의 배분 비율을 적용한다 (상·하 Set 상의만 → 65%). 6.①은 산정 기준 가격을 1벌 전체로 잡는다는 뜻으로 읽음 [해석] [결정 2026-11-02 Q-L3]"
+    },
+    "similar_item_application": {
+      "auto": false,
+      "unlisted_item_result": "out_of_scope",
+      "unlisted_item_code": "ITEM_NOT_IN_TABLE",
+      "unlisted_item_code_status": "accepted",
+      "in_source": true,
+      "basis": "시행령 제9조 ② '준용할 수 있다' → 엔진은 자동 준용하지 않는다. 평균 내용연수표에 없는 세탁물은 계산하지 않고 ❔ + 1372 안내 [결정 2026-11-02 Q-L4]. 코드 이름 수락 (2026-11-02)"
+    },
+    "decision_sensitivity": {
+      "applies_to": ["use_days", "rounding", "set_partial_damage"],
+      "applies_to_note": "lifespan_table.hanbok은 2026-11-06 원문 칸 구조 확인으로 in_source: true가 되어 검사 대상에서 뺐다 (Q-L8). set_partial_damage는 복원할 때만 검사한다",
+      "rule": "in_source: false 결정을 alternative로 바꾼 모든 조합에서 조회 결과(내용연수 행, 배상비율 칸)와 배상액이 결정 값과 같을 때만 ✅. 하나라도 다르면 🔍 DECISION_SENSITIVE. 메시지에는 원인 결정(사용일수 산입 / 원 미만 처리)과 금액 범위를 반드시 넣는다",
+      "code_status": "accepted",
+      "limit": "나열한 결정(applies_to)의 대안만 본다. 나열하지 않은 해석이 결과를 바꾸는지는 이 검사로 알 수 없다 (laundry_spec_draft.md L4.1 '검토하지 않은 대안')",
+      "in_source": false,
+      "basis": "✅는 해석에 의존하지 않는 기준 확인이라는 설계 원칙 [결정 2026-11-02 사용자 지시]. 세부는 laundry_spec_draft.md L4"
+    },
+    "deductions_computed": false,
+    "deductions_basis": "2.① 고객 일부 책임 공제, 2.② 손상품 인도 시 일부 감액: 원문에 금액·비율 없음 → 사유 코드로만 표시"
+  },
+  "notes": [
+    "초안(사전 조사, 2026-11-02). 블록 4개(ratio_table, lifespan_table, set_allocation, unproven_fallback)는 기계 대조 일치로 verified: true, user_checked: false다 [결정 2026-11-02 Q-S2, 헬스장 선례]. 사용자 표본 대조는 나중에 한다.",
+    "최상위 verified는 false로 둔다: 세탁 표준약관 조항(related_clauses)은 아직 한 경로만 확인했고(Q-L7), 아래 밑줄 문장의 의미를 확인하지 않았다.",
+    "비율은 정수 퍼센트(ratio_percent)로 저장한다. 금액 계산은 정수·분수 연산으로 하고 float를 쓰지 않는다.",
+    "rows[].bands[].max_days가 null이면 상한 없음(원문 '548~' 등).",
+    "lifespan_table.rows: years가 있으면 단일 값, variants가 있으면 variant_by(use/material)로 고른다. 원문 표의 글자 사이 공백은 지웠다.",
+    "원문 PDF 122쪽 '2. 손해배상액의 감액 ②' 문장에 밑줄이 있다. 의미는 확인하지 않았다.",
+    "세탁업 표준약관(제10039호) 조항은 HWP 한 경로만 확인해 related_clauses에 넣되 verified_paths: 1로 표시했다. 안내 문구로만 쓰고, 인용하기 전에 PDF 등 두 번째 경로로 원문을 다시 확인한다 [결정 2026-11-02 Q-L7]. 청구 기간(6개월)은 범위 판정에 쓰지 않는다."
+  ],
+  "clauses": [
+    {
+      "id": "laundry_types",
+      "label": "별표 Ⅱ ⑯세탁업 분쟁유형·해결기준",
+      "text": "분쟁유형: 1) 하자발생(탈색, 변‧퇴색, 재오염, 손상 등) / 2) 분실 또는 소실\n해결기준: o 사업자의 책임하에(사업자 비용 부담) 원상회복, 불가능시 손해배상 / o 손해배상"
+    },
+    {
+      "id": "laundry_1",
+      "label": "별표 Ⅱ ⑯세탁업 1. 배상액의 산정방식",
+      "text": "1. 배상액의 산정방식\n① 배상액= 물품구입가격× 배상비율(배상비율표 참조)\n② 다만, 소비자와 세탁업자간의 배상에 대한 특약이 있는 경우에는 그에 따름."
+    },
+    {
+      "id": "laundry_2",
+      "label": "별표 Ⅱ ⑯세탁업 2. 손해배상액의 감액",
+      "text": "2. 손해배상액의 감액\n① 세탁물의 손상 등에 대하여 고객도 일부 책임이 있는 경우에는 세탁업자의 손해배상액에서 그에 해당하는 금액을 공제함.\n② 고객이 손상된 세탁물을 인도받기를 원하는 경우에는 배상액의 일부를 감액할 수 있음."
+    },
+    {
+      "id": "laundry_3",
+      "label": "별표 Ⅱ ⑯세탁업 3. 배상의무의 면제",
+      "text": "3. 배상의무의 면제\n① 고객이 세탁물에 이상이 없다는 확인서를 세탁업자에게 교부했을 때는 세탁업자는 세탁물 하자에 대한 보수나 손해배상책임을 면함. 이 경우 확인서는 인수증에 날인 또는 기명하는 것으로 대신할 수 있음, 단 고객이 이상 없음을 확인하였더라도 추후 세탁업자의 고의, 과실이 있음을 입증한 경우에는 면책되지 않음.\n② 세탁업자는 다음 각호의 경우 세탁물의 하자 또는 세탁의 지체로 인한 소비자피해에 대해 면책됨.\n- 세탁업자의 세탁물 회수에 대한 통지에도 불구하고 통지도달일로부터 30일이 경과하도록 미회수하는 경우\n- 고객이 세탁완성예정일(고객의 동의로 완성예정일이 연기된 경우 연기된 완성예정일)의 다음날부터 3개월간 완성된 세탁물을 미회수하는 경우"
+    },
+    {
+      "id": "laundry_4",
+      "label": "별표 Ⅱ ⑯세탁업 4. 세탁물 확인 의무",
+      "text": "4. 세탁물 확인 의무\n- 세탁업자는 세탁물 인수 시 의뢰받은 세탁물상의 하자여부를 확인할 책임이 있음."
+    },
+    {
+      "id": "laundry_5",
+      "label": "별표 Ⅱ ⑯세탁업 5. 세탁물 인수증 교부의무",
+      "text": "5. 세탁물 인수증 교부의무\n① 세탁업자는 세탁물 인수 시 다음 각 호의 내용을 기재한 인수증을 교부하여야 함.\n- 세탁업자의 상호, 주소 및 전화번호\n- 고객의 성명, 주소 및 전화번호\n- 세탁물 인수일, 세탁완성 예정일\n- 세탁물의 구입가격 및 구입일(20만원 이상제품의 경우)\n- 세탁물의 품명, 수량 및 세탁요금\n- 피해발생 시 손해배상기준\n- 기타사항(세탁물보관료, 세탁물의 하자유무, 특약사항)\n② 인수증 미교부 시 세탁물 분실에 대해서는 세탁업소에서 책임을 짐."
+    },
+    {
+      "id": "laundry_5_1",
+      "label": "별표 Ⅱ ⑯세탁업 5-1. 손해배상대상세탁물",
+      "text": "5-1. 손해배상대상세탁물\n① 손해배상의 산정기준은 인수증에 기재된 바에 따름. 단 세탁업자가 세탁물의 품명, 구입가격, 구입일이 인수증의 기재내용과 상이함을 증명한 경우에는 그에 따름.\n② 세탁업자가 손해배상 산정에 필요한 인수증 기재사항을 누락했거나 또는 인수증을 교부하지 않은 경우에는 고객이 입증하는 내용(세탁물의 품명, 구입가격, 구입일 등)을 기준으로 함.\n③ 고객이 세탁물의 품명, 구입가격, 구입일 등을 입증하지 못하여 배상액 산정이 불가한 경우에는 세탁업자는 고객에게 세탁요금의 20배를 배상함."
+    },
+    {
+      "id": "laundry_6",
+      "label": "별표 Ⅱ ⑯세탁업 6. Set의류의 배상액 산정기준",
+      "text": "6. Set의류의 배상액 산정기준\n① 양복 상하와 같이 2점 이상이 1벌일 때는 1벌 전체를 기준으로 하여 배상액을 산정함.\n② 단, 소비자가 1벌 중 일부만을 세탁업자에게 세탁의뢰 하였을 경우에는 그 일부에 대하여만 배상함."
+    },
+    {
+      "id": "laundry_7",
+      "label": "별표 Ⅱ ⑯세탁업 7. Set의류의 배상액 배분",
+      "text": "7. Set의류의 배상액 배분\n① 상‧하의가 한 Set인 경우：상의 65%, 하의 35%\n② 상‧중‧하의가 한 Set인 경우：상의 55%, 하의 35%, 중의 10%\n③ 한복 중 치마저고리, 바지저고리는 상의50%, 하의50%\n④ 세트의류라 하더라도 각각의 가격이 정해져 있는 경우는 그 가격에 따름."
+    },
+    {
+      "id": "laundry_8",
+      "label": "별표 Ⅱ ⑯세탁업 8. 탈부착용 부속물",
+      "text": "8. 탈부착용 부속물(털, 칼라, 모자 등)이 손상된 경우는 동 부속물만을 대상으로 배상액을 결정함. 단, 부속물이 해당 의류의 기능 발휘에 없어서는 안 될 필수적인 경우(방한복의 모자 등)에는 의류 전체를 기준으로 배상액을 산정함."
+    },
+    {
+      "id": "laundry_ratio_table",
+      "label": "별표 Ⅱ ⑯세탁업 배상비율표",
+      "text": "물품 사용일수(물품 구입일로부터 사용여부에 상관없이 세탁의뢰일 까지 계산한 일수)",
+      "table_ref": "ratio_table"
+    },
+    {
+      "id": "laundry_lifespan_table",
+      "label": "별표 Ⅱ ⑯세탁업 품목별 평균 내용년수",
+      "text": "* 특수워싱：본래 제조된 원단 상태가 아니라 인위적으로 외형을 가공(샌드가공, 스톤워싱, 표백제 등 약품처리 가공 등)한 상태의 소재를 말함.",
+      "table_ref": "lifespan_table"
+    }
+  ],
+  "related_clauses": [
+    {
+      "id": "cpa16_3",
+      "label": "소비자기본법 제16조 ③",
+      "source": {
+        "name": "소비자기본법",
+        "law_number": "법률 제21444호",
+        "url": "https://www.law.go.kr/법령/소비자기본법",
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "제2항의 규정에 따른 소비자분쟁해결기준은 분쟁당사자 사이에 분쟁해결방법에 관한 별도의 의사표시가 없는 경우에 한하여 분쟁해결을 위한 합의 또는 권고의 기준이 된다."
+    },
+    {
+      "id": "cpa_dec9_2",
+      "label": "소비자기본법 시행령 제9조 ②",
+      "source": {
+        "name": "소비자기본법 시행령",
+        "law_number": "대통령령 제36663호",
+        "url": "https://www.law.go.kr/법령/소비자기본법시행령",
+        "effective_date": "2026-09-11",
+        "retrieved_at": "2026-11-02"
+      },
+      "text": "품목별 소비자분쟁해결기준에서 해당 품목에 대한 분쟁해결기준을 정하고 있지 아니한 경우에는 같은 기준에서 정한 유사품목에 대한 분쟁해결기준을 준용할 수 있다."
+    },
+    {
+      "id": "laundry_terms_art9",
+      "label": "세탁업 표준약관 제9조 (세탁요금의 환급)",
+      "source": {
+        "name": "세탁업 표준약관",
+        "terms_number": "표준약관 제10039호",
+        "url": "https://www.ftc.go.kr/www/selectBbsNttView.do?key=202&bordCd=201&nttSn=11115",
+        "enacted": "2002-12-05",
+        "retrieved_at": "2026-11-02",
+        "verified_paths": 1,
+        "usage": "notice_only"
+      },
+      "text": "① 세탁업자의 책임있는 사유로 세탁물이 손상, 색상변화, 얼룩 등의 하자가 발생하거나, 분실 등으로 고객에게 세탁물을 반환할 수 없을 때에는 해당 세탁물에 대하여 세탁업자는 고객에게 세탁요금을 청구하지 못합니다.\n② 전항의 경우에 세탁업자가 세탁요금을 선납받은 경우에는 그 요금을 환급합니다."
+    },
+    {
+      "id": "laundry_terms_art10_3",
+      "label": "세탁업 표준약관 제10조 ③ (청구 기간)",
+      "source": {
+        "name": "세탁업 표준약관",
+        "terms_number": "표준약관 제10039호",
+        "url": "https://www.ftc.go.kr/www/selectBbsNttView.do?key=202&bordCd=201&nttSn=11115",
+        "enacted": "2002-12-05",
+        "retrieved_at": "2026-11-02",
+        "verified_paths": 1,
+        "usage": "notice_only"
+      },
+      "text": "③ 고객은 완성된 세탁물을 인도받은 날부터 6개월 이내에 하자의 보수 또는 손해배상의 청구를 하여야 하며, 이 기간이 경과하면 세탁업자는 그 책임을 면합니다. 이 경우 세탁완성예정일(고객의 동의로 완성예정일이 연기된 경우에는 연기된 완성예정일)의 다음날부터 고객의 귀책사유로 세탁물을 회수하지 않은 기간은 이에 산입합니다."
+    }
+  ]
+}
