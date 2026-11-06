@@ -148,10 +148,14 @@ WITHDRAWAL_GUIDE = (
 
 # ---- 고지·상담 창구 (초안, 승인 대기 보고서) ----
 
+# 고시 제2019-9호(제1조~제8조)와 근거 조항 방문판매법 제32조 ④ 원문에 구속력 여부를 정한
+# 문구가 없어 "참고 결과이며 법적 판단이 아님" 취지로 쓴다 (2026-11-06 Q1, 승인 대기 보고서).
 DISCLAIMER = (
-    "이 결과는 공정거래위원회 고시 등 기준에 정해진 내용을 정리한 참고 정보입니다. "
+    "공정거래위원회 고시 기준으로 계산한 참고 결과이며 법적 판단이 아닙니다. "
     "기준상 이렇게 정해져 있다는 뜻이며, 실제 환급 여부나 금액을 확정하지 않습니다."
 )
+
+CONSULT_NO_CALC_CODES = frozenset(NO_CALC_CODES - {F.MISSING_REQUIRED, F.INVALID_INPUT})
 
 CONSULT_MESSAGE = "이 결과는 아래 상담 창구에 문의해 주세요."
 CONSULT_CHANNELS: tuple[str, ...] = (
@@ -260,9 +264,10 @@ def build_display(result: GymResult, rule: GymRule) -> GymDisplay:
     """GymResult → 화면 표시 정보 (5.4 화면 한 줄 1개 + 나머지 접기)."""
     ordered = order_flags(result.flags)
     lines = [_flag_line(code) for code in ordered]
-    # 상담 창구: ❔이거나 계산하지 않은 🔍 (5.2 머리말, 5.5 부여 규칙)
+    # 상담 창구: ❔와 계산하지 않은 🔍 중 CONSULT_NO_CALC_CODES (5.5 부여 규칙, 2026-11-06 Q2).
+    # MISSING_REQUIRED·INVALID_INPUT은 다시 입력하면 되므로 붙이지 않는다.
     needs_consult = result.badge == Badge.UNDETERMINABLE or (
-        not result.calculated and any(code in NO_CALC_CODES for code in ordered)
+        not result.calculated and any(code in CONSULT_NO_CALC_CODES for code in ordered)
     )
     s = rule.source
     return GymDisplay(
