@@ -82,6 +82,7 @@ docs/         MVP_SPEC.md 등
 ## 7. Git
 
 세부 규칙은 `CONTRIBUTING.md`. 핵심만: **사용자가 요청하기 전에는 commit, push, 브랜치 삭제를 하지 않는다.** `--force`, `--no-verify`, `git reset --hard`는 쓰지 않는다. `main`에 직접 커밋하지 않는다.
+커밋 메시지는 제목 한 줄만 쓴다(`git commit -m "<type>(<scope>): <제목>"`, `-m` 하나, 본문 없음). 출처 이름·URL·확인일은 커밋이 아니라 PR 본문에 적는다. Claude가 제안하는 커밋 명령도 모두 이 형식을 따른다.
 
 ## 8. 범위 밖 (요청이 와도 먼저 확인)
 
