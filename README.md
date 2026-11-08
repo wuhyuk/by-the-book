@@ -98,10 +98,20 @@ by-the-book/
 `backend/.env.example`을 `backend/.env`로 복사하고 값을 채웁니다. API 키는 코드나 저장소에 올리지 마세요.
 
 ```env
-LLM_PROVIDER=사용할_LLM_제공자
+LLM_PROVIDER=gemini
 LLM_API_KEY=발급받은_API_키
-LLM_MODEL=사용할_모델_이름
+LLM_MODEL=gemini-3.1-flash-lite
 ```
+
+선택 설정 (없으면 기본값):
+
+| 이름 | 기본값 | 뜻 |
+|---|---|---|
+| `LLM_TEMPERATURE` | 0 | 값을 비우면(`LLM_TEMPERATURE=`) temperature를 보내지 않습니다 |
+| `LLM_MAX_RPM` | 12 | 분당 호출 상한. 코드가 호출 간격(60 ÷ 값 초)을 지킵니다 |
+| `LLM_FALLBACK_MODEL` | (비움) | 기본 모델이 재시도 뒤에도 429일 때 1회 부를 예비 모델 |
+
+지금 지원하는 제공자는 `gemini` 하나입니다 (`backend/llm/gemini.py`, REST 호출). 모델 이름은 코드에 없고 `LLM_MODEL`에서만 읽습니다. 환경변수가 있으면 `.env`보다 먼저 씁니다. 설정이 없어도 서버는 뜨고, 문장 분석(`/api/analyze`)만 "직접 입력해 주세요" 안내(503)를 돌려줍니다.
 
 ### 2. 백엔드 실행
 
@@ -127,7 +137,10 @@ npm install
 npm run dev
 ```
 
-브라우저에서 `http://localhost:5173`을 열고 헬스장·요가·필라테스 계약 정보를 입력한 뒤 **기준 금액 확인**을 누릅니다. 지금 단계(VS2)는 입력 폼만 있고 자유 문장 입력·LLM은 쓰지 않습니다.
+브라우저에서 `http://localhost:5173`을 엽니다.
+
+- **문장으로 입력 (VS3)**: 상황을 문장으로 적고 **문장에서 항목 찾기**를 누르면, 개인정보를 가린 뒤 LLM이 항목을 찾아 아래 폼을 채웁니다. 문장에서 근거를 확인한 값만 채우고, 빠지거나 확인하지 못한 항목은 폼에 표시해 다시 묻습니다. 승패·법적 효력 질문이면 `❔ 판단 불가`와 상담 창구를 보여 줍니다.
+- **폼으로 입력**: 폼을 직접 채우고 **기준 금액 확인**을 누릅니다. 금액은 항상 규칙 엔진(`/api/calculate`)이 계산합니다.
 
 ### 4. 테스트
 
@@ -153,6 +166,18 @@ backend\.venv\Scripts\python eval\vs2_walkthrough.py --checklist  # 화면에서
 ```
 
 `--checklist` 표의 배지·화면 한 줄·금액이 브라우저 결과 카드와 같은지 눈으로 확인합니다. 케이스 입력값은 `backend/tests/test_gym_calc.py`의 같은 ID에 있습니다.
+
+### 6. 모델 비교 (VS3, 실제 키 사용)
+
+`backend/.env`(또는 환경변수)에 키를 넣은 사람이 직접 실행합니다. 가상 문장 15건을 모델마다 보내 필수 필드 추출 정확도(few-shot과 겹치는 케이스/아닌 케이스 따로 포함), `refund_basis`의 null/"unknown" 구분, 판단 질문 감지, 응답 시간, 429 발생 수를 출력합니다. 입력 문장·추출 값·응답 본문·키는 출력하지 않습니다. 기본 목록은 `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`입니다.
+
+```powershell
+$env:PYTHONIOENCODING = "utf-8"
+backend\.venv\Scripts\python eval\vs3_model_compare.py --dry-run   # 키 없이 케이스 정의 점검
+backend\.venv\Scripts\python eval\vs3_model_compare.py --out $env:TEMP\vs3_compare_result.json
+```
+
+호출 간격은 모델별 무료 한도로 정합니다 (flash-lite 계열 5초, 하루 20건 모델 13초, `--interval`로 변경). `gemini-3.6-flash` 같은 하루 20건 모델은 `--models`로 직접 지정할 때만 쓰고, 실행 전에 한도 경고를 출력합니다.
 
 ## 📊 평가 지표
 
