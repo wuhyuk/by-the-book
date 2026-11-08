@@ -1,5 +1,5 @@
-// /api/calculate 호출. 입력은 POST 본문으로만 보낸다 (URL·localStorage·콘솔에 남기지 않는다).
-import type { CalculateResponse, GymInput, ValidationIssue } from './types'
+// /api/calculate·/api/analyze 호출. 입력은 POST 본문으로만 보낸다 (URL·localStorage·콘솔에 남기지 않는다).
+import type { AnalyzeResponse, CalculateResponse, GymInput, ValidationIssue } from './types'
 
 export type CalculateOutcome =
   | { kind: 'ok'; data: CalculateResponse }
@@ -8,6 +8,7 @@ export type CalculateOutcome =
 
 const NETWORK_ERROR = '서버에 연결하지 못했습니다. 백엔드가 실행 중인지 확인해 주세요.'
 const UNKNOWN_ERROR = '알 수 없는 오류가 발생했습니다. 잠시 뒤 다시 시도해 주세요.'
+const ANALYZE_INVALID = '문장을 1자 이상 2,000자 이하로 입력해 주세요.'
 
 export async function calculate(input: GymInput): Promise<CalculateOutcome> {
   let response: Response
@@ -33,6 +34,35 @@ export async function calculate(input: GymInput): Promise<CalculateOutcome> {
     }
   }
   try {
+    const body = (await response.json()) as { message?: string }
+    return { kind: 'error', message: body.message ?? UNKNOWN_ERROR }
+  } catch {
+    return { kind: 'error', message: UNKNOWN_ERROR }
+  }
+}
+
+export type AnalyzeOutcome =
+  | { kind: 'ok'; data: AnalyzeResponse }
+  | { kind: 'error'; message: string }
+
+// /api/analyze 호출. 문장은 POST 본문으로만 보낸다 (URL·localStorage·콘솔에 남기지 않는다).
+export async function analyze(text: string): Promise<AnalyzeOutcome> {
+  let response: Response
+  try {
+    response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+      cache: 'no-store',
+    })
+  } catch {
+    return { kind: 'error', message: NETWORK_ERROR }
+  }
+  try {
+    if (response.ok) {
+      return { kind: 'ok', data: (await response.json()) as AnalyzeResponse }
+    }
+    if (response.status === 422) return { kind: 'error', message: ANALYZE_INVALID }
     const body = (await response.json()) as { message?: string }
     return { kind: 'error', message: body.message ?? UNKNOWN_ERROR }
   } catch {

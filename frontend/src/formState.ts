@@ -1,11 +1,11 @@
 // 입력 폼 상태와 GymInput 변환. 화면에 보이지 않는 조건부 항목은 null/기본값으로 보낸다.
 // 입력 문자열을 정수로 바꾸는 것 외에 숫자를 만들지 않는다.
-import type { GymInput, TriState } from './types'
+import type { AnalyzeResult, GymInput, TriState } from './types'
 
 export type TriChoice = 'yes' | 'no' | 'unknown'
 
 export interface FormState {
-  industry: string // 'fitness' | 'yoga_pilates' | 'other'
+  industry: string // 'fitness' | 'yoga_pilates' | 'other' | '' (문장 분석에서 못 찾음)
   termination_cause: GymInput['termination_cause'] | ''
   contract_type: GymInput['contract_type'] | ''
   refund_basis: 'period' | 'session' | 'unknown' | ''
@@ -116,7 +116,7 @@ type NumberField = (typeof NUMBER_FIELDS)[number]
 
 export const COUNT_FIELDS: readonly string[] = ['total_sessions', 'used_sessions']
 
-type ChoiceField = 'termination_cause' | 'contract_type'
+type ChoiceField = 'industry' | 'termination_cause' | 'contract_type'
 
 export type BuildResult =
   | { ok: true; input: GymInput }
@@ -134,7 +134,7 @@ export function buildInput(f: FormState): BuildResult {
   }
   // 사용자가 고르지 않은 값을 대신 채워 보내지 않는다 (필수 선택 항목)
   const missingFields: (NumberField | ChoiceField)[] = [
-    ...(['termination_cause', 'contract_type'] as const).filter((n) => f[n] === ''),
+    ...(['industry', 'termination_cause', 'contract_type'] as const).filter((n) => f[n] === ''),
     ...(['total_contract_amount', 'paid_amount'] as const).filter(
       (n) => parsed[n] === null && !invalidFields.includes(n),
     ),
@@ -173,4 +173,91 @@ export function buildInput(f: FormState): BuildResult {
       is_pt_only: v.ptQuestion ? tri(f.is_pt_only) : null,
     },
   }
+}
+
+// ---- 문장 분석 결과 → 폼 (VS3, 2026-11-08 결정 B) ----
+
+const TRI_FIELDS = ['has_refund_limit_clause', 'had_postponement', 'is_pt_only'] as const
+const CHECK_FIELDS = ['academy_law_applies', 'is_withdrawal', 'add_on_returned'] as const
+const DATE_FIELDS = ['start_date', 'end_date', 'notice_date'] as const
+const ENUM_VALUES = {
+  industry: ['fitness', 'yoga_pilates', 'other'],
+  termination_cause: ['consumer', 'business', 'force_majeure', 'unknown'],
+  contract_type: ['period', 'session'],
+  refund_basis: ['period', 'session', 'unknown'],
+} as const
+
+type FieldName = keyof FormState
+type FieldValue = FormState[FieldName]
+
+/** 분석 결과(근거 확인된 값)를 폼 값으로 바꾼다. 숫자는 서버가 준 정수를 문자열로 옮기기만 한다. */
+export function extractedFormValues(ext: AnalyzeResult): Partial<Record<FieldName, FieldValue>> {
+  const v = ext.fields
+  const out: Partial<Record<FieldName, FieldValue>> = {}
+  for (const [name, allowed] of Object.entries(ENUM_VALUES) as [keyof typeof ENUM_VALUES, readonly string[]][]) {
+    const value = v[name]
+    if (typeof value === 'string' && allowed.includes(value)) out[name] = value
+  }
+  for (const name of NUMBER_FIELDS) {
+    const value = v[name]
+    if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) out[name] = String(value)
+  }
+  for (const name of DATE_FIELDS) {
+    const value = v[name]
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) out[name] = value
+  }
+  for (const name of TRI_FIELDS) {
+    const value = v[name]
+    if (typeof value === 'boolean') out[name] = value ? 'yes' : 'no'
+  }
+  for (const name of CHECK_FIELDS) {
+    const value = v[name]
+    if (typeof value === 'boolean') out[name] = value
+  }
+  // 확인 항목은 체크(True)만 있다. False·없음은 체크하지 않은 상태 (5.1)
+  if (v.withdrawal_cleared === true) out.withdrawal_cleared = true
+  return out
+}
+
+/** 비어 있는 값: 빈 문자열, "모름"(예/아니오/모름), 체크하지 않음 */
+export function isEmptyValue(name: FieldName, value: FieldValue): boolean {
+  if (typeof value === 'boolean') return !value
+  if ((TRI_FIELDS as readonly string[]).includes(name)) return value === 'unknown'
+  return value === ''
+}
+
+export interface MergeResult {
+  form: FormState
+  /** 문장 값으로 채운 항목 */
+  filled: FieldName[]
+  /** 사용자가 입력한 값과 문장 값이 달라 사용자 값을 유지한 항목 → 문장 값 */
+  conflicts: Partial<Record<FieldName, FieldValue>>
+}
+
+/**
+ * 분석 결과를 현재 폼에 합친다 (결정 B).
+ * - 사용자가 직접 입력한 값(touched이고 비어 있지 않음)은 그대로 둔다. 문장 값이 다르면 conflicts에 담는다.
+ * - 그 밖의 항목(비었거나 이전 분석·기본값으로 채워진 항목)은 문장 값으로 채우고,
+ *   문장에 없으면 기본값으로 되돌린다. 업종은 기본값(헬스·피트니스) 대신 비워 사용자가 고르게 한다.
+ */
+export function mergeExtraction(form: FormState, touched: ReadonlySet<string>, ext: AnalyzeResult): MergeResult {
+  const values = extractedFormValues(ext)
+  const next = { ...form } as Record<FieldName, FieldValue>
+  const filled: FieldName[] = []
+  const conflicts: Partial<Record<FieldName, FieldValue>> = {}
+  for (const name of Object.keys(INITIAL_FORM) as FieldName[]) {
+    const userValue = touched.has(name) && !isEmptyValue(name, form[name])
+    const extracted = values[name]
+    if (userValue) {
+      if (extracted !== undefined && extracted !== form[name]) conflicts[name] = extracted
+      continue
+    }
+    if (extracted !== undefined) {
+      next[name] = extracted
+      filled.push(name)
+    } else {
+      next[name] = name === 'industry' ? '' : INITIAL_FORM[name]
+    }
+  }
+  return { form: next as unknown as FormState, filled, conflicts }
 }

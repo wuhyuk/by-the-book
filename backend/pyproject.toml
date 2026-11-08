@@ -11,12 +11,12 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "pydantic>=2",
+    "httpx",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "httpx",
     "ruff",
 ]
 
