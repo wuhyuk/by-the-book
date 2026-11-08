@@ -108,3 +108,29 @@ export interface ValidationIssue {
   loc: (string | number)[]
   type: string
 }
+
+// /api/analyze 응답 (backend/api/analyze.py, llm/extraction.py).
+// fields는 근거 구절을 코드가 확인한 값만 있다. 폼을 미리 채우는 데만 쓰고, 계산은 /api/calculate가 한다.
+export type ExtractedValue = string | number | boolean
+
+export interface AnalyzeResult {
+  fields: Partial<Record<keyof GymInput, ExtractedValue>>
+  evidence: Partial<Record<keyof GymInput, string>>
+  unverified: string[]
+  missing: string[]
+  confirm: string[]
+  judgment_requested: boolean
+}
+
+export interface GuardrailDisplay {
+  badge: string
+  screen_line: DisplayLine
+  consult: { message: string; channels: string[] }
+}
+
+export interface AnalyzeResponse {
+  status: 'extracted' | 'guardrail'
+  pii_masked: boolean
+  extraction: AnalyzeResult | null
+  guardrail: GuardrailDisplay | null
+}

@@ -242,3 +242,103 @@
   font-weight: 600;
   color: var(--text);
 }
+
+/* 문장 입력 (VS3) */
+.analyze {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px 14px;
+  margin-bottom: 16px;
+  background: var(--panel);
+}
+
+.analyze h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.analyze textarea {
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+}
+
+.analyze-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 8px;
+}
+
+.analyze button {
+  font: inherit;
+  font-weight: 700;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.analyze button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.analyze-error {
+  margin: -8px 0 12px;
+}
+
+.follow-up {
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.follow-up p {
+  margin: 4px 0;
+}
+
+.evidence {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ask-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.field-ask input,
+.field-ask select {
+  border-color: var(--accent);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.privacy {
+  margin: 6px 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--danger);
+}

@@ -85,3 +85,40 @@ export const RESULT_TEXT = {
   ruleSource: '기준',
   consultTitle: '상담 창구',
 }
+
+// 문장 입력·분석 (VS3). privacy는 [결정 2026-11-08 사용자] 문구 그대로, 나머지는 [초안] 승인 대기
+// (docs/sources/vs3_report.md 3절 C).
+export const ANALYZE_TEXT = {
+  title: '상황을 문장으로 입력',
+  label: '상황 설명',
+  placeholder:
+    '예: 헬스장 1년권을 2026-01-01부터 2026-12-31까지 120만원에 결제했는데, 이사 때문에 2026-03-31에 해지하겠다고 했어요.',
+  privacy:
+    '이름·연락처·주소는 입력하지 마세요. 입력한 문장은 외부 AI 서비스(Google)로 전달되며 서비스 개선에 쓰일 수 있습니다. 폼에 직접 입력하는 값은 전달되지 않습니다',
+  calcNote: '입력한 문장은 저장하지 않습니다. 금액은 AI가 아니라 고시의 계산식대로 코드가 계산합니다.',
+  button: '문장에서 항목 찾기',
+  analyzing: '찾는 중…',
+  masked: '개인정보로 보이는 부분을 가린 뒤 분석했습니다.',
+  filled: (n: number) =>
+    n > 0
+      ? `문장에서 찾은 항목 ${n}개를 아래 폼의 빈칸에 채웠습니다. 값이 맞는지 확인한 뒤 '기준 금액 확인'을 눌러 주세요.`
+      : '문장에서 새로 채울 항목을 찾지 못했습니다. 아래 폼에 직접 입력해 주세요.',
+  askTitle: '더 필요한 정보',
+  unverifiedTitle: '문장에서 확인하지 못한 값',
+  conflictTitle: '입력한 값과 문장이 다른 항목',
+  confirmTitle: '확인이 필요한 항목',
+  confirmNote: '문장에서 이렇게 보입니다. 이 값이면 기준 금액을 계산하지 않으니 맞는지 확인해 주세요.',
+  missingNote: '문장에서 찾지 못했습니다. 입력해 주세요.',
+  unverifiedNote: '문장의 값을 확인하지 못해 비워 두었습니다. 직접 입력해 주세요.',
+  conflictNote: (value: string) => `문장에서는 ${value}(으)로 보입니다. 입력한 값을 그대로 두었습니다.`,
+  evidence: (t: string) => `문장: “${t}”`,
+  or: '또는 아래 폼에 직접 입력할 수 있습니다.',
+}
+
+// [초안] 문장 값 표시용 선택지 이름 (폼의 선택지 문구와 같은 뜻)
+export const VALUE_LABEL: Record<string, Record<string, string>> = {
+  industry: { fitness: '헬스·피트니스', yoga_pilates: '요가·필라테스', other: '그 외 업종' },
+  contract_type: { period: '기간제', session: '횟수제' },
+  refund_basis: { period: '기간 기준', session: '횟수 기준', unknown: '모름' },
+  termination_cause: { consumer: '내 사정', business: '업체 사정', force_majeure: '불가항력', unknown: '모름' },
+}
