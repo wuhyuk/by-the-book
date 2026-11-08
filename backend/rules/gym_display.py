@@ -13,6 +13,7 @@ from rules.badge import (
     Badge,
     FlagCode,
     NoticeCode,
+    decide_badge,
     order_flags,
 )
 from rules.gym import GymResult
@@ -293,4 +294,32 @@ def build_display(result: GymResult, rule: GymRule) -> GymDisplay:
             else None
         ),
         withdrawal_guide=WITHDRAWAL_GUIDE if F.WITHDRAWAL in ordered else None,
+    )
+
+
+class GuardrailDisplay(_Model):
+    """계산 전에 멈춘 결과(승패·법적 효력 질문)의 표시 정보 (VS3 /api/analyze)."""
+
+    badge: Badge
+    screen_line: DisplayLine
+    consult: ConsultInfo
+
+
+def judgment_guardrail_display() -> GuardrailDisplay:
+    """승패·법적 효력 판단·법률 문서 작성 요청 → ❔ 판단 불가 + 상담 창구 (CLAUDE.md 절대 규칙 4).
+
+    배지는 배지 결정 함수로 정한다 (judgment_requested=True면 ❔). 문구는 기존 ❔ 사유 한 줄과 같다.
+    계산하지 않았으므로 계산 결과 고지(DISCLAIMER)는 붙이지 않는다.
+    """
+    badge = decide_badge(
+        judgment_requested=True,
+        out_of_scope=False,
+        missing_or_invalid=False,
+        robust_warnings=[],
+        review_flags=[],
+    )
+    return GuardrailDisplay(
+        badge=badge,
+        screen_line=_flag_line(F.JUDGMENT_REQUESTED),
+        consult=ConsultInfo(message=CONSULT_MESSAGE, channels=list(CONSULT_CHANNELS)),
     )
