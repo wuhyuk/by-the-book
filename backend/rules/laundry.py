@@ -184,7 +184,8 @@ def _invalid(inp: LaundryInput, rule: LaundryRule) -> bool:
     if row is None:
         return True
     if row.variants is None:
-        return inp.variant_key is not None
+        # 값이 하나인 행의 variant_key는 무시한다 (결과가 같다, 12.1 Q4 변경)
+        return False
     return inp.variant_key is None or row.variant(inp.variant_key) is None
 
 
@@ -327,6 +328,15 @@ def _notices(inp: LaundryInput, method: Method) -> list[LaundryNotice]:
     return notices
 
 
+def _terms_citable(rule: LaundryRule, clause_id: str) -> bool:
+    """표준약관 조항은 원문을 두 경로로 확인했을 때만 인용한다 (12.7, Q-L7)."""
+    clause = next((c for c in rule.related_clauses if c.id == clause_id), None)
+    if clause is None:
+        return False
+    paths = clause.source.verified_paths
+    return paths is not None and paths >= 2 and clause.source.usage != "notice_only"
+
+
 def _citations(
     inp: LaundryInput,
     rule: LaundryRule,
@@ -348,6 +358,15 @@ def _citations(
             ids.append("laundry_3")
         if N.NO_RECEIPT_LOSS in notices:
             ids.append("laundry_5")
+        terms = {
+            N.LAUNDRY_FEE_TERMS: "laundry_terms_art9",
+            N.CLAIM_PERIOD_TERMS: "laundry_terms_art10_3",
+        }
+        ids += [
+            cid
+            for code, cid in terms.items()
+            if code in notices and _terms_citable(rule, cid)
+        ]
     else:
         by_code = {
             L.UNSUPPORTED_DAMAGE: "laundry_types",
@@ -380,7 +399,7 @@ def _ratio_steps(
     row = rule.lifespan_table.row(inp.item_key)
     assert row is not None
     item = row.label
-    if inp.variant_key is not None:
+    if row.variants is not None and inp.variant_key is not None:
         variant = row.variant(inp.variant_key)
         assert variant is not None
         item += f" ({variant.label})"

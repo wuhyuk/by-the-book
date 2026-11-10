@@ -10,6 +10,7 @@ import {
   buildLaundryInput,
   INITIAL_LAUNDRY_FORM,
   isEmptyLaundryValue,
+  isUserLaundryValue,
   mergeLaundryExtraction,
   UNLISTED,
   type LaundryForm as Form,
@@ -116,8 +117,12 @@ export function LaundryApp() {
       const k = formKey(f) as keyof Form
       return k in merged.form && isEmptyLaundryValue(k, merged.form[k])
     }
+    // 필수 누락(missing)은 직접 고른 "모름"이어도 다시 묻는다 (예: 입증 여부 "모름" → 계산 안 함, L10).
+    // 확인 안 됨(unverified)은 사용자가 직접 고른 값이면 묻지 않는다.
     const missing = ext.missing.filter(stillEmpty)
-    const unverified = ext.unverified.filter((f) => stillEmpty(f) && !missing.includes(f))
+    const unverified = ext.unverified.filter(
+      (f) => stillEmpty(f) && !missing.includes(f) && !isUserLaundryValue(formKey(f) as keyof Form, merged.form[formKey(f) as keyof Form], touched),
+    )
     const conflicts = Object.keys(merged.conflicts)
     const filled = new Set<string>(merged.filled)
     const confirm = ext.confirm.filter((f) => filled.has(formKey(f)))

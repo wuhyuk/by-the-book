@@ -1,6 +1,6 @@
 // 입력 폼 상태와 GymInput 변환. 화면에 보이지 않는 조건부 항목은 null/기본값으로 보낸다.
 // 입력 문자열을 정수로 바꾸는 것 외에 숫자를 만들지 않는다.
-import type { AnalyzeResult, GymInput, TriState } from './types'
+import type { AnalyzeResult, GymInput, TriState } from './types.ts'
 
 export type TriChoice = 'yes' | 'no' | 'unknown'
 
@@ -219,6 +219,17 @@ export function extractedFormValues(ext: AnalyzeResult): Partial<Record<FieldNam
   return out
 }
 
+/**
+ * 사용자 입력으로 볼 값인지 (문장 분석이 덮어쓰지 않는다).
+ * 기본값이 있는 선택 항목("모름")은 사용자가 직접 고른 적이 있으면(touched) "모름"이라도 사용자 입력이다.
+ * 빈칸·체크하지 않음은 직접 지웠어도 빈 값으로 본다 (2026-11-10 사용자 지시).
+ */
+export function isUserValue(name: FieldName, value: FieldValue, touched: ReadonlySet<string>): boolean {
+  if (!touched.has(name)) return false
+  if ((TRI_FIELDS as readonly string[]).includes(name)) return true
+  return !isEmptyValue(name, value)
+}
+
 /** 비어 있는 값: 빈 문자열, "모름"(예/아니오/모름), 체크하지 않음 */
 export function isEmptyValue(name: FieldName, value: FieldValue): boolean {
   if (typeof value === 'boolean') return !value
@@ -236,7 +247,7 @@ export interface MergeResult {
 
 /**
  * 분석 결과를 현재 폼에 합친다 (결정 B).
- * - 사용자가 직접 입력한 값(touched이고 비어 있지 않음)은 그대로 둔다. 문장 값이 다르면 conflicts에 담는다.
+ * - 사용자가 직접 입력한 값(isUserValue: 직접 고른 "모름" 포함)은 그대로 둔다. 문장 값이 다르면 conflicts에 담는다.
  * - 그 밖의 항목(비었거나 이전 분석·기본값으로 채워진 항목)은 문장 값으로 채우고,
  *   문장에 없으면 기본값으로 되돌린다. 업종은 기본값(헬스·피트니스) 대신 비워 사용자가 고르게 한다.
  */
@@ -246,7 +257,7 @@ export function mergeExtraction(form: FormState, touched: ReadonlySet<string>, e
   const filled: FieldName[] = []
   const conflicts: Partial<Record<FieldName, FieldValue>> = {}
   for (const name of Object.keys(INITIAL_FORM) as FieldName[]) {
-    const userValue = touched.has(name) && !isEmptyValue(name, form[name])
+    const userValue = isUserValue(name, form[name], touched)
     const extracted = values[name]
     if (userValue) {
       if (extracted !== undefined && extracted !== form[name]) conflicts[name] = extracted
