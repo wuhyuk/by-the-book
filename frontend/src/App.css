@@ -342,3 +342,29 @@
   font-weight: 600;
   color: var(--danger);
 }
+
+/* 품목 선택 탭 (VS4) */
+.item-tabs {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 1100px;
+  margin: 16px auto 0;
+  padding: 0 16px;
+}
+
+.item-tab {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.item-tab-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}

@@ -1,9 +1,9 @@
 # MVP_SPEC — 기준대로
 
 > 상태: **초안**. 현재 단계에 필요한 결정이 끝나기 전에는 그 단계를 구현하지 않는다. 결정이 나면 이 문서를 먼저 갱신한다.
-> **현재 단계: 수직 슬라이스 VS3 (자연어 → LLM 추출, `feat/llm-analyze`) 진행 중, 다음은 VS4 (세탁 엔진)**. `/api/guide`를 VS3으로 당기는 안은 검토 후 VS5에 둔다 (근거·일정 영향은 `docs/sources/vs3_report.md` 0절, 2026-11-08). 2026-11-06부터 구현 순서는 8.1절 수직 슬라이스 계획을 따른다.
-> 완료한 단계: 0 (고시 원문 확인, 2026-10-26), 1 (저장소 뼈대, 2026-10-19), 2 (규칙 엔진 + 테스트, main 병합 #4), 세탁·가전 사전 조사 (main 병합 #5, 2026-11-06), VS1 (main 병합 #6), VS2 (PR 2-1 `/api/calculate` main 병합 #8, PR 2-2·2-3 화면·관통 확인 main 병합 #9).
-> 세탁·가전 사전 조사 산출물: `docs/sources/laundry_*.md`, `docs/sources/appliance_*.md`, `backend/data/rules/laundry_*.json`·`appliance_*.json` 초안. 세탁은 결정 반영(2026-11-02·11-06, 표 블록 4개 `verified: true`·`user_checked: false`, 최상위 `false`), 가전은 모두 `verified: false`로 보관. 단계 7 구현 전 조사이며 코드는 없다. 결정·일정은 `docs/sources/stage0_laundry_appliance_report.md` 9·10절.
+> **현재 단계: 수직 슬라이스 VS4 (세탁 축소 A 기본안, `feat/laundry`) 진행 중, 다음은 VS4 복원 후보(소재·용도 미상 → Set 일부 → 부속물) → VS5**. 세탁 계약은 12절, 작업 기록은 `docs/sources/vs4_report.md`, 케이스 검증은 `docs/sources/vs4_cases_approval.md`(승인 대기). 2026-11-06부터 구현 순서는 8.1절 수직 슬라이스 계획을 따른다.
+> 완료한 단계: 0 (고시 원문 확인, 2026-10-26), 1 (저장소 뼈대, 2026-10-19), 2 (규칙 엔진 + 테스트, main 병합 #4), 세탁·가전 사전 조사 (main 병합 #5, 2026-11-06), VS1 (main 병합 #6), VS2 (PR 2-1 `/api/calculate` main 병합 #8, PR 2-2·2-3 화면·관통 확인 main 병합 #9), VS3 (`/api/analyze`·되묻기 화면, main 병합 #10).
+> 세탁·가전 사전 조사 산출물: `docs/sources/laundry_*.md`, `docs/sources/appliance_*.md`, `backend/data/rules/laundry_*.json`·`appliance_*.json` 초안. 세탁은 결정 반영(2026-11-02·11-06, 표 블록 4개 `verified: true`·`user_checked: false`, 최상위 `false`), 명세는 2026-11-10 12절로 옮겼다. 가전은 모두 `verified: false`로 보관하며 v0.1 범위 밖이다. 결정은 `docs/sources/stage0_laundry_appliance_report.md` 9절.
 
 ## 1. MVP 한 줄
 
@@ -655,3 +655,201 @@ VS5 TODO [제안, 2026-11-08 사용자 지시로 기록, 외부 배포판용]:
 ## 11. 평가 메모 (단계 7)
 
 - 교수님 조언: AI Hub 대화 데이터(감정 태그 '부정')를 구어체 견고성 시험에 보조로 사용할 수 있음. 이용 승인·조건 확인 전이며, 원문은 저장소에 올리지 않는다. 정확도 지표의 정답 데이터는 직접 만든 가상 사례로 한다.
+
+## 12. 세탁 규칙 엔진 계약 (VS4, 축소 A) (`backend/rules/laundry.py`)
+
+> 2026-11-10 `docs/sources/laundry_spec_draft.md`(2026-11-02·11-06 결정 반영본)에서 옮겼다. 이 절이 세탁 구현의 **단일 기준 문서**다. 다른 문서와 다르면 이 절을 먼저 고친 뒤 구현한다. 초안 파일은 결정 기록으로만 남긴다.
+> 원문: `docs/sources/laundry_notice.md` (소비자분쟁해결기준, 공정거래위원회고시 제2025-14호 [별표 Ⅱ] ⑯세탁업), 규칙 JSON `backend/data/rules/laundry_damage.json`, 케이스 `docs/sources/laundry_cases_draft.md`, 검증 보고서 `docs/sources/vs4_cases_approval.md`.
+> 표시는 5절과 같다: **[원문]**, **[해석]**, **[결정]**(사용자 결정, 날짜), **[미결]**. 새로 붙인 **[기본값 2026-11-10]**은 초안의 [제안]을 사용자 사전 승인(2026-11-10 "합리적 기본값으로 진행하고 문서에 기록")에 따라 구현 기본값으로 정한 것이며 `docs/sources/vs4_report.md` 3절 승인 목록에 올린다.
+
+### 12.0 범위 (축소 A) [결정 2026-11-02 2차]
+
+| 포함 | 제외 — 복원 후보 (VS4 기본안 뒤 순서대로: 소재·용도 미상 → Set 일부 → 부속물) |
+|---|---|
+| 손상·분실 배상액(물품구입가격 × 배상비율), 배상비율표·평균 내용연수표 조회 | 소재·용도를 모를 때 후보를 모두 계산하기 (축소 A는 다시 묻는다, `MISSING_REQUIRED`) |
+| 입증 불가 시 세탁요금 20배 | Set 의류 **일부** 손상·분실과 7. 배분 (Set **전체**는 1벌 가격으로 계산, 6.①) |
+| ❔ 경로: 승패 질문, 무인세탁소, 지체 손해, 제조 불량 주장, 표에 없는 품목, Set 일부·부속물 | 1벌 중 일부만 의뢰 (6.②), 세트 개별 가격 (7.④), 탈부착 부속물 (8.) |
+| 특약·감액·면책 주장 → 계산 후 🔍 / 업체 제시액 ⚠️ / 결정 민감도 검사 | |
+
+엔진이 하지 않는 일: 하자 원인 판정, 감액 금액 계산(원문에 금액 없음), 면책 성립 판정, 특약 해석, 원상회복 가능 여부 판정, 표에 없는 품목의 유사품목 준용. 원문 해결기준은 "원상회복, 불가능시 손해배상"이다 **[원문]**. 엔진은 손해배상 기준 금액만 계산하고 원상회복 우선은 안내(`RESTORE_FIRST`)로 보여 준다.
+
+### 12.1 입력 스키마 (`LaundryInput`)
+
+| 필드 | 타입 | 필수 | 설명·근거 |
+|---|---|---|---|
+| `judgment_requested` | `bool` | 필수 | 승패·법적 효력 질문 여부 (헬스장과 같음) |
+| `service_type` | `str` | 필수 | `laundry_shop`(세탁소에 맡김) / `self_laundromat`(무인세탁소) / 그 외. 무인세탁소는 별도 표준약관(제10081호) 대상 → 범위 밖 **[기본값 2026-11-10]** |
+| `damage_type` | `"defect" \| "loss" \| "other"` | 필수 | 하자발생 / 분실·소실 / 그 외(지체 손해 등) **[원문]** 분쟁유형 1)·2) |
+| `manufacturing_cause_claimed` | `bool \| None` | 선택 | 원단·제조 불량 주장. `True`면 ❔ **[결정 2026-11-02 Q-L6]** |
+| `item_key` | `str \| None` | 입증 가능 시 필수 | 평균 내용연수표 행 ID (`lifespan_table.rows[].id`). 문장 분석으로 채워도 폼에서 확인받는다 (12.9) |
+| `item_unlisted` | `bool` | 선택 (기본 `False`) | 표에 맞는 품목 없음 → ❔ `ITEM_NOT_IN_TABLE` **[결정 2026-11-02 Q-L4]** |
+| `variant_key` | `str \| None` | 행에 값이 여럿이면 필수 | 소재·용도 (`variants[].key`). `unknown`은 받지 않는다 (복원 후보) |
+| `purchase_price` | `int \| None` | 입증 가능 시 필수 | 물품구입가격 **[원문]** 1.①. Set 전체면 1벌 가격 (6.①) |
+| `purchase_date` | `date \| None` | 입증 가능 시 필수 | 물품 구입일 **[원문]** 배상비율표 하단 |
+| `request_date` | `date \| None` | 입증 가능 시 필수 | 세탁의뢰일 **[원문]** 배상비율표 하단 |
+| `proof_available` | `bool \| None` | 필수 (`None`이면 누락) | 품명·구입가격·구입일을 인수증 또는 고객 입증으로 정할 수 있는지. `False`면 20배 **[원문]** 5-1.③ |
+| `laundry_fee` | `int \| None` | 입증 불가 시 필수 | 세탁요금 **[원문]** 5-1.③ |
+| `set_type` | `"none" \| "top_bottom" \| "top_mid_bottom" \| "hanbok"` | 선택 (기본 `none`) | **[원문]** 7.①~③. 축소 A는 Set 여부 판정에만 쓴다 |
+| `set_part` | `"top" \| "mid" \| "bottom" \| "whole" \| None` | `set_type ≠ none`이면 필수 | 손상·분실된 부분. `whole`이 아니면 ❔ |
+| `attachment_only` | `bool \| None` | 선택 | 탈부착 부속물만 손상 **[원문]** 8. `True`면 ❔ |
+| `special_agreement` | `bool \| None` | 선택 | 배상 특약 **[원문]** 1.② |
+| `customer_partial_fault` | `bool \| None` | 선택 | 업체가 고객 일부 책임을 주장 **[원문]** 2.① |
+| `wants_damaged_item` | `bool \| None` | 선택 | 손상된 세탁물을 돌려받기 원함 **[원문]** 2.② |
+| `no_issue_confirmation` | `bool \| None` | 선택 | 이상 없음 확인서(인수증 날인·기명 포함) 교부 **[원문]** 3.① |
+| `uncollected` | `bool \| None` | 선택 | 업체가 장기 미회수(통지 후 30일, 완성예정일 다음날부터 3개월)를 주장 **[원문]** 3.② |
+| `receipt_issued` | `bool \| None` | 선택 | 인수증을 받았는지. 안내 `NO_RECEIPT_LOSS`에만 쓴다 (배지 판정에 쓰지 않음). 초안 L5가 "인수증 미교부"를 조건으로 쓰면서 입력 필드가 없어 추가 **[기본값 2026-11-10]** |
+| `provider_offer` | `int \| None` | 선택 | 업체 제시액 |
+
+입력 검증 (실패하면 🔍 `INVALID_INPUT`, 계산 안 함) **[기본값 2026-11-10]**: 계산에 쓰는 금액(`purchase_price` 또는 `laundry_fee`) ≤ 0, `provider_offer` < 0 (0원 제시는 받는다), `request_date < purchase_date`, `item_key`가 표에 없음, `variant_key`가 그 행의 후보에 없거나 후보가 없는 행에 값이 있음, `set_part`가 `set_type`에 없는 부분(예: `top_bottom`에 `mid`). 입증 불가(20배) 경로에서는 품목·날짜·구입가격을 쓰지 않으므로 검증하지 않는다.
+
+### 12.2 범위 판정 (위에서부터, 먼저 걸리는 것이 이긴다)
+
+❔이면 계산하지 않고 상담 창구(1372, 한국소비자원 피해구제, 대한법률구조공단 ☎132)를 안내한다.
+
+| 순서 | 조건 | 결과 | 근거 |
+|---|---|---|---|
+| 1 | `judgment_requested` | ❔ `JUDGMENT_REQUESTED` | CLAUDE.md 절대 규칙 4 |
+| 2 | `service_type ≠ laundry_shop` | ❔ `UNSUPPORTED_SERVICE` | **[기본값 2026-11-10]** 무인세탁소는 별도 표준약관 |
+| 3 | `damage_type = other` | ❔ `UNSUPPORTED_DAMAGE` | **[원문]** 분쟁유형은 1)·2)뿐 |
+| 4 | `manufacturing_cause_claimed = True` | ❔ `MANUFACTURING_CAUSE` | **[결정 2026-11-02 Q-L6]** |
+| 5 | `set_type ≠ none`이고 `set_part`가 그 Set의 부분(`whole` 제외) | ❔ `SET_PARTIAL_UNSUPPORTED` | 축소 A 범위 밖 **[결정 2026-11-06 Q-L9]** |
+| 6 | `attachment_only = True` | ❔ `ATTACHMENT_UNSUPPORTED` | 축소 A 범위 밖 **[결정 2026-11-06 Q-L9]** |
+| 7 | `proof_available = True`이고 `item_unlisted` | ❔ `ITEM_NOT_IN_TABLE` | **[원문]** 시행령 제9조 ② "준용할 수 있다" → 엔진이 유사품목을 고르지 않는다 **[결정 2026-11-02 Q-L4]** |
+| 8 | 필수 누락 | 🔍 `MISSING_REQUIRED` (계산 안 함) | 배지 순서 2 |
+| 9 | 입력 검증 실패 | 🔍 `INVALID_INPUT` (계산 안 함) | 배지 순서 2 |
+
+- 순서 5·6은 `proof_available`과 무관하게 먼저 판정한다. 순서 7은 `proof_available = True`일 때만 본다 (20배는 내용연수를 쓰지 않는다).
+- 순서 5는 `set_part`가 그 Set에 있는 부분일 때만 건다. Set에 없는 부분(예: 상·하 Set의 `mid`)은 순서 9의 입력 오류다 **[기본값 2026-11-10]** (초안은 순서 5를 먼저 적어 이 입력 오류가 나올 수 없었다).
+- 누락 판정 (순서 8): `proof_available = None`이면 `["proof_available"]`만 (어느 계산식을 쓸지 정할 수 없음, 케이스 L10 수락 2026-11-02). `True`면 `item_key`(표에 없다고 답하지 않은 경우), 행에 값이 여럿이면 `variant_key`, `purchase_price`, `purchase_date`, `request_date`. `False`면 `laundry_fee`. 입증 여부를 답한 경우(`True`·`False`)에만 `set_type ≠ none`이고 `set_part = None`이면 `set_part`를 더한다 (입증 여부를 모르면 그것 하나만 묻는다, 2026-11-10 리뷰 반영). 순서는 12.1 표 순서.
+- 면책(3.①·②), 특약(1.②), 감액(2.①·②)은 ❔로 막지 않고 계산 후 🔍 사유로 붙인다 **[결정 2026-11-02 Q-L5]**.
+
+### 12.3 계산식
+
+```text
+[입증 가능]
+use_days = request_date − purchase_date            ← 구입 당일 = 0일 (D0) [결정 2026-11-02 Q-L1]
+life     = lifespan_table[item_key] (값이 여럿이면 [variant_key])   ← 1~6년, 원문 표
+ratio    = ratio_table[life] 에서 use_days가 속한 칸 (%)             ← 원문 표, 구간 빈틈·겹침 없음
+amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번만 원 미만 내림 [결정 2026-11-02 Q-C1]
+
+[입증 불가]  amount = laundry_fee × 20              ← 원문 5-1.③, 정수
+[감액]      계산하지 않는다 (원문에 금액·비율 없음). 사유 코드로만 표시
+```
+
+| 항목 | 내용 | 표시 |
+|---|---|---|
+| 산정식 | 배상액 = 물품구입가격 × 배상비율 | [원문] 1.① |
+| 사용일수 | 구입일부터 세탁의뢰일까지, 사용 여부 무관. 첫날은 넣지 않는다 (D0). 헬스장 양끝 산입과 다른 이유는 `laundry_spec_draft.md` L3 | [원문] / 첫날 처리 [결정 2026-11-02 Q-L1] |
+| 한복류 내용연수 | 행 전체에 걸친 한 칸, 값 4를 두 소재("견, 빌로드" / "기타")에 모두 쓴다. 근거: HWPX 셀 속성·문단 수와 PDF 125쪽 이미지 (JSON `years_scope_check`). 민감도 검사 대상이 아니고 🔍를 붙이지 않는다. 한복류 행에는 소재 선택(`variant_key`)이 없다 | [원문] 칸 구조 확인 2026-11-06 (Q-L8) |
+| 원 미만 | 내림. 계산 과정에 "원 미만 내림(고시에 규정 없음)" | [결정 2026-11-02 Q-C1] |
+| 산정 기준 자료 | 인수증 기재 → 업체가 다르다고 증명하면 그에 따름 → 인수증 누락·미교부면 고객 입증 내용. 엔진은 입력값을 쓰고 출처는 안내(`RECEIPT_BASIS`)로만 표시 | [원문] 5-1.①② |
+
+### 12.4 배지 결정과 결정 민감도 검사
+
+결정 순서는 4절과 같고 `rules/badge.py`의 `decide_badge`를 그대로 쓴다.
+
+블록 단위 검증 **[기본값 2026-11-10]**: 결과가 쓰는 블록만 본다. 입증 가능 경로는 `ratio_table`·`lifespan_table`, 입증 불가(20배) 경로는 `unproven_fallback`이다 (초안의 "(20배면) unproven_fallback"을 20배 결과는 표를 쓰지 않는다는 뜻으로 읽었다). 하나라도 `verified: false`이면 `RULE_UNVERIFIED`(🔍)를 붙이고 ⚠️ 코드는 뺀다. 최상위 `verified`(현재 `false`)는 배지 판정에 쓰지 않는다. 현재 네 블록 모두 `verified: true`, `user_checked: false` [결정 2026-11-02 Q-S2].
+
+**결정 민감도 검사** [결정 2026-11-02 사용자 지시, 2026-11-06 Q-L10]: ✅는 원문에 없는 결정을 바꿔도 결과가 같을 때만 준다.
+
+| 결정 (`in_source: false`) | 결정 값 | 대안 값 | 원인 이름 |
+|---|---|---|---|
+| 사용일수 첫날 산입 (`params.use_days`) | D0 | D1 = D0 + 1 | 사용일수 산입 |
+| 원 미만 처리 (`params.rounding`) | 내림 | half up | 원 미만 처리 |
+
+1. 결정 값의 결과를 결과 값으로 둔다. 2. 모든 조합(D0·D1 × 내림·half up = 4가지)을 다시 계산한다. 3. 각 조합의 조회 결과(내용연수 행, 배상비율 칸)와 배상액이 모두 결과 값과 같으면 통과, 하나라도 다르면 🔍 `DECISION_SENSITIVE`. 4. 원인 결정은 그 결정 **하나만** 대안으로 바꿨을 때 결과가 달라지는 결정이다. 어느 결정도 혼자서는 바꾸지 않고 함께 바꿀 때만 달라지면 모두 원인으로 적는다. 5. 20배는 결정을 쓰지 않아 항상 통과. 6. ⚠️ `OFFER_BELOW_STANDARD_MIN`은 4조합 결과의 최솟값과 비교한다.
+
+검사의 한계: 위 표의 대안만 다시 계산한다. 검토하지 않은 대안(사용일수 D0 − 1, 올림·10원 단위, 정가 대 결제가, 품목·소재 매핑, 혼방 소재, 감액 금액)은 `laundry_spec_draft.md` L4.1 표에 있다. [미결] D0 − 1을 검사 대상에 넣을지 (Q-L11, 넣으면 칸 첫날 케이스 L6이 ✅에서 🔍).
+
+`DECISION_SENSITIVE` 화면 한 줄 (숫자는 엔진 결과 필드에서만 채운다, 금액은 천 단위 쉼표, 범위는 작은 값부터) [결정 2026-11-06 Q-L10 형식]:
+
+| 원인 | 문구 |
+|---|---|
+| 사용일수 산입만 | "고시에 정해져 있지 않은 사용일수 산입 방식(구입일을 세는지)에 따라 배상비율이 {ratio_percent}%에서 {sensitivity_ratio_alt}%로 바뀌어, 기준 금액이 {min}원~{max}원으로 달라질 수 있습니다." |
+| 원 미만 처리만 (폭 1원) | "고시에 정해져 있지 않은 원 미만 처리(내림·반올림)에 따른 1원 차이가 있습니다 ({min}원~{max}원)." |
+| 사용일수 산입과 원 미만 처리 | "고시에 정해져 있지 않은 사용일수 산입 방식과 원 미만 처리에 따라 기준 금액이 {min}원~{max}원으로 달라질 수 있습니다." |
+
+원 미만 처리만이 원인이면 폭은 항상 1원이다 (half up과 내림의 차이는 최대 1원).
+
+사유 코드 [결정 2026-11-02 Q-S1: 공통 Enum + 품목별 Enum, 품목별 코드 집합·우선순위는 명시 목록]:
+
+| 등급 | 코드 | 조건 | 화면 한 줄 |
+|---|---|---|---|
+| ❔ | `JUDGMENT_REQUESTED` (공통) | 12.2 순서 1 | 헬스장과 같음 |
+| ❔ | `UNSUPPORTED_SERVICE` | 순서 2 | "무인세탁소(셀프빨래방) 등 세탁소에 맡기지 않은 경우는 이 서비스에서 지원하지 않습니다. 1372에 문의해 주세요." **[기본값 2026-11-10, 승인 대기]** |
+| ❔ | `UNSUPPORTED_DAMAGE` | 순서 3 | "세탁 지연 등 하자·분실이 아닌 피해는 기준표에 배상액 계산 방식이 없어 계산하지 않습니다. 1372에 문의해 주세요." **[기본값 2026-11-10, 승인 대기]** |
+| ❔ | `MANUFACTURING_CAUSE` | 순서 4 | "의복류 등 다른 품목 기준의 대상일 수 있습니다. 1372에 문의해 주세요." [결정 2026-11-02 Q-L6] |
+| ❔ | `SET_PARTIAL_UNSUPPORTED` | 순서 5 | "세트 의류의 일부만 손상·분실된 경우는 소비자분쟁해결기준의 기준표에 배상액 배분 규정이 있으나, 이번 버전에서는 지원하지 않습니다. 1372 또는 한국소비자원에 문의해 주세요." [결정 2026-11-06 Q-L9] |
+| ❔ | `ATTACHMENT_UNSUPPORTED` | 순서 6 | "탈부착 부속물(털, 칼라, 모자 등)이 손상된 경우는 소비자분쟁해결기준의 기준표에 규정이 있으나, 이번 버전에서는 지원하지 않습니다. 1372 또는 한국소비자원에 문의해 주세요." [결정 2026-11-06 Q-L9] |
+| ❔ | `ITEM_NOT_IN_TABLE` | 순서 7 | "이 세탁물은 고시의 품목별 평균 내용연수표에 없어 이 서비스에서는 계산하지 않습니다. 1372에 문의해 주세요." |
+| 🔍 계산 안 함 | `MISSING_REQUIRED`, `INVALID_INPUT` (공통) | 순서 8·9 | 헬스장과 같음 |
+| ⚠️ | `OFFER_BELOW_STANDARD_MIN` | `provider_offer` < 4조합 최솟값. 특약·감액·면책 주장이 하나라도 있으면 판정하지 않는다 **[기본값 2026-11-10]** | "업체 제시액이 고시 기준으로 계산한 가장 작은 기준 금액보다도 적습니다." **[승인 대기]** |
+| 🔍 | `EXEMPTION_CLAIMED` | `no_issue_confirmation = True` 또는 `uncollected = True` | "확인서 교부나 장기 미회수에 해당하면 기준상 세탁업자의 책임이 면제될 수 있습니다." |
+| 🔍 | `SPECIAL_AGREEMENT` | `special_agreement = True` | "배상에 관한 특약이 있으면 기준상 특약을 따르게 되어 있습니다." |
+| 🔍 | `PARTIAL_FAULT_CLAIMED` | `customer_partial_fault = True` | "고객에게도 일부 책임이 있으면 그만큼 공제하도록 되어 있어, 금액이 줄어들 수 있습니다." |
+| 🔍 | `DAMAGED_ITEM_RETURN` | `wants_damaged_item = True` | "손상된 세탁물을 돌려받으면 배상액 일부를 감액할 수 있도록 되어 있습니다." |
+| 🔍 | `RULE_UNVERIFIED` (공통) | 쓰는 블록이 `verified: false` | 헬스장과 같음 |
+| 🔍 | `DECISION_SENSITIVE` | 민감도 검사에서 결과가 달라짐 | 위 표 |
+
+화면 표시 우선순위 (`rules/laundry_codes.py` `LAUNDRY_DISPLAY_PRIORITY`, 위 표 순서) **[기본값 2026-11-10, 승인 대기]**: ❔(12.2 순서) → 🔍 계산 안 함 → ⚠️ → 🔍(면책 → 특약 → 일부 책임 → 손상품 인도 → 규칙 미검증 → 결정 민감). 헬스장과 같이 기준 적용 여부를 흔드는 사유를 앞에 둔다.
+
+코드 구성: 공통 Enum `CommonFlag`(`JUDGMENT_REQUESTED`, `MISSING_REQUIRED`, `INVALID_INPUT`, `RULE_UNVERIFIED`)과 세탁 Enum `LaundryFlag`·`LaundryNotice`를 `rules/laundry_codes.py`에 둔다. 헬스장 `rules/badge.py`의 `FlagCode`·`NoticeCode`·`DISPLAY_PRIORITY`는 이름·값·순서를 바꾸지 않고(9절 2026-11-02 2번), 공통 코드와 같은 값의 멤버를 그대로 갖는다 (테스트로 값 일치를 확인).
+
+✅ 조건: ❔·🔍·⚠️ 사유가 하나도 없을 때 = (배상비율 계산) 품목이 표에 있고 소재·용도 확정, 민감도 검사 통과 / (20배) 결정을 쓰지 않음, 공통으로 특약·감액·면책 주장 없음, 쓰는 블록 모두 `verified: true`.
+
+### 12.5 안내 코드 (`notices`, 배지 판정에 쓰지 않음, 계산한 결과에만)
+
+| 코드 | 조건 | 문구 |
+|---|---|---|
+| `RESTORE_FIRST` | `damage_type = defect` | "기준상 하자가 생기면 세탁업자 비용으로 원상회복을 먼저 하고, 불가능할 때 손해배상을 합니다." [원문] 분쟁유형 1) |
+| `UNPROVEN_FALLBACK` | 20배 적용 | "품명·구입가격·구입일을 입증하기 어려운 경우 기준상 세탁요금의 20배로 정해져 있습니다." [원문] 5-1.③ |
+| `RECEIPT_BASIS` | 항상 | "기준상 배상액은 인수증에 적힌 품명·구입가격·구입일을 기준으로 정합니다. 인수증이 없거나 빠진 내용이 있으면 고객이 입증하는 내용을 기준으로 합니다." [원문] 5-1.①② |
+| `NO_RECEIPT_LOSS` | `damage_type = loss`이고 `receipt_issued = False` | "인수증을 받지 못했다면 기준상 분실 책임은 세탁업소에 있습니다." [원문] 5.② |
+| `LAUNDRY_FEE_TERMS` | 항상 | "세탁 표준약관을 사용한 계약이라면 세탁업자 책임으로 손상·분실된 세탁물의 세탁요금은 청구하지 않도록 되어 있습니다." [결정 2026-11-02 Q-L7, 안내로만] |
+| `CLAIM_PERIOD_TERMS` | 항상 | "세탁 표준약관을 사용한 계약이라면 세탁물을 받은 날부터 6개월 안에 손해배상 등을 청구하도록 되어 있습니다." [결정 2026-11-02 Q-L7, 안내로만, 범위 판정에 쓰지 않음] |
+
+❔의 상담 창구는 헬스장과 같이 표시 단계(`rules/laundry_display.py`)에서 `flags`를 보고 붙인다. `MISSING_REQUIRED`·`INVALID_INPUT`에는 상담 창구를 붙이지 않는다.
+
+### 12.6 출력 (`LaundryResult`)
+
+공통 필드 `badge`, `calculated`, `steps`, `flags`, `missing`, `notices`, `citations`에 더해:
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `method` | `"ratio" \| "fallback" \| None` | 배상비율 계산 / 20배 / 계산 안 함 |
+| `use_days` | `int \| None` | 사용일수 (D0) |
+| `life_years` | `int \| None` | 조회한 내용연수 |
+| `ratio_percent` | `int \| None` | 배상비율 |
+| `band_min_days` / `band_max_days` | `int \| None` | 조회한 칸의 사용일수 구간 (마지막 칸 상한은 `None`) |
+| `amount` | `int \| None` | 결과 값 (결정 값으로 계산, 20배면 20배 금액) |
+| `fallback_amount` | `int \| None` | 20배 금액 (20배일 때만) |
+| `sensitivity_min` / `sensitivity_max` | `int \| None` | 4조합 결과의 최솟값·최댓값 (통과하면 `amount`와 같다) |
+| `sensitivity_causes` | `list["use_days" \| "rounding"]` | 원인 결정, 통과하면 빈 목록 |
+| `sensitivity_ratio_alt` | `int \| None` | 사용일수 산입이 원인일 때 대안 D1로 조회한 배상비율 |
+
+### 12.7 근거 조항 ID
+
+| 결과 요소 | 인용 ID |
+|---|---|
+| 계산한 결과 (항상) | `laundry_types`, `laundry_1`, `laundry_5_1`, `cpa16_3` (권고 기준) |
+| 배상비율 계산 | `laundry_ratio_table`, `laundry_lifespan_table` |
+| Set 전체 (1벌 기준) | `laundry_6` |
+| 감액 사유 (`PARTIAL_FAULT_CLAIMED`, `DAMAGED_ITEM_RETURN`) | `laundry_2` |
+| 면책 사유 (`EXEMPTION_CLAIMED`) | `laundry_3` |
+| `NO_RECEIPT_LOSS` | `laundry_5` |
+| ❔ `UNSUPPORTED_DAMAGE` | `laundry_types` **[기본값 2026-11-10]** |
+| ❔ `SET_PARTIAL_UNSUPPORTED` / `ATTACHMENT_UNSUPPORTED` | `laundry_7` / `laundry_8` (규정이 있다는 근거) **[기본값 2026-11-10]** |
+| ❔ `ITEM_NOT_IN_TABLE` | `cpa_dec9_2` |
+
+세탁 표준약관(`laundry_terms_art9`, `laundry_terms_art10_3`)은 두 번째 경로로 원문을 다시 확인하기 전에는 인용하지 않는다 [결정 2026-11-02 Q-L7]. 중복은 한 번만, 위 순서대로. 모든 ID는 규칙 JSON에 있어야 한다.
+
+### 12.8 고지
+
+세탁 결과 고지 **[기본값 2026-11-10, 승인 대기]**: "소비자분쟁해결기준(공정거래위원회 고시)으로 계산한 참고 결과이며 법적 판단이 아닙니다. 이 기준은 분쟁 당사자 사이에 다른 의사표시가 없을 때 합의 또는 권고의 기준이 되며, 기준상 이렇게 정해져 있다는 뜻입니다." 근거 `cpa16_3`(소비자기본법 제16조 ③). 헬스장 고지(9절 확정 5번)는 바꾸지 않는다.
+
+### 12.9 API·추출·화면 **[기본값 2026-11-10]**
+
+- `POST /api/calculate?item=laundry`: 요청 본문 `LaundryInput`, 응답 `{result: LaundryResult, display: LaundryDisplay}`. `item`이 없거나 `gym`이면 지금과 같다 (헬스장 요청·응답 형식 유지).
+- `GET /api/laundry/items`: 품목·소재·용도 선택지 (규칙 JSON 표 행의 ID·이름·소재/용도 이름 그대로. 내용연수 숫자는 화면 선택에 쓰지 않는다).
+- `POST /api/analyze?item=laundry`: 세탁 추출 스키마(12.1 필드)로 추출하고 헬스장과 같은 근거 확인(금액·날짜는 근거 구절에서 코드가 읽은 값, 예/아니오는 필드별 단서 낱말)을 통과한 값만 채운다. 품목 행(`item_key`, `variant_key`, `item_unlisted`)은 LLM의 표 행 선택이므로 채택해도 폼에서 확인을 받는다 (`confirm`). 사용일수·배상비율·금액은 엔진만 계산한다.
+- 화면: 맨 위 품목 선택(헬스장 / 세탁). 품목마다 폼·결과 상태를 따로 둔다.

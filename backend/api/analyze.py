@@ -1,4 +1,6 @@
-"""자연어 분석 라우터 (MVP_SPEC 6절 /api/analyze, 8.1 VS3). 로직은 llm/·rules/에 두고 연결만 한다.
+"""자연어 분석 라우터 (MVP_SPEC 6절 /api/analyze, 8.1 VS3, 12.9 VS4). 로직은 llm/·rules/에 두고 연결만 한다.
+
+품목은 쿼리 item으로 고른다: 없거나 gym이면 헬스장 추출(지금과 같음), laundry면 세탁 추출.
 
 순서: 마스킹 → 규칙 가드레일(걸리면 LLM을 부르지 않고 ❔) → LLM 추출·근거 확인 → LLM 판정 가드레일.
 - 입력 문장·마스킹한 문장·LLM 응답은 저장·로그하지 않는다. 로그에는 실패 종류만 남긴다.
@@ -19,6 +21,7 @@ from llm.config import LLMConfigError, load_settings
 from llm.extraction import AnalyzeResult, analyze_text
 from llm.gemini import GeminiClient
 from llm.guardrail import detect_judgment_request
+from llm.laundry_extraction import analyze_laundry_text
 from llm.masking import mask_pii
 from llm.ratelimit import MinIntervalLimiter
 from llm.resilience import RetryingClient
@@ -93,6 +96,7 @@ def _error(status: int, message: str, code: str) -> JSONResponse:
 def analyze(
     req: AnalyzeRequest,
     provider: Annotated[Callable[[], LLMClient], Depends(get_client_provider)],
+    item: Literal["gym", "laundry"] = "gym",
 ) -> AnalyzeResponse | JSONResponse:
     """문장 → 폼에 채울 값(근거 확인된 값만)과 되물을 항목. 승패·법적 효력 질문이면 ❔."""
     masked = mask_pii(req.text)
@@ -111,7 +115,8 @@ def analyze(
         logger.warning("LLM 설정 없음")
         return _error(503, NOT_CONFIGURED_MESSAGE, "not_configured")
     try:
-        result = analyze_text(masked, client)
+        extract = analyze_laundry_text if item == "laundry" else analyze_text
+        result = extract(masked, client)
     except LLMError as exc:
         logger.warning("LLM 호출 실패: %s", exc.kind.value)
         if exc.kind == LLMErrorKind.RATE_LIMITED:

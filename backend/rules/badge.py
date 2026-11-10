@@ -3,7 +3,7 @@
 배지는 규칙 코드가 정한다 (CLAUDE.md 절대 규칙 3). 화면 한 줄 우선순위는 DISPLAY_PRIORITY 하나로 둔다.
 """
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from enum import StrEnum
 
 
@@ -129,10 +129,13 @@ def decide_badge(
     judgment_requested: bool,
     out_of_scope: bool,
     missing_or_invalid: bool,
-    robust_warnings: list[FlagCode],
-    review_flags: list[FlagCode],
+    robust_warnings: Sequence[str],
+    review_flags: Sequence[str],
 ) -> Badge:
-    """배지 결정 순서 (MVP_SPEC 4절, 5.4): ❔ → 🔍(계산 안 함) → ⚠️ → 🔍 → ✅."""
+    """배지 결정 순서 (MVP_SPEC 4절, 5.4, 12.4): ❔ → 🔍(계산 안 함) → ⚠️ → 🔍 → ✅.
+
+    품목과 무관하다. 사유 코드는 헬스장 FlagCode나 세탁 코드(rules/laundry_codes.py) 모두 받는다.
+    """
     if judgment_requested or out_of_scope:
         return Badge.UNDETERMINABLE
     if missing_or_invalid:

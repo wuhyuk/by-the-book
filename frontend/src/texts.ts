@@ -122,3 +122,61 @@ export const VALUE_LABEL: Record<string, Record<string, string>> = {
   refund_basis: { period: '기간 기준', session: '횟수 기준', unknown: '모름' },
   termination_cause: { consumer: '내 사정', business: '업체 사정', force_majeure: '불가항력', unknown: '모름' },
 }
+
+// ---- 세탁 (VS4, MVP_SPEC 12절) ----
+// [초안] 승인 대기 (docs/sources/vs4_report.md 3절). 사유·안내·고지 문구는 서버 응답(display)을 쓴다.
+
+export const ITEM_TAB_LABEL = { gym: '헬스장·요가·필라테스', laundry: '세탁' } as const
+
+export const LAUNDRY_TEXT = {
+  lead: '세탁소에 맡긴 옷이 손상되거나 분실됐을 때 소비자분쟁해결기준의 배상 기준 금액을 고시의 계산식대로 보여 드립니다.',
+  supported: '지원 범위: 세탁소에 맡긴 세탁물의 손상·분실 (무인세탁소, 세탁 지연, 세트 일부·부속물 손상은 아직 지원하지 않습니다)',
+  placeholder:
+    '예: 2025년 11월 1일에 40만원에 산 겨울 정장을 2026년 10월 1일에 세탁소에 맡겼는데 색이 변했어요. 영수증은 있어요.',
+  itemsLoadError: '품목 목록을 불러오지 못했습니다. 백엔드가 실행 중인지 확인해 주세요.',
+  submit: '기준 금액 확인',
+  submitting: '확인 중…',
+  amountTitle: '기준 금액',
+  ratioLabel: '물품구입가격 × 배상비율',
+  fallbackLabel: '세탁요금 × 20',
+  fallbackTitle: '입증이 어려울 때의 기준 금액 (세탁요금 × 20)',
+  range: (min: string, max: string) => `고시에 없는 결정에 따라 ${min}~${max}`,
+  lookup: (life: number, ratio: number) => `내용연수 ${life}년 · 배상비율 ${ratio}%`,
+  daysText: (n: number) => `사용일수 ${n.toLocaleString('ko-KR')}일`,
+  unlistedOption: '표에 맞는 품목이 없음',
+  proofHint: '인수증·영수증·결제 내역 등으로 품명·구입가격·구입일을 정할 수 있으면 "예"입니다.',
+  dateHint: '사용일수는 구입일 다음 날부터 세탁을 맡긴 날까지 셉니다 (계산은 서버가 합니다).',
+  selectionNote: '문장에서 고른 표의 품목(소재·용도)입니다. 맞는지 확인해 주세요.',
+  routeNote: '문장에서 이렇게 보입니다. 이 값이면 세탁요금의 20배로 계산하니 맞는지 확인해 주세요.',
+}
+
+export const LAUNDRY_FIELD_LABEL: Record<string, string> = {
+  service_type: '어디에 맡겼나요',
+  damage_type: '피해 종류',
+  proof_available: '품명·구입가격·구입일을 입증할 수 있나요',
+  item_key: '세탁물 품목 (평균 내용연수표)',
+  item_unlisted: '표에 없는 품목',
+  variant_key: '소재·용도',
+  purchase_price: '구입가격',
+  purchase_date: '구입일',
+  request_date: '세탁을 맡긴 날',
+  laundry_fee: '세탁요금',
+  set_type: '세트 의류',
+  set_part: '손상·분실된 부분',
+  receipt_issued: '세탁소에서 인수증을 받았나요',
+  manufacturing_cause_claimed: '업체가 원단·제조 불량을 주장하나요',
+  attachment_only: '털·칼라·모자 같은 탈부착 부속물만 손상됐나요',
+  special_agreement: '배상에 관한 특약이 있나요',
+  customer_partial_fault: '업체가 고객에게도 책임이 있다고 하나요',
+  wants_damaged_item: '손상된 세탁물을 돌려받고 싶나요',
+  no_issue_confirmation: '찾을 때 "이상 없음" 확인서(인수증 서명 포함)를 써 줬나요',
+  uncollected: '업체가 오래 찾아가지 않았다고 하나요 (통지 후 30일, 완성 예정일 다음날부터 3개월)',
+  provider_offer: '업체가 제시한 배상액',
+}
+
+export const LAUNDRY_VALUE_LABEL: Record<string, Record<string, string>> = {
+  service_type: { laundry_shop: '세탁소에 맡김', self_laundromat: '무인세탁소(셀프빨래방)', other: '그 외' },
+  damage_type: { defect: '하자 (탈색·변색·손상 등)', loss: '분실·소실', other: '그 외 (세탁 지연 등)' },
+  set_type: { none: '세트 아님', top_bottom: '상·하의 한 벌', top_mid_bottom: '상·중·하의 한 벌', hanbok: '한복 치마저고리·바지저고리' },
+  set_part: { whole: '한 벌 전체', top: '상의', mid: '중의', bottom: '하의' },
+}
