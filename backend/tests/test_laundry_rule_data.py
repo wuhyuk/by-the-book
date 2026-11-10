@@ -137,14 +137,53 @@ def test_engine_citation_ids_exist(rule: LaundryRule) -> None:
     assert used <= rule.clause_ids
 
 
-def test_terms_clauses_not_cited(rule: LaundryRule) -> None:
-    """세탁 표준약관은 두 번째 경로 확인 전에는 인용하지 않는다 (Q-L7)."""
-    inp = LaundryInput(
-        judgment_requested=False,
-        service_type="laundry_shop",
-        damage_type="loss",
-        proof_available=False,
-        laundry_fee=1000,
-    )
-    result = calculate_damage(inp, rule)
-    assert not {"laundry_terms_art9", "laundry_terms_art10_3"} & set(result.citations)
+TERMS_IDS = ["laundry_terms_art9", "laundry_terms_art10_3"]
+
+
+def _terms_input(**kw: object) -> LaundryInput:
+    base: dict[str, object] = {
+        "judgment_requested": False,
+        "service_type": "laundry_shop",
+        "damage_type": "loss",
+        "proof_available": False,
+        "laundry_fee": 1000,
+    }
+    base.update(kw)
+    return LaundryInput.model_validate(base)
+
+
+def test_terms_clauses_two_paths(rule: LaundryRule) -> None:
+    """세탁 표준약관 두 조항은 두 경로로 확인했다 (2026-11-11, Q-L7)."""
+    by_id = {c.id: c for c in rule.related_clauses}
+    for cid in TERMS_IDS:
+        assert by_id[cid].source.verified_paths == 2
+        assert by_id[cid].source.usage is None
+
+
+def test_terms_clauses_cited_when_computed(rule: LaundryRule) -> None:
+    """계산한 결과의 표준약관 안내에 맞춰 조항을 인용한다 (12.7)."""
+    result = calculate_damage(_terms_input(), rule)
+    assert result.calculated
+    assert result.citations[-2:] == TERMS_IDS
+
+
+def test_terms_clauses_not_cited_when_stopped(rule: LaundryRule) -> None:
+    result = calculate_damage(_terms_input(damage_type="other"), rule)
+    assert not result.calculated
+    assert not set(TERMS_IDS) & set(result.citations)
+
+
+def test_terms_clauses_not_cited_with_one_path(rule: LaundryRule) -> None:
+    """한 경로만 확인한 조항은 인용하지 않는다 (verified_paths < 2)."""
+    clauses = [
+        c.model_copy(
+            update={"source": c.source.model_copy(update={"verified_paths": 1})}
+        )
+        if c.id in TERMS_IDS
+        else c
+        for c in rule.related_clauses
+    ]
+    one_path = rule.model_copy(update={"related_clauses": clauses})
+    result = calculate_damage(_terms_input(), one_path)
+    assert result.calculated
+    assert not set(TERMS_IDS) & set(result.citations)

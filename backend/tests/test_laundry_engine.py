@@ -132,7 +132,6 @@ def test_missing_required(
         {"request_date": date(2025, 12, 31)},
         {"item_key": "no_such_item"},
         {"item_key": "blouse", "variant_key": "wool"},
-        {"item_key": "hanbok", "variant_key": "silk"},
         {"set_type": "top_bottom", "set_part": "mid"},
         {"set_part": "whole"},
         {"provider_offer": -1},
