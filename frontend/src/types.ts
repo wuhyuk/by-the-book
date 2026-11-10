@@ -134,3 +134,96 @@ export interface AnalyzeResponse {
   extraction: AnalyzeResult | null
   guardrail: GuardrailDisplay | null
 }
+
+// ---- 세탁 (VS4, backend/rules/laundry.py·laundry_display.py, MVP_SPEC 12절) ----
+// 화면은 응답 값을 그대로 표시만 한다. 사용일수·배상비율·금액을 새로 계산하지 않는다.
+
+export type Item = 'gym' | 'laundry'
+
+export interface LaundryInput {
+  judgment_requested: boolean
+  service_type: string
+  damage_type: 'defect' | 'loss' | 'other'
+  manufacturing_cause_claimed: TriState
+  item_key: string | null
+  item_unlisted: boolean
+  variant_key: string | null
+  purchase_price: number | null
+  purchase_date: string | null
+  request_date: string | null
+  proof_available: TriState
+  laundry_fee: number | null
+  set_type: 'none' | 'top_bottom' | 'top_mid_bottom' | 'hanbok'
+  set_part: 'top' | 'mid' | 'bottom' | 'whole' | null
+  attachment_only: TriState
+  special_agreement: TriState
+  customer_partial_fault: TriState
+  wants_damaged_item: TriState
+  no_issue_confirmation: TriState
+  uncollected: TriState
+  receipt_issued: TriState
+  provider_offer: number | null
+}
+
+export interface LaundryResult {
+  badge: string
+  calculated: boolean
+  method: 'ratio' | 'fallback' | null
+  use_days: number | null
+  life_years: number | null
+  ratio_percent: number | null
+  band_min_days: number | null
+  band_max_days: number | null
+  amount: number | null
+  fallback_amount: number | null
+  sensitivity_min: number | null
+  sensitivity_max: number | null
+  sensitivity_causes: ('use_days' | 'rounding')[]
+  sensitivity_ratio_alt: number | null
+  steps: Step[]
+  flags: string[]
+  missing: string[]
+  notices: string[]
+  citations: string[]
+}
+
+export interface LaundryDisplay {
+  badge: string
+  screen_line: DisplayLine | null
+  other_flags: DisplayLine[]
+  notices: DisplayLine[]
+  citations: CitationCard[]
+  rule_source: {
+    name: string
+    notice_number: string
+    annex: string
+    url: string
+    effective_date: string
+    last_amended: string
+    retrieved_at: string
+  }
+  disclaimer: string
+  consult: { message: string; channels: string[] } | null
+}
+
+export interface LaundryCalculateResponse {
+  result: LaundryResult
+  display: LaundryDisplay
+}
+
+export interface LaundryItemOption {
+  key: string
+  label: string
+  examples: string | null
+  variant_by: 'use' | 'material' | null
+  variants: DisplayLine[]
+}
+
+export interface LaundryAnalyzeResult {
+  fields: Partial<Record<keyof LaundryInput, ExtractedValue>>
+  evidence: Partial<Record<keyof LaundryInput, string>>
+  unverified: string[]
+  missing: string[]
+  confirm: string[]
+  judgment_requested: boolean
+}

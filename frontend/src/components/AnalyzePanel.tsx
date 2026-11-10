@@ -7,9 +7,13 @@ const MAX_LENGTH = 2000
 interface Props {
   onAnalyze: (text: string) => void
   analyzing: boolean
+  /** 품목별 예시 문장 (기본: 헬스장 예시) */
+  placeholder?: string
+  /** 같은 화면에 품목별 패널이 둘 있어 id를 나눈다 */
+  idPrefix?: string
 }
 
-export function AnalyzePanel({ onAnalyze, analyzing }: Props) {
+export function AnalyzePanel({ onAnalyze, analyzing, placeholder = ANALYZE_TEXT.placeholder, idPrefix = '' }: Props) {
   const [text, setText] = useState('')
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -18,17 +22,17 @@ export function AnalyzePanel({ onAnalyze, analyzing }: Props) {
   return (
     <form className="analyze" onSubmit={submit} autoComplete="off" noValidate data-testid="analyze-form">
       <h2>{ANALYZE_TEXT.title}</h2>
-      <label htmlFor="situation" className="visually-hidden">
+      <label htmlFor={`${idPrefix}situation`} className="visually-hidden">
         {ANALYZE_TEXT.label}
       </label>
       <textarea
-        id="situation"
+        id={`${idPrefix}situation`}
         name="situation"
         rows={4}
         maxLength={MAX_LENGTH}
         autoComplete="off"
         spellCheck={false}
-        placeholder={ANALYZE_TEXT.placeholder}
+        placeholder={placeholder}
         value={text}
         onChange={(e) => setText(e.target.value)}
       />

@@ -8,11 +8,12 @@ interface Props {
   conflicts: string[]
   confirm: string[]
   piiMasked: boolean
+  /** 항목 이름표 (기본: 헬스장 항목) */
+  labels?: Record<string, string>
 }
 
-const label = (f: string) => FIELD_LABEL[f] ?? f
-
-export function FollowUp({ filledCount, missing, unverified, conflicts, confirm, piiMasked }: Props) {
+export function FollowUp({ filledCount, missing, unverified, conflicts, confirm, piiMasked, labels = FIELD_LABEL }: Props) {
+  const label = (f: string) => labels[f] ?? f
   return (
     <div className="follow-up" role="status" data-testid="follow-up">
       <p>{ANALYZE_TEXT.filled(filledCount)}</p>
