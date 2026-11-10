@@ -179,6 +179,152 @@ BOOL_CUE_RULES: dict[str, BoolRule] = {
     "add_on_returned": BoolRule(cues=("반환", "돌려", "반납")),
 }
 
+# 세탁 예/아니오 필드 (MVP_SPEC 12.9, VS4). 헬스장 규칙과 같은 방식이다. 바꾸면
+# tests/test_llm_laundry_extraction.py와 docs/sources/vs4_report.md 2절을 같이 고친다.
+# 세탁 부정 낱말: '못' 하나만으로는 받지 않는다 ("세탁소 잘못"의 '못'이 부정으로 읽히지 않게).
+LAUNDRY_NEG: tuple[str, ...] = (
+    "없",
+    "않",
+    "안 ",
+    "안했",
+    "아니",
+    "못 ",
+    "못했",
+    "못하",
+    "못받",
+    "못 받",
+)
+# "이상 없음 확인서에 서명"의 '없'은 부정이 아니다.
+_PLAIN_NEG = tuple(n for n in LAUNDRY_NEG if n != "없")
+_SHOP_FAULT = (
+    "세탁소 잘못",
+    "세탁소 책임",
+    "세탁소 과실",
+    "업체 잘못",
+    "업체 책임",
+    "업체 과실",
+)
+LAUNDRY_BOOL_CUE_RULES: dict[str, BoolRule] = {
+    # False면 20배 경로. 인수증·영수증·입증 단서가 있어야 하고, 모른다·없다·잃어버렸다는 False.
+    "proof_available": BoolRule(
+        cues=(
+            "영수증",
+            "인수증",
+            "입증",
+            "증명",
+            "구매 내역",
+            "결제 내역",
+            "구입 내역",
+            "기억",
+            "얼마에 샀",
+            "언제 샀",
+        ),
+        true_forbids=LAUNDRY_NEG,
+        false_requires=(*LAUNDRY_NEG, "모르", "몰라", "잃어", "버렸"),
+    ),
+    # ❔ MANUFACTURING_CAUSE. "세탁 불량"은 세탁소 과실이라 받지 않는다. False는 받지 않는다.
+    "manufacturing_cause_claimed": BoolRule(
+        cues=("원단", "제조", "불량", "제품 하자", "제품 자체", "소재 문제"),
+        true_forbids=(*LAUNDRY_NEG, "세탁 불량", "세탁불량"),
+        accept_false=False,
+    ),
+    # ❔ ATTACHMENT_UNSUPPORTED. 부속물"만" 손상됐다는 표현이 있어야 True. False는 받지 않는다.
+    "attachment_only": BoolRule(
+        cues=("부속", "탈부착", "털", "칼라", "카라", "모자", "후드"),
+        true_requires=(
+            "부속물만",
+            "털만",
+            "칼라만",
+            "카라만",
+            "모자만",
+            "후드만",
+            "만 손상",
+            "만 망가",
+            "만 상했",
+            "만 찢",
+            "만 변색",
+        ),
+        true_forbids=LAUNDRY_NEG,
+        accept_false=False,
+    ),
+    "special_agreement": BoolRule(
+        cues=("특약", "별도 약정", "따로 약정", "별도로 정", "따로 정"),
+        true_forbids=LAUNDRY_NEG,
+        false_requires=LAUNDRY_NEG,
+    ),
+    # 업체가 고객 책임을 주장. 고객의 잘못·책임을 뜻하는 붙은 표현이 있어야 True
+    # ("제 코트"의 '제'만으로는 받지 않는다).
+    "customer_partial_fault": BoolRule(
+        cues=("책임", "과실", "잘못", "탓"),
+        true_requires=(
+            "제 잘못",
+            "제 책임",
+            "제 과실",
+            "제 탓",
+            "제가 잘못",
+            "제게도 책임",
+            "저도 책임",
+            "저한테도 책임",
+            "저에게도 책임",
+            "제 잘못도",
+            "내 잘못",
+            "내 책임",
+            "고객 잘못",
+            "고객 책임",
+            "고객 과실",
+            "고객 탓",
+            "고객에게도",
+            "고객한테도",
+            "손님 잘못",
+            "손님 책임",
+            "손님한테도",
+            "소비자 잘못",
+            "소비자 책임",
+        ),
+        true_forbids=(*LAUNDRY_NEG, *_SHOP_FAULT),
+        false_requires=LAUNDRY_NEG,
+    ),
+    "wants_damaged_item": BoolRule(
+        cues=("돌려받", "돌려 받", "가져가", "가져오", "찾아오", "받고 싶"),
+        true_forbids=LAUNDRY_NEG,
+        false_requires=LAUNDRY_NEG,
+    ),
+    "no_issue_confirmation": BoolRule(
+        cues=("확인서", "이상 없", "이상없", "날인", "서명", "사인"),
+        true_requires=("확인서", "날인", "서명", "사인"),
+        true_forbids=_PLAIN_NEG,
+        false_requires=_PLAIN_NEG,
+    ),
+    # 업체가 장기 미회수를 주장. 기간 낱말은 경과를 뜻하는 형태만 받는다
+    # ("구입한 지 3개월", "3월 30일"은 받지 않는다). "안 찾아갔다"는 True 쪽 표현이다.
+    "uncollected": BoolRule(
+        cues=("미회수", "찾아가", "찾으러", "방치", "3개월", "석 달", "30일"),
+        true_requires=(
+            "미회수",
+            "안 찾아",
+            "못 찾아",
+            "찾아가지 않",
+            "방치",
+            "3개월 넘",
+            "3개월이 넘",
+            "3개월 동안",
+            "석 달 넘",
+            "석 달이 넘",
+            "석 달 동안",
+            "30일 넘",
+            "30일이 넘",
+            "30일 동안",
+        ),
+        true_forbids=("아니라", "바로 찾", "제때"),
+        false_requires=("바로 찾", "제때", "아니"),
+    ),
+    "receipt_issued": BoolRule(
+        cues=("인수증", "보관증", "접수증", "세탁 영수증", "맡긴 영수증"),
+        true_forbids=LAUNDRY_NEG,
+        false_requires=LAUNDRY_NEG,
+    ),
+}
+
 # 판단 질문 플래그: 근거 구절에 이 낱말 중 하나가 있어야 받는다.
 JUDGMENT_CUES: tuple[str, ...] = (
     "판정",
@@ -213,7 +359,9 @@ def _has(text: str, words: tuple[str, ...]) -> bool:
 
 def bool_grounded(name: str, value: bool, evidence: str) -> bool:
     """예/아니오 값이 근거 구절의 낱말과 맞는지 (근거 구절이 문장에 있는지는 따로 본다)."""
-    rule = BOOL_CUE_RULES[name]
+    rule = (
+        BOOL_CUE_RULES[name] if name in BOOL_CUE_RULES else LAUNDRY_BOOL_CUE_RULES[name]
+    )
     if not _has(evidence, rule.cues):
         return False
     if value:
