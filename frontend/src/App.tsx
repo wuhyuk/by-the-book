@@ -5,7 +5,15 @@ import { FollowUp } from './components/FollowUp'
 import { GuardrailCard } from './components/GuardrailCard'
 import { GymForm } from './components/GymForm'
 import { ResultCard } from './components/ResultCard'
-import { buildInput, COUNT_FIELDS, INITIAL_FORM, isEmptyValue, mergeExtraction, type FormState } from './formState'
+import {
+  buildInput,
+  COUNT_FIELDS,
+  INITIAL_FORM,
+  isEmptyValue,
+  isUserValue,
+  mergeExtraction,
+  type FormState,
+} from './formState'
 import { ANALYZE_TEXT, FIELD_LABEL, INPUT_ERROR, ISSUE_TYPE_LABEL, SUPPORTED_INDUSTRIES, VALUE_LABEL } from './texts'
 import type { CalculateResponse, GuardrailDisplay } from './types'
 
@@ -89,8 +97,14 @@ function App() {
     // 되묻기 안내는 합친 뒤에도 비어 있는 항목에만 붙인다
     const stillEmpty = (f: string) =>
       f in merged.form && isEmptyValue(f as keyof FormState, merged.form[f as keyof FormState])
+    // 필수 누락(missing)은 직접 고른 "모름"이어도 다시 묻고, 확인 안 됨(unverified)은 직접 고른 값이면 묻지 않는다
     const missing = ext.missing.filter(stillEmpty)
-    const unverified = ext.unverified.filter((f) => stillEmpty(f) && !missing.includes(f))
+    const unverified = ext.unverified.filter(
+      (f) =>
+        stillEmpty(f) &&
+        !missing.includes(f) &&
+        !isUserValue(f as keyof FormState, merged.form[f as keyof FormState], touched),
+    )
     const conflicts = Object.keys(merged.conflicts)
     const nextNotes: Record<string, string> = {}
     for (const f of unverified) nextNotes[f] = ANALYZE_TEXT.unverifiedNote

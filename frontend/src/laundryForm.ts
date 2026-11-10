@@ -1,7 +1,7 @@
 // 세탁 입력 폼 상태와 LaundryInput 변환 (MVP_SPEC 12.1). 화면에 보이지 않는 조건부 항목은 null로 보낸다.
 // 입력 문자열을 정수로 바꾸는 것 외에 숫자를 만들지 않는다. 내용연수·배상비율은 화면이 알지 못한다.
-import { parseWon, type TriChoice } from './formState'
-import type { LaundryAnalyzeResult, LaundryInput, LaundryItemOption, TriState } from './types'
+import { parseWon, type TriChoice } from './formState.ts'
+import type { LaundryAnalyzeResult, LaundryInput, LaundryItemOption, TriState } from './types.ts'
 
 export const UNLISTED = '__unlisted__'
 
@@ -180,6 +180,13 @@ export function laundryExtractedValues(
   return out
 }
 
+/** 사용자 입력으로 볼 값인지. 직접 고른 "모름"·"세트 아님"은 기본값과 같아도 사용자 입력이다. */
+export function isUserLaundryValue(name: Name, value: Value, touched: ReadonlySet<string>): boolean {
+  if (!touched.has(name)) return false
+  if ((LAUNDRY_TRI_FIELDS as readonly string[]).includes(name) || name === 'set_type') return true
+  return !isEmptyLaundryValue(name, value)
+}
+
 export function isEmptyLaundryValue(name: Name, value: Value): boolean {
   if ((LAUNDRY_TRI_FIELDS as readonly string[]).includes(name)) return value === 'unknown'
   if (name === 'set_type') return value === 'none'
@@ -203,7 +210,7 @@ export function mergeLaundryExtraction(
   const filled: Name[] = []
   const conflicts: Partial<Record<Name, Value>> = {}
   for (const name of Object.keys(INITIAL_LAUNDRY_FORM) as Name[]) {
-    const userValue = touched.has(name) && !isEmptyLaundryValue(name, form[name])
+    const userValue = isUserLaundryValue(name, form[name], touched)
     const extracted = values[name]
     if (userValue) {
       if (extracted !== undefined && extracted !== form[name]) conflicts[name] = extracted
