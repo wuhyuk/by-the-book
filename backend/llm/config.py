@@ -43,8 +43,8 @@ class LLMSettings(BaseModel):
     fallback_model: str | None = None
 
 
-def read_env_file(path: Path) -> dict[str, str]:
-    """KEY=VALUE 줄에서 KEYS에 있는 이름만 읽는다. 따옴표는 벗긴다. 파일이 없으면 빈 dict."""
+def read_env_file(path: Path, keys: tuple[str, ...] = KEYS) -> dict[str, str]:
+    """KEY=VALUE 줄에서 keys에 있는 이름만 읽는다. 따옴표는 벗긴다. 파일이 없으면 빈 dict."""
     if not path.is_file():
         return {}
     values: dict[str, str] = {}
@@ -54,7 +54,7 @@ def read_env_file(path: Path) -> dict[str, str]:
             continue
         name, _, value = line.partition("=")
         name = name.strip().removeprefix("export ").strip()
-        if name not in KEYS:
+        if name not in keys:
             continue
         value = value.strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":

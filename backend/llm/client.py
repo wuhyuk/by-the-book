@@ -18,6 +18,9 @@ class LLMErrorKind(StrEnum):
     HTTP_ERROR = "http_error"  # 429 외 4xx·5xx
     BAD_RESPONSE = "bad_response"  # 응답이 JSON이 아니거나 스키마와 다름
     BLOCKED = "blocked"  # 제공자가 응답을 막음 (안전 필터 등)
+    DAILY_LIMIT = (
+        "daily_limit"  # 하루 호출 상한 도달 (llm/usage.py). 호출을 보내지 않았다
+    )
 
 
 class LLMError(Exception):
