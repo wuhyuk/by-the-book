@@ -174,3 +174,18 @@
 | `laundry_spec_draft.md` 표 행에 "안내로만"이 표시 없이 남음 | 행마다 "→ 2026-11-11 인용 시작" 표시 |
 | 이 문서 7절 표가 "모름 덮어쓰기 유지"로 남음 | 취소선과 8.1 참조 |
 | MVP_SPEC 12.7 문단이 옛 규칙으로 시작 | 현재 규칙(`verified_paths ≥ 2`일 때만 인용)을 앞에, 기록을 뒤에 |
+
+## 9. 복원 R1 1라운드 (`feat/laundry-restore-r1`, main `10c0d30`에서 분기, 2026-11-11)
+
+순서는 보고서 → 승인 → 코드다. 이번 라운드는 보완(9.1)과 R1 케이스 보고서(9.2)까지이며 **R1 코드와 `ENABLED_FEATURES` 상수는 아직 없다** (승인 뒤 작성).
+
+### 9.1 보완: 되묻기 목록 필터를 순수 함수로
+
+- 8.6에서 화면 컴포넌트(`App.tsx`, `LaundryApp.tsx`)에 둔 되묻기 필터를 `formState.ts` `followUpFields`, `laundryForm.ts` `laundryFollowUpFields`(+ `laundryFormKey`)로 옮겼다. 규칙은 같다: 필수 누락은 직접 고른 "모름"이어도 다시 묻고, '확인 안 됨'만 직접 고른 값이면 묻지 않는다. 폼에 없는 항목 이름은 버린다.
+- `frontend/tests/followup.test.ts` 9건 (헬스장 5, 세탁 4: 필수 누락·직접 고른 값·기본값·빈 값·`item_unlisted` 대응). `npm test` 16건 (기존 7 + 9). 새 의존성 없음 (Node 내장 러너).
+
+### 9.2 R1 케이스 보고서
+
+- `docs/sources/vs4_restore_r1_cases.md` (승인 대기): 독립 서브에이전트 1회가 원문 표(HWPX 텍스트·PDF 텍스트층)에서 두 계산기로 도출. 케이스 11건(R1-1~R1-9, R1-5c 추가 제안), 두 계산기 모든 비교 필드 일치, 값이 여럿인 13개 행의 원문 표 값 불일치 0건. 엔진 코드(`backend/rules/` 등)는 열지 않았다.
+- L7 기대값 변경(전 → 후)은 보고서 3절, MVP_SPEC 12.10 R1에 요약.
+- [해석 기본값] D4~D7과 열린 질문 Q1~Q10은 MVP_SPEC 12.10 R1과 보고서 6·7절.

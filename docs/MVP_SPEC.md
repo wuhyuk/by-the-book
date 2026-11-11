@@ -1,7 +1,7 @@
 # MVP_SPEC — 기준대로
 
 > 상태: **초안**. 현재 단계에 필요한 결정이 끝나기 전에는 그 단계를 구현하지 않는다. 결정이 나면 이 문서를 먼저 갱신한다.
-> **현재 단계: 수직 슬라이스 VS4 (세탁 축소 A 기본안, `feat/laundry`) 진행 중 (케이스 L1~L22 승인 반영은 `feat/laundry-cases`), 다음은 VS4 복원 후보(소재·용도 미상 → Set 일부 → 부속물, 12.10 명세만 있고 코드 없음) → VS5**. 세탁 계약은 12절, 작업 기록은 `docs/sources/vs4_report.md`, 케이스 검증은 `docs/sources/vs4_cases_approval.md`(승인 완료 2026-11-10). 2026-11-06부터 구현 순서는 8.1절 수직 슬라이스 계획을 따른다.
+> **현재 단계: 수직 슬라이스 VS4 (세탁 축소 A 기본안, `feat/laundry`) 진행 중 (케이스 L1~L22 승인 반영 main 병합 #12), 지금은 VS4 복원 R1(소재·용도 미상, `feat/laundry-restore-r1`, 케이스 보고서 `docs/sources/vs4_restore_r1_cases.md` 승인 대기, 코드 없음), 다음은 R2 Set 일부 → R3 부속물 → VS5**. 세탁 계약은 12절, 작업 기록은 `docs/sources/vs4_report.md`, 케이스 검증은 `docs/sources/vs4_cases_approval.md`(승인 완료 2026-11-10). 2026-11-06부터 구현 순서는 8.1절 수직 슬라이스 계획을 따른다.
 > 완료한 단계: 0 (고시 원문 확인, 2026-10-26), 1 (저장소 뼈대, 2026-10-19), 2 (규칙 엔진 + 테스트, main 병합 #4), 세탁·가전 사전 조사 (main 병합 #5, 2026-11-06), VS1 (main 병합 #6), VS2 (PR 2-1 `/api/calculate` main 병합 #8, PR 2-2·2-3 화면·관통 확인 main 병합 #9), VS3 (`/api/analyze`·되묻기 화면, main 병합 #10).
 > 세탁·가전 사전 조사 산출물: `docs/sources/laundry_*.md`, `docs/sources/appliance_*.md`, `backend/data/rules/laundry_*.json`·`appliance_*.json` 초안. 세탁은 결정 반영(2026-11-02·11-06, 표 블록 4개 `verified: true`·`user_checked: false`, 최상위 `false`), 명세는 2026-11-10 12절로 옮겼다. 가전은 모두 `verified: false`로 보관하며 v0.1 범위 밖이다. 결정은 `docs/sources/stage0_laundry_appliance_report.md` 9절.
 
@@ -869,6 +869,14 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 - 계산: 그 행의 모든 소재·용도 후보를 계산한다 (표 순서). 값이 같은 후보도 따로 보여 준다 [원문 표 행 그대로].
 - 사유: 🔍 `VARIANT_UNKNOWN` (항상). 후보 중 하나라도 민감도 검사에서 결과가 달라지면 `DECISION_SENSITIVE`도 붙인다.
 - 화면 한 줄: "소재·용도를 알 수 없어 표의 후보를 모두 계산했습니다. 기준 금액은 {min}원~{max}원입니다." (숫자는 결과 필드에서만) **[초안, 승인 대기]**
+- 케이스·질문: `docs/sources/vs4_restore_r1_cases.md` (2026-11-11, 승인 대기, 케이스 R1-1~R1-9·R1-5c, 열린 질문 Q1~Q10). 승인 전에는 아래 [해석 기본값]으로 구현하지 않고 테스트 기대값에도 쓰지 않는다.
+- **[해석 기본값, 승인 대기]** (보고서 6절 D4~D7. D1~D3은 위 명세 문장 그대로):
+  - D4: `VARIANT_UNKNOWN` 한 줄의 {min}~{max}는 후보들의 **결정 값** 금액 범위다 (4조합 범위가 아님, Q2).
+  - D5: 후보가 여럿이고 `DECISION_SENSITIVE`가 붙으면 12.4의 비율 틀·1원 틀을 쓰지 않고 일반 틀 "고시에 정해져 있지 않은 {원인들}에 따라 기준 금액이 {min}원~{max}원으로 달라질 수 있습니다."를 쓴다. {min}~{max}는 `sensitivity_min`·`sensitivity_max`, `sensitivity_ratio_alt`는 `None` (Q3). 12.4의 "폭은 항상 1원"은 후보가 하나일 때만 성립한다.
+  - D6: 입증 불가(20배)이면 `"unknown"`을 무시한다 (`VARIANT_UNKNOWN` 없음, Q10). 값이 하나인 행은 12.1 Q4대로 무시한다.
+  - D7: 안내·인용은 일반 배상비율 경로와 같다 (새 조항 ID 없음).
+- 답이 필요한 질문 (보고서 7절): Q1 모든 후보가 같은 결과일 때 ✅ 여부 (기본 🔍, 위 "항상"), Q4 문장 분석이 `"unknown"`을 채울 수 있는지 (제안: 아니오, 폼의 "모름"만), Q6 후보가 여럿일 때 맨 위 필드(`life_years` 등) 값 (제안: `None`, 후보별 값은 `candidates`), Q7 ⚠️ 비교 기준 (명세: 모든 후보 × 4조합 최솟값), Q9 기능이 꺼졌을 때 `"unknown"` 처리 (12.1대로 `INVALID_INPUT`, 화면은 "모름" 선택지를 숨김 제안).
+- **L7 기대값 변경 (재승인 필요)**: 승인 케이스 L7("용도 모름")의 테스트 입력은 지금 `variant_key = None`이다. R1을 켜면 입력을 `"unknown"`으로 바꾸고 기대값을 🔍 계산 안 함 `MISSING_REQUIRED ["variant_key"]` → 🔍 계산함 `VARIANT_UNKNOWN`, 후보 하복 300,000 / 춘추복 350,000 / 동복 350,000 (R1-1)으로 바꾸는 안이 기본이다. `None` 입력의 기대값(지금 L7)은 R1-2로 남는다. 재승인 전에는 L7 테스트를 바꾸지 않는다.
 
 #### R2 Set 일부 손상·분실 (`set_partial`)
 
