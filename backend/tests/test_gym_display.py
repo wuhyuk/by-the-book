@@ -33,7 +33,7 @@ SPEC_FLAG_TEXTS = {
     F.OFFER_BELOW_B: "업체 제시액이 정상가 기준으로 계산한 기준 금액보다도 적습니다.",
     F.PENALTY_ABOVE_CAP: "계약서상 위약금이 고시의 위약금 상한(총계약대금의 10%)보다 큽니다. 계산에는 상한을 공제했습니다.",
     F.SCOPE_UNCERTAIN_PT_ONLY: "PT만 계약한 경우 이 기준이 적용되는지 확실하지 않아, 헬스·피트니스 기준으로 계산했습니다.",
-    F.PERIOD_ONE_MONTH_BOUNDARY: "계약 기간이 1개월 경계에 있어(날짜를 세는 방식에 따라 28~31일) 이 기준이 적용되는지 확인이 필요합니다.",
+    F.PERIOD_ONE_MONTH_BOUNDARY: "계약 기간이 1개월 경계(시작일과 종료일을 모두 세어 28~32일)에 있어 이 기준이 적용되는지 확인이 필요합니다.",
     F.REFUND_LIMIT_CLAUSE_UNKNOWN: "계약서에 중도 해지 시 환급 제한이나 위약금 조항이 있는지 확인이 필요합니다.",
     F.WITHDRAWAL_STATUS_UNCONFIRMED: "청약철회 대상이 아니거나 철회 기간이 지났는지 확인되지 않았습니다.",
     F.SESSION_VALIDITY_MISSING: "횟수제 이용권의 유효기간을 입력하지 않아 이 기준의 적용 여부를 확인하지 못했습니다.",
