@@ -1,7 +1,7 @@
 # MVP_SPEC — 기준대로
 
 > 상태: **초안**. 현재 단계에 필요한 결정이 끝나기 전에는 그 단계를 구현하지 않는다. 결정이 나면 이 문서를 먼저 갱신한다.
-> **현재 단계: 1차 배포 라운드 (일정 변경 2026-11-11, 8.1 "1차 배포 일정"). 지금은 PR-A `feat/guide-and-switches`(백엔드·문서: `/api/config`, 분석 안전 스위치, `/api/guide` 템플릿, 표 값 확인 시트, R1 결정 기록), 다음은 PR-B(화면·배포 패키지) → 11/14(토) 1차 배포 → 11/14~11/17 버그 수정만 → 11/18까지 사용자 만족도 정량평가(응답 10명 이상)**. VS4 복원 R1은 결정·승인 기록만 했고(12.10) 코드는 11/18 이후로 미뤘다. VS4 축소 A는 main 병합 #11·#12, R1 케이스 보고서는 #13. 세탁 계약은 12절, 작업 기록은 `docs/sources/vs4_report.md`, 케이스 검증은 `docs/sources/vs4_cases_approval.md`(승인 완료 2026-11-10). 2026-11-06부터 구현 순서는 8.1절 수직 슬라이스 계획을 따른다.
+> **현재 단계: 1차 배포 라운드 (일정 변경 2026-11-11, 8.1 "1차 배포 일정"). PR-A `feat/guide-and-switches` main 병합 #14. 지금은 PR-B `feat/web-deploy-pack`(1개월 경계 문구, 분석 순서·설정 보완, 화면, 배포 패키지 `Dockerfile`·`docs/DEPLOY.md`·`scripts/smoke_deploy.py`), 다음은 11/14(토) 1차 배포 → 11/14~11/17 버그 수정만 → 11/18까지 사용자 만족도 정량평가(응답 10명 이상)**. VS4 복원 R1은 결정·승인 기록만 했고(12.10) 코드는 11/18 이후로 미뤘다. VS4 축소 A는 main 병합 #11·#12, R1 케이스 보고서는 #13. 세탁 계약은 12절, 작업 기록은 `docs/sources/vs4_report.md`, 케이스 검증은 `docs/sources/vs4_cases_approval.md`(승인 완료 2026-11-10). 2026-11-06부터 구현 순서는 8.1절 수직 슬라이스 계획을 따른다.
 > 완료한 단계: 0 (고시 원문 확인, 2026-10-26), 1 (저장소 뼈대, 2026-10-19), 2 (규칙 엔진 + 테스트, main 병합 #4), 세탁·가전 사전 조사 (main 병합 #5, 2026-11-06), VS1 (main 병합 #6), VS2 (PR 2-1 `/api/calculate` main 병합 #8, PR 2-2·2-3 화면·관통 확인 main 병합 #9), VS3 (`/api/analyze`·되묻기 화면, main 병합 #10).
 > 세탁·가전 사전 조사 산출물: `docs/sources/laundry_*.md`, `docs/sources/appliance_*.md`, `backend/data/rules/laundry_*.json`·`appliance_*.json` 초안. 세탁은 결정 반영(2026-11-02·11-06, 표 블록 4개 `verified: true`·`user_checked: false`, 최상위 `false`), 명세는 2026-11-10 12절로 옮겼다. 가전은 모두 `verified: false`로 보관하며 v0.1 범위 밖이다. 결정은 `docs/sources/stage0_laundry_appliance_report.md` 9절.
 
@@ -278,7 +278,7 @@ deposit_refund = deposit                                       ← 별도 약정
 | 코드 | 짧은 이름 | 조건 | 화면 한 줄 |
 |---|---|---|---|
 | `SCOPE_UNCERTAIN_PT_ONLY` | 범위 불확실 (PT 단독) | `is_pt_only = True` | "PT만 계약한 경우 이 기준이 적용되는지 확실하지 않아, 헬스·피트니스 기준으로 계산했습니다." |
-| `PERIOD_ONE_MONTH_BOUNDARY` | 1개월 경계 구간 | 계약 일수 28~32 (양끝 산입. 32일은 한쪽 끝만 세면 31일이라 포함) [결정 2026-11-06 (a)] | "계약 기간이 1개월 경계에 있어(날짜를 세는 방식에 따라 28~31일) 이 기준이 적용되는지 확인이 필요합니다." |
+| `PERIOD_ONE_MONTH_BOUNDARY` | 1개월 경계 구간 | 계약 일수 28~32 (양끝 산입. 32일은 한쪽 끝만 세면 31일이라 포함) [결정 2026-11-06 (a)] | "계약 기간이 1개월 경계(시작일과 종료일을 모두 세어 28~32일)에 있어 이 기준이 적용되는지 확인이 필요합니다." |
 | `REFUND_LIMIT_CLAUSE_UNKNOWN` | 약정 미확인 | `has_refund_limit_clause is None` | "계약서에 중도 해지 시 환급 제한이나 위약금 조항이 있는지 확인이 필요합니다." |
 | `WITHDRAWAL_STATUS_UNCONFIRMED` | 청약철회 미확인 | `withdrawal_cleared`가 `True`가 아님 | "청약철회 대상이 아니거나 철회 기간이 지났는지 확인되지 않았습니다." |
 | `SESSION_VALIDITY_MISSING` | 유효기간 미입력 | 기준에 `session`이 있고 `start_date`·`end_date` 중 하나라도 없음 (5.2) | "횟수제 이용권의 유효기간을 입력하지 않아 이 기준의 적용 여부를 확인하지 못했습니다." |
@@ -500,7 +500,8 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 | `POST /api/analyze` | 문장 → 추출 결과(`item`, `fields`, `missing`, `evidence`) |
 | `POST /api/calculate` | 확정된 필드 → 계산 결과(`refund`, `steps`, `badge`, `source`) |
 | `POST /api/guide` | `/api/calculate`와 같은 본문 → 서버가 다시 계산한 결과로 설명 문장·업체용 문안·근거 조항 (`backend/guide/`, LLM 없음, 템플릿) [결정 2026-11-11 사용자]. ❔·계산 안 함이면 업체용 문안 `null`. 인용은 엔진이 정한 조항 ID의 카드만 쓰므로 검색 결과에 없는 조항을 인용할 수 없다 (절대 규칙 7) |
-| `GET /api/config` | `{analyze_enabled, survey_url}` (운영 설정 `ANALYZE_ENABLED`, `SURVEY_URL`) [결정 2026-11-11 사용자] |
+| `GET /api/config` | `{analyze_enabled, survey_url}`. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
+| `GET /healthz` | 배포 헬스체크 `{"status": "ok"}` (외부 호출 없음). 그 밖의 `/api` 밖 경로는 화면(`frontend/dist`, SPA 폴백), 없는 `/api/*`는 404 JSON (`docs/DEPLOY.md`) |
 
 `/api/ask`(자유 질의)는 MVP 범위 밖이다.
 
@@ -567,8 +568,9 @@ VS5 평가 30건 기준 [결정 2026-11-08 사용자]:
 - 평가 지표에 **되묻기 비율**을 넣는다 [결정 2026-11-08 사용자]: 전체(문장 분석 1회당 `missing`·`unverified` 항목 수, 되묻기가 1개 이상인 사례 비율)와 항목별(필드마다 `unverified`로 간 비율, 그중 정답 값이 문장에 있었는데 되물은 비율). 예/아니오 뜻 확인(D1)이 되묻기를 얼마나 늘리는지 이 지표로 잰다. VS3 비교 2차 실행은 D1 반영 전 코드라 근거로 쓰지 않는다.
 
 VS5 TODO [제안, 2026-11-08 사용자 지시로 기록, 외부 배포판용] → **백엔드는 PR-A에서 구현 (2026-11-11), 화면 연동은 PR-B**:
-- 문장 분석 끄기 설정 `ANALYZE_ENABLED` (기본 true). 끄면 `/api/analyze`가 Gemini를 부르지 않고 503 `ANALYZE_DISABLED` + "문장 분석은 지금 쓸 수 없습니다. 아래 입력 폼으로 입력해 주세요"를 돌려준다. 화면은 `/api/config`의 `analyze_enabled`로 문장 입력창을 숨긴다 (PR-B).
-- 프로세스 안 일일 호출 카운터 `DAILY_ANALYZE_LIMIT` (기본 450, 기본 모델 RPD 500 기준, 2026-11-08 AI Studio 확인). Gemini로 실제로 보낸 호출만 센다 (규칙 가드레일에 걸린 요청 제외, 재시도·예비 모델 호출은 각각 1회). 날짜는 KST. 상한에 도달하면 429 `ANALYZE_DAILY_LIMIT` + 폼 입력 안내. **카운터는 프로세스 메모리에만 있어 서버를 다시 시작하면 0으로 초기화되고, 프로세스가 여럿이면 따로 센다** (`backend/llm/usage.py`). `/api/guide`는 LLM을 쓰지 않으므로 세지 않는다.
+- 처리 순서 [결정 2026-11-12 사용자]: 마스킹 → 규칙 가드레일(외부 호출 없음) → 스위치 확인 → 하루 상한 확인 → Gemini. 분석이 꺼져 있거나 상한에 도달해도 승패·법적 효력 질문은 ❔로 답한다.
+- 문장 분석 끄기 설정 `ANALYZE_ENABLED` (기본 true, 대소문자 무시: `true`·`1`·`yes`·`on` 켬 / `false`·`0`·`no`·`off` 끔 / 빈 값 켬 / 그 외 끔). 끄면 `/api/analyze`가 Gemini를 부르지 않고 503 `ANALYZE_DISABLED` + "문장 분석은 지금 쓸 수 없습니다. 아래 입력 폼으로 입력해 주세요"를 돌려준다. 화면은 `/api/config`의 `analyze_enabled`로 문장 입력창을 숨긴다 (PR-B).
+- 프로세스 안 일일 호출 카운터 `DAILY_ANALYZE_LIMIT` (기본 450, 기본 모델 RPD 500 기준, 2026-11-08 AI Studio 확인). Gemini로 실제로 보낸 호출만 센다 (규칙 가드레일에 걸린 요청 제외, 재시도·예비 모델 호출은 각각 1회). 날짜는 KST. 상한에 도달하면 429 `ANALYZE_DAILY_LIMIT` + "오늘 쓸 수 있는 문장 분석 횟수를 모두 사용했습니다. 아래 입력 폼은 계속 사용할 수 있고, 한국시간 자정 이후 다시 분석할 수 있습니다." [문구 결정 2026-11-12 사용자]. **카운터는 프로세스 메모리에만 있어 서버를 다시 시작하면 0으로 초기화되고, 프로세스가 여럿이면 따로 센다** (`backend/llm/usage.py`). `/api/guide`는 LLM을 쓰지 않으므로 세지 않는다.
 - 두 스위치는 `/api/analyze`에만 걸리고 `/api/calculate`·`/api/guide`는 영향을 받지 않는다.
 
 1차 배포 일정 [결정 2026-11-11 사용자] (과제 평가 기준: 11/18까지 배포와 사용자 만족도 정량평가, 응답자 10명 이상):
@@ -665,7 +667,7 @@ VS5 TODO [제안, 2026-11-08 사용자 지시로 기록, 외부 배포판용] �
 - `refund_basis = unknown` 결과는 "일수 기준", "횟수 기준"으로 묶어서 보여 준다 (5.3).
 - 단계 6 입력 화면에서 요가·필라테스의 `refund_basis` 질문에 "모름" 선택지를 제공해야 한다 ("모름" → `unknown`, 답하지 않음 → `None` = 누락) [결정 2026-10-26 단계 2].
 - 사유 한 줄 표시 문제: 케이스 기준으로 계산한 🔍 24건 중 19건(2026-11-06 B4 재승인 전 20건)의 화면 한 줄이 `WITHDRAWAL_STATUS_UNCONFIRMED`라 화면에 같은 문구만 보인다. 단계 6에서 결정: 사유 상위 2개와 "외 N개" 펼침, 또는 확인 체크리스트. 단계 2에서는 5.4 우선순위 규칙(1개 표시)을 바꾸지 않는다 [2026-10-26 기록]. (2026-11-06: 이 결정은 VS5 UI 다듬기에서 한다, 8.1)
-- TODO (VS5 UI 다듬기) **[제안]** 1개월 경계 문구: `PERIOD_ONE_MONTH_BOUNDARY`의 화면 문구 "…(날짜를 세는 방식에 따라 28~31일)…"는 32일 계약에서 어색하다. 고정된 "28~31일" 대신 그 계약의 실제 일수 두 값(양끝 산입 일수, 한쪽 끝 산입 일수. 예: "32일 또는 31일")을 보여 주는 문구로 바꾼다. 두 값은 엔진 결과(`contract_days`, `contract_days − 1`)에서만 채우고 LLM이 만들지 않는다. 지금 문구(5.4)는 바꾸지 않는다 [2026-11-06 사용자 지시].
+- TODO (VS5 UI 다듬기) **[제안]** 1개월 경계 문구: `PERIOD_ONE_MONTH_BOUNDARY`의 화면 문구 "…(날짜를 세는 방식에 따라 28~31일)…"는 32일 계약에서 어색하다. 고정된 "28~31일" 대신 그 계약의 실제 일수 두 값(양끝 산입 일수, 한쪽 끝 산입 일수. 예: "32일 또는 31일")을 보여 주는 문구로 바꾼다. 두 값은 엔진 결과(`contract_days`, `contract_days − 1`)에서만 채우고 LLM이 만들지 않는다. 지금 문구(5.4)는 바꾸지 않는다 [2026-11-06 사용자 지시]. → 2026-11-11(PR-B) 정의(양끝 산입 28~32일)와 어긋나는 "28~31일"만 먼저 고쳤다: 5.4 문구를 "계약 기간이 1개월 경계(시작일과 종료일을 모두 세어 28~32일)에 있어 …"로 바꿈 [승인 대기]. 실제 일수 두 값을 보여 주는 안은 11/18 이후.
 
 ## 11. 평가 메모 (단계 7)
 
@@ -847,7 +849,7 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 | 결과 요소 | 인용 ID |
 |---|---|
 | 계산한 결과 (항상) | `laundry_types`, `laundry_1`, `laundry_5_1`, `cpa16_3` (권고 기준) |
-| 배상비율 계산 | `laundry_ratio_table`, `laundry_lifespan_table` |
+| 배상비율 계산 | `laundry_ratio_table`, `laundry_lifespan_table`. 두 카드 본문에는 원문 한 줄 뒤에 이번 계산에 적용한 칸(내용연수 행·사용일수 칸·배상비율)과 품목 행(품목·소재/용도 → 내용연수)을 덧붙인다. 사용일수 산입 방식이 원인인 `DECISION_SENSITIVE`면 대안 칸도 적는다. 숫자는 엔진 결과와 규칙 JSON 표 값에서만 가져온다 (`rules/laundry_display.py` `applied_ratio_text`·`applied_item_text`) [2026-11-12 사용자 지시] |
 | Set 전체 (1벌 기준) | `laundry_6` |
 | 감액 사유 (`PARTIAL_FAULT_CLAIMED`, `DAMAGED_ITEM_RETURN`) | `laundry_2` |
 | 면책 사유 (`EXEMPTION_CLAIMED`) | `laundry_3` |
