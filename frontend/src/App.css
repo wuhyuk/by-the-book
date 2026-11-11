@@ -230,6 +230,9 @@
   padding-left: 10px;
   border-left: 3px solid var(--border);
   font-size: 14px;
+  /* 원문의 줄바꿈과 '적용한 칸' 줄을 그대로 보여 준다 (2026-11-12) */
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 
 .source,
@@ -367,4 +370,195 @@
   border-color: var(--accent);
   color: #fff;
   font-weight: 700;
+}
+
+/* 1차 배포 화면 (2026-11-12): 면책·예시·분석 꺼짐·설명/업체용 문안·설문 */
+.site-disclaimer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--muted);
+  box-sizing: border-box;
+}
+
+.examples {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.analyze .example-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  white-space: normal;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 6px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.analyze-off {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.guide-panel {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.guide-panel h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.copy-block {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.copy-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-bottom: 6px;
+}
+
+.copy-head h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.copy-button,
+.survey-button {
+  font: inherit;
+  font-size: 14px;
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.survey-button {
+  display: inline-block;
+  box-sizing: border-box;
+  margin-top: 8px;
+  line-height: 26px;
+  text-decoration: none;
+  background: var(--accent);
+  color: #fff;
+}
+
+.copy-line {
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.copy-status {
+  margin: 6px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.copy-fallback {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 14px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.result-help {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.result-help p {
+  margin: 0 0 4px;
+}
+
+.site-footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+  box-sizing: border-box;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* 휴대폰 폭: 긴 낱말(주소·숫자)이 가로 스크롤을 만들지 않게 */
+@media (max-width: 480px) {
+  .app {
+    padding: 16px 12px 32px;
+  }
+  .app header h1 {
+    font-size: 24px;
+  }
+  .output,
+  .guide-panel,
+  .copy-block {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .copy-head .copy-button {
+    width: 100%;
+  }
+}
+
+/* 휴대폰 폭 가로 넘침 방지 (2026-11-12 세탁 화면 375px 확인에서 발견):
+   - 한 열 그리드 트랙이 내용 최소 폭(긴 품목 선택지, 계산 과정 표)만큼 늘어나지 않게 minmax(0, 1fr)
+   - fieldset 기본 min-inline-size(min-content)와 select 기본 폭(가장 긴 선택지)을 칸 안으로 묶는다
+   - 계산 과정 표는 칸 안에서 가로로 스크롤한다 */
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.layout > * {
+  min-width: 0;
+}
+
+fieldset {
+  min-width: 0;
+}
+
+select,
+input,
+textarea {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.output table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.citation a,
+.screen-line {
+  overflow-wrap: anywhere;
 }

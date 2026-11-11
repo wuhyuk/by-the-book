@@ -37,10 +37,11 @@ def test_laundry_calculate_matches_engine() -> None:
     res = client.post("/api/calculate?item=laundry", json=BODY)
     assert res.status_code == 200
     rule = load_laundry_rule()
-    result = calculate_damage(LaundryInput.model_validate_json(json.dumps(BODY)), rule)
+    inp = LaundryInput.model_validate_json(json.dumps(BODY))
+    result = calculate_damage(inp, rule)
     expected = {
         "result": result.model_dump(mode="json"),
-        "display": build_laundry_display(result, rule).model_dump(mode="json"),
+        "display": build_laundry_display(result, rule, inp).model_dump(mode="json"),
     }
     assert res.json() == expected
 

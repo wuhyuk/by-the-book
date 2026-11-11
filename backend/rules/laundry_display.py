@@ -20,7 +20,7 @@ from rules.gym_display import (
 from rules.gym_display import (
     FLAG_TEXTS as GYM_FLAG_TEXTS,
 )
-from rules.laundry import LaundryResult
+from rules.laundry import LaundryInput, LaundryResult
 from rules.laundry_codes import (
     CommonFlag,
     LaundryCode,
@@ -28,7 +28,7 @@ from rules.laundry_codes import (
     LaundryNotice,
     order_laundry_flags,
 )
-from rules.laundry_rule import LaundryRule
+from rules.laundry_rule import Band, LaundryRule
 
 C = CommonFlag
 L = LaundryFlag
@@ -209,8 +209,89 @@ def citation_cards(ids: list[str], rule: LaundryRule) -> list[CitationCard]:
     return cards
 
 
-def build_laundry_display(result: LaundryResult, rule: LaundryRule) -> LaundryDisplay:
-    """LaundryResult → 화면 표시 정보 (화면 한 줄 1개 + 나머지 접기, 12.4)."""
+RATIO_TABLE_ID = "laundry_ratio_table"
+LIFESPAN_TABLE_ID = "laundry_lifespan_table"
+
+
+def _days(n: int) -> str:
+    return f"{n:,}일"
+
+
+def _band_text(band: Band) -> str:
+    """원문 표 칸의 사용일수 구간 (규칙 JSON 값 그대로)."""
+    if band.max_days is None:
+        return f"사용일수 {_days(band.min_days)} 이상"
+    return f"사용일수 {band.min_days:,}~{_days(band.max_days)}"
+
+
+def applied_ratio_text(result: LaundryResult, rule: LaundryRule) -> str | None:
+    """배상비율표에서 이번 계산에 적용한 칸 (2026-11-12). 숫자는 엔진 결과와 규칙 JSON 값만 쓴다.
+
+    사용일수 산입 방식이 원인인 결정 민감(🔍)이면 대안으로 조회한 칸도 같이 적는다.
+    대안 칸은 같은 내용연수 행에서 엔진이 낸 대안 비율(sensitivity_ratio_alt)의 칸이다.
+    """
+    life, ratio, days = result.life_years, result.ratio_percent, result.use_days
+    if result.method != "ratio" or life is None or ratio is None or days is None:
+        return None
+    row = next(r for r in rule.ratio_table.rows if r.life_years == life)
+    band = rule.ratio_table.band(life, days)
+    assert band.ratio_percent == ratio  # 엔진 결과와 표 값이 같아야 한다
+    text = (
+        f"적용한 칸: 내용연수 {life}년 행, {_band_text(band)} 칸 "
+        f"(이번 사용일수 {_days(days)}) → 배상비율 {ratio}%"
+    )
+    alt = result.sensitivity_ratio_alt
+    if "use_days" in result.sensitivity_causes and alt is not None:
+        alt_band = next(b for b in row.bands if b.ratio_percent == alt)
+        text += (
+            "\n사용일수 산입 방식(구입일을 세는지)에 따라 갈리는 칸: "
+            f"내용연수 {life}년 행, {_band_text(alt_band)} 칸 → 배상비율 {alt}%"
+        )
+    return text
+
+
+def applied_item_text(
+    inp: LaundryInput, result: LaundryResult, rule: LaundryRule
+) -> str | None:
+    """평균 내용연수표에서 이번 계산에 적용한 품목 행 (2026-11-12). 이름·연수는 규칙 JSON 값 그대로."""
+    if result.method != "ratio" or result.life_years is None or inp.item_key is None:
+        return None
+    row = next((r for r in rule.lifespan_table.rows if r.id == inp.item_key), None)
+    if row is None:
+        return None
+    name = row.item or row.category
+    variant = row.variant(inp.variant_key) if inp.variant_key and row.variants else None
+    years = variant.years if variant is not None else row.years
+    assert years == result.life_years  # 엔진 결과와 표 값이 같아야 한다
+    label = f"{name} ({variant.label})" if variant is not None else name
+    return f"적용한 품목: {label} → 내용연수 {years}년"
+
+
+def _with_applied(
+    cards: list[CitationCard],
+    result: LaundryResult,
+    rule: LaundryRule,
+    inp: LaundryInput | None,
+) -> list[CitationCard]:
+    """표 인용 카드에 이번 계산에 적용한 칸을 덧붙인다 (원문 한 줄은 그대로 둔다)."""
+    extra = {RATIO_TABLE_ID: applied_ratio_text(result, rule)}
+    if inp is not None:
+        extra[LIFESPAN_TABLE_ID] = applied_item_text(inp, result, rule)
+    out: list[CitationCard] = []
+    for card in cards:
+        add = extra.get(card.id)
+        text = f"{card.text}\n{add}" if add else card.text
+        out.append(card.model_copy(update={"text": text}))
+    return out
+
+
+def build_laundry_display(
+    result: LaundryResult, rule: LaundryRule, inp: LaundryInput | None = None
+) -> LaundryDisplay:
+    """LaundryResult → 화면 표시 정보 (화면 한 줄 1개 + 나머지 접기, 12.4).
+
+    inp를 넘기면 평균 내용연수표 카드에 적용한 품목 행을 덧붙인다 (API·문안은 항상 넘긴다).
+    """
     lines = [flag_line(c, result) for c in order_laundry_flags(result.flags)]
     s = rule.source
     return LaundryDisplay(
@@ -220,7 +301,9 @@ def build_laundry_display(result: LaundryResult, rule: LaundryRule) -> LaundryDi
         notices=[
             DisplayLine(code=n.value, text=NOTICE_TEXTS[n]) for n in result.notices
         ],
-        citations=citation_cards(result.citations, rule),
+        citations=_with_applied(
+            citation_cards(result.citations, rule), result, rule, inp
+        ),
         rule_source=LaundryRuleSource(
             name=s.name,
             notice_number=s.notice_number,

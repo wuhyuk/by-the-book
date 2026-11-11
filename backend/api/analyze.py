@@ -2,9 +2,9 @@
 
 품목은 쿼리 item으로 고른다: 없거나 gym이면 헬스장 추출(지금과 같음), laundry면 세탁 추출.
 
-순서: 분석 스위치(ANALYZE_ENABLED=false면 바로 ANALYZE_DISABLED) → 마스킹 → 규칙 가드레일(걸리면
-LLM을 부르지 않고 ❔, 호출 수에 넣지 않음) → 하루 상한 확인(ANALYZE_DAILY_LIMIT) → LLM 추출·근거 확인
-→ LLM 판정 가드레일. 하루 호출 수는 실제로 보낸 호출만 센다 (재시도·예비 모델 포함, llm/usage.py).
+순서 (2026-11-12 결정): 마스킹 → 규칙 가드레일(외부 호출 없음, 걸리면 ❔, 호출 수에 넣지 않음)
+→ 분석 스위치(ANALYZE_ENABLED=false면 ANALYZE_DISABLED) → 하루 상한 확인(ANALYZE_DAILY_LIMIT)
+→ LLM 추출·근거 확인 → LLM 판정 가드레일. 분석이 꺼져 있어도 승패 질문은 ❔로 답한다. 하루 호출 수는 실제로 보낸 호출만 센다 (재시도·예비 모델 포함, llm/usage.py).
 두 스위치는 /api/analyze에만 걸린다. /api/calculate·/api/guide는 영향을 받지 않는다.
 - 입력 문장·마스킹한 문장·LLM 응답은 저장·로그하지 않는다. 로그에는 실패 종류만 남긴다.
 - 응답의 fields는 화면 폼을 미리 채우는 값이다. 계산은 사용자가 폼에서 확인한 뒤 /api/calculate가 한다.
@@ -45,8 +45,8 @@ DISABLED_CODE = "ANALYZE_DISABLED"
 DISABLED_MESSAGE = "문장 분석은 지금 쓸 수 없습니다. 아래 입력 폼으로 입력해 주세요"
 DAILY_LIMIT_CODE = "ANALYZE_DAILY_LIMIT"
 DAILY_LIMIT_MESSAGE = (
-    "오늘 쓸 수 있는 문장 분석 횟수를 모두 써서 지금은 문장 분석을 쓸 수 없습니다. "
-    "아래 입력 폼으로 입력해 주세요"
+    "오늘 쓸 수 있는 문장 분석 횟수를 모두 사용했습니다. 아래 입력 폼은 계속 사용할 수 있고, "
+    "한국시간 자정 이후 다시 분석할 수 있습니다."
 )
 
 router = APIRouter(prefix="/api")
@@ -125,8 +125,6 @@ def analyze(
     item: Literal["gym", "laundry"] = "gym",
 ) -> AnalyzeResponse | JSONResponse:
     """문장 → 폼에 채울 값(근거 확인된 값만)과 되물을 항목. 승패·법적 효력 질문이면 ❔."""
-    if not settings.analyze_enabled:
-        return _error(503, DISABLED_MESSAGE, DISABLED_CODE)
     masked = mask_pii(req.text)
     pii_masked = masked != req.text
     guardrail = AnalyzeResponse(
@@ -137,6 +135,8 @@ def analyze(
     )
     if detect_judgment_request(masked):
         return guardrail
+    if not settings.analyze_enabled:
+        return _error(503, DISABLED_MESSAGE, DISABLED_CODE)
     if counter.exhausted():
         return _error(429, DAILY_LIMIT_MESSAGE, DAILY_LIMIT_CODE)
     try:

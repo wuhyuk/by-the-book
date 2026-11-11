@@ -1,0 +1,23 @@
+# 이미지에 들어가면 안 되는 것 (docs/DEPLOY.md "이미지에 .env가 없는지 확인")
+**/.env
+**/.env.*
+.git
+.gitignore
+**/.venv
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.ruff_cache
+**/*.egg-info
+**/test-results
+**/playwright-report
+.playwright-mcp
+.claude
+frontend/dist
+backend/tests
+eval
+docs
+chroma
+**/*.sqlite
+**/*.db

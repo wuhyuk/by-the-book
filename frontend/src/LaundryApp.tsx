@@ -1,9 +1,10 @@
 // 세탁 화면 (VS4). 상태는 이 컴포넌트의 useState로만 둔다. 입력값을 URL·localStorage·콘솔에 남기지 않는다.
 import { useEffect, useState } from 'react'
-import { analyze, calculateLaundry, fetchLaundryItems } from './api'
+import { ANALYZE_UNAVAILABLE_CODES, analyze, calculateLaundry, fetchLaundryItems } from './api'
 import { AnalyzePanel } from './components/AnalyzePanel'
 import { FollowUp } from './components/FollowUp'
 import { GuardrailCard } from './components/GuardrailCard'
+import { GuidePanel } from './components/GuidePanel'
 import { LaundryForm } from './components/LaundryForm'
 import { LaundryResultCard } from './components/LaundryResultCard'
 import {
@@ -22,8 +23,16 @@ import {
   LAUNDRY_FIELD_LABEL,
   LAUNDRY_TEXT,
   LAUNDRY_VALUE_LABEL,
+  EXAMPLES,
 } from './texts'
-import type { GuardrailDisplay, LaundryAnalyzeResult, LaundryCalculateResponse, LaundryItemOption } from './types'
+import type {
+  GuardrailDisplay,
+  LaundryAnalyzeResult,
+  LaundryCalculateResponse,
+  LaundryInput,
+  LaundryItemOption,
+  ScreenProps,
+} from './types'
 
 interface Analysis {
   filledCount: number
@@ -41,7 +50,9 @@ function without(rec: Record<string, string>, form: Form, next: Form): Record<st
   return Object.fromEntries(keys.map((k) => [k, rec[k]]))
 }
 
-export function LaundryApp() {
+export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl }: ScreenProps) {
+  // 마지막으로 계산에 보낸 입력 (/api/guide에 그대로 다시 보낸다)
+  const [calcInput, setCalcInput] = useState<LaundryInput | null>(null)
   const [items, setItems] = useState<LaundryItemOption[]>([])
   const [itemsError, setItemsError] = useState(false)
   const [form, setForm] = useState<Form>(INITIAL_LAUNDRY_FORM)
@@ -90,6 +101,10 @@ export function LaundryApp() {
       setAnalyzing(false)
     }
     if (outcome.kind === 'error') {
+      if (outcome.code && ANALYZE_UNAVAILABLE_CODES.has(outcome.code)) {
+        onAnalyzeUnavailable(outcome.message) // 패널 대신 안내를 보여 주고 폼으로 이어진다
+        return
+      }
       setAnalyzeError(outcome.message)
       return
     }
@@ -168,6 +183,7 @@ export function LaundryApp() {
       setSubmitting(false)
     }
     if (outcome.kind === 'ok') {
+      setCalcInput(built.input)
       setResponse(outcome.data)
       return
     }
@@ -196,12 +212,19 @@ export function LaundryApp() {
         <p className="lead">{LAUNDRY_TEXT.lead}</p>
         <p className="supported">{LAUNDRY_TEXT.supported}</p>
       </header>
-      <AnalyzePanel
-        onAnalyze={onAnalyze}
-        analyzing={analyzing}
-        placeholder={LAUNDRY_TEXT.placeholder}
-        idPrefix="laundry-"
-      />
+      {analyzeOff === null ? (
+        <AnalyzePanel
+          onAnalyze={onAnalyze}
+          analyzing={analyzing}
+          placeholder={LAUNDRY_TEXT.placeholder}
+          idPrefix="laundry-"
+          examples={EXAMPLES.laundry}
+        />
+      ) : (
+        <p className="analyze-off" role="status" data-testid="analyze-off">
+          {analyzeOff}
+        </p>
+      )}
       {analyzeError && (
         <p className="request-error analyze-error" role="alert">
           {analyzeError}
@@ -242,6 +265,7 @@ export function LaundryApp() {
             </p>
           )}
           {response && <LaundryResultCard data={response} />}
+          {response && calcInput && <GuidePanel item="laundry" input={calcInput} surveyUrl={surveyUrl} />}
         </div>
       </div>
     </main>

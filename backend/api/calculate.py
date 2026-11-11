@@ -83,7 +83,7 @@ async def calculate(
         lrule = load_laundry_rule()
         lresult = calculate_damage(laundry, lrule)
         return LaundryCalculateResponse(
-            result=lresult, display=build_laundry_display(lresult, lrule)
+            result=lresult, display=build_laundry_display(lresult, lrule, laundry)
         )
     inp = validate_body(GymInput, body)
     rule = load_rule(RULE_ID)

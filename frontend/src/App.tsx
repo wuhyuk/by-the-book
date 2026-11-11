@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { analyze, calculate } from './api'
+import { ANALYZE_UNAVAILABLE_CODES, analyze, calculate } from './api'
 import { AnalyzePanel } from './components/AnalyzePanel'
 import { FollowUp } from './components/FollowUp'
 import { GuardrailCard } from './components/GuardrailCard'
+import { GuidePanel } from './components/GuidePanel'
 import { GymForm } from './components/GymForm'
 import { ResultCard } from './components/ResultCard'
 import {
@@ -13,8 +14,8 @@ import {
   mergeExtraction,
   type FormState,
 } from './formState'
-import { ANALYZE_TEXT, FIELD_LABEL, INPUT_ERROR, ISSUE_TYPE_LABEL, SUPPORTED_INDUSTRIES, VALUE_LABEL } from './texts'
-import type { CalculateResponse, GuardrailDisplay } from './types'
+import { ANALYZE_TEXT, EXAMPLES, FIELD_LABEL, INPUT_ERROR, ISSUE_TYPE_LABEL, SUPPORTED_INDUSTRIES, VALUE_LABEL } from './texts'
+import type { CalculateResponse, GuardrailDisplay, GymInput, ScreenProps } from './types'
 
 interface Analysis {
   filledCount: number
@@ -45,8 +46,10 @@ function without(rec: Record<string, string>, form: FormState, next: FormState):
 import './App.css'
 
 // 상태는 이 컴포넌트의 useState로만 둔다. 입력값을 URL·localStorage·콘솔에 남기지 않는다.
-function App() {
+function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl }: ScreenProps) {
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
+  // 마지막으로 계산에 보낸 입력 (/api/guide에 그대로 다시 보낸다)
+  const [calcInput, setCalcInput] = useState<GymInput | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [response, setResponse] = useState<CalculateResponse | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -72,6 +75,10 @@ function App() {
       setAnalyzing(false)
     }
     if (outcome.kind === 'error') {
+      if (outcome.code && ANALYZE_UNAVAILABLE_CODES.has(outcome.code)) {
+        onAnalyzeUnavailable(outcome.message) // 패널 대신 안내를 보여 주고 폼으로 이어진다
+        return
+      }
       setAnalyzeError(outcome.message)
       return
     }
@@ -142,6 +149,7 @@ function App() {
       setSubmitting(false)
     }
     if (outcome.kind === 'ok') {
+      setCalcInput(built.input)
       setResponse(outcome.data)
       return
     }
@@ -170,7 +178,13 @@ function App() {
         <p className="lead">헬스장·요가·필라테스 중도 해지 환급 기준 금액을 고시의 계산식대로 보여 드립니다.</p>
         <p className="supported">{SUPPORTED_INDUSTRIES}</p>
       </header>
-      <AnalyzePanel onAnalyze={onAnalyze} analyzing={analyzing} />
+      {analyzeOff === null ? (
+        <AnalyzePanel onAnalyze={onAnalyze} analyzing={analyzing} examples={EXAMPLES.gym} />
+      ) : (
+        <p className="analyze-off" role="status" data-testid="analyze-off">
+          {analyzeOff}
+        </p>
+      )}
       {analyzeError && (
         <p className="request-error analyze-error" role="alert">
           {analyzeError}
@@ -206,6 +220,7 @@ function App() {
             </p>
           )}
           {response && <ResultCard data={response} />}
+          {response && calcInput && <GuidePanel item="gym" input={calcInput} surveyUrl={surveyUrl} />}
         </div>
       </div>
     </main>

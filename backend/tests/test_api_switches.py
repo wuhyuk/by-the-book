@@ -291,3 +291,48 @@ def test_default_client_shares_counter(monkeypatch: pytest.MonkeyPatch) -> None:
         assert FAKE_KEY not in repr(c)
     finally:
         analyze_module.default_client.cache_clear()
+
+
+# ---- 2026-11-12 보완: 처리 순서·config 의미·파싱 ----
+
+
+def test_disabled_still_answers_judgment_question(override: Any) -> None:
+    """분석이 꺼져 있어도 승패 질문은 외부 호출 없이 ❔ (가드레일이 스위치보다 먼저)."""
+    fake = FakeClient(reply=extraction_reply())
+    counter = DailyCallCounter(5)
+    override(settings=AppSettings(analyze_enabled=False), counter=counter, llm=fake)
+    r = client.post(
+        "/api/analyze", json={"text": "헬스장 환불 소송하면 이길 수 있나요?"}
+    )
+    assert r.status_code == 200 and r.json()["status"] == "guardrail"
+    assert fake.received == [] and counter.count == 0
+
+
+def test_config_false_when_daily_limit_reached(override: Any) -> None:
+    counter = DailyCallCounter(1)
+    override(settings=AppSettings(analyze_enabled=True), counter=counter)
+    assert client.get("/api/config").json()["analyze_enabled"] is True
+    counter.acquire()
+    assert client.get("/api/config").json()["analyze_enabled"] is False
+
+
+def test_config_false_when_switch_off_even_below_limit(override: Any) -> None:
+    override(settings=AppSettings(analyze_enabled=False), counter=DailyCallCounter(9))
+    assert client.get("/api/config").json()["analyze_enabled"] is False
+
+
+def test_daily_limit_message_text() -> None:
+    assert DAILY_LIMIT_MESSAGE == (
+        "오늘 쓸 수 있는 문장 분석 횟수를 모두 사용했습니다. 아래 입력 폼은 계속 사용할 수 "
+        "있고, 한국시간 자정 이후 다시 분석할 수 있습니다."
+    )
+
+
+@pytest.mark.parametrize(
+    ("value", "enabled"),
+    [("TRUE", True), ("Yes", True), ("  on ", True), ("1", True), ("FALSE", False),
+     ("No", False), ("Off", False), ("enabled", False), ("2", False)],
+)  # fmt: skip
+def test_settings_analyze_enabled_case_insensitive(value: str, enabled: bool) -> None:
+    s = load_app_settings({"ANALYZE_ENABLED": value}, env_file=None)
+    assert s.analyze_enabled is enabled

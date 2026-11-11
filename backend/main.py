@@ -8,6 +8,7 @@ from api.config import router as config_router
 from api.errors import install_error_handling
 from api.guide import router as guide_router
 from api.health import router as health_router
+from api.spa import install_spa
 
 app = FastAPI(title="기준대로")
 install_error_handling(app)
@@ -16,3 +17,5 @@ app.include_router(calculate_router)
 app.include_router(analyze_router)
 app.include_router(guide_router)
 app.include_router(config_router)
+# 화면 서빙은 API 라우터를 모두 등록한 뒤에 둔다 (catch-all이 API를 가리지 않게)
+install_spa(app)

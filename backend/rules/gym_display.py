@@ -73,7 +73,7 @@ _SPEC_FLAG_TEXTS: dict[FlagCode, str] = {
         "헬스·피트니스 기준으로 계산했습니다."
     ),
     F.PERIOD_ONE_MONTH_BOUNDARY: (
-        "계약 기간이 1개월 경계에 있어(날짜를 세는 방식에 따라 28~31일) "
+        "계약 기간이 1개월 경계(시작일과 종료일을 모두 세어 28~32일)에 있어 "
         "이 기준이 적용되는지 확인이 필요합니다."
     ),
     F.REFUND_LIMIT_CLAUSE_UNKNOWN: (
