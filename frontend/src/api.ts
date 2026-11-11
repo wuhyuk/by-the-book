@@ -2,6 +2,8 @@
 // 품목은 쿼리 item으로만 고른다 (입력값은 URL에 넣지 않는다).
 import type {
   AnalyzeResponse,
+  AppConfig,
+  Guide,
   CalculateResponse,
   GymInput,
   Item,
@@ -72,9 +74,13 @@ export async function fetchLaundryItems(): Promise<LaundryItemOption[] | null> {
   }
 }
 
+// code: 서버 안내 코드 (ANALYZE_DISABLED, ANALYZE_DAILY_LIMIT, rate_limited 등). 없으면 undefined
 export type AnalyzeOutcome =
   | { kind: 'ok'; data: AnalyzeResponse }
-  | { kind: 'error'; message: string }
+  | { kind: 'error'; message: string; code?: string }
+
+// 문장 분석을 더 쓸 수 없다는 코드 (패널을 숨기고 폼으로 안내한다)
+export const ANALYZE_UNAVAILABLE_CODES: ReadonlySet<string> = new Set(['ANALYZE_DISABLED', 'ANALYZE_DAILY_LIMIT'])
 
 // /api/analyze 호출. 문장은 POST 본문으로만 보낸다 (URL·localStorage·콘솔에 남기지 않는다).
 export async function analyze(text: string, item: Item = 'gym'): Promise<AnalyzeOutcome> {
@@ -94,9 +100,24 @@ export async function analyze(text: string, item: Item = 'gym'): Promise<Analyze
       return { kind: 'ok', data: (await response.json()) as AnalyzeResponse }
     }
     if (response.status === 422) return { kind: 'error', message: ANALYZE_INVALID }
-    const body = (await response.json()) as { message?: string }
-    return { kind: 'error', message: body.message ?? UNKNOWN_ERROR }
+    const body = (await response.json()) as { message?: string; code?: string }
+    return { kind: 'error', message: body.message ?? UNKNOWN_ERROR, code: body.code }
   } catch {
     return { kind: 'error', message: UNKNOWN_ERROR }
   }
+}
+
+// GET /api/config. 실패하면 null (화면은 분석 패널을 그대로 두고, 분석 요청의 안내 코드로 처리한다)
+export async function fetchConfig(): Promise<AppConfig | null> {
+  try {
+    const response = await fetch('/api/config', { cache: 'no-store' })
+    return response.ok ? ((await response.json()) as AppConfig) : null
+  } catch {
+    return null
+  }
+}
+
+// POST /api/guide. 본문은 /api/calculate에 보낸 입력 그대로다 (서버가 다시 계산한다).
+export function fetchGuide(item: Item, input: GymInput | LaundryInput): Promise<Outcome<Guide>> {
+  return postCalculate<Guide>(item === 'gym' ? '/api/guide' : '/api/guide?item=laundry', input)
 }

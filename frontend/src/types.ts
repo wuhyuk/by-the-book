@@ -227,3 +227,25 @@ export interface LaundryAnalyzeResult {
   confirm: string[]
   judgment_requested: boolean
 }
+
+// GET /api/config (backend/api/config.py). analyze_enabled = 스위치 켜짐 그리고 하루 상한 미도달.
+export interface AppConfig {
+  analyze_enabled: boolean
+  survey_url: string | null
+}
+
+// POST /api/guide (backend/guide/). 서버가 다시 계산한 결과로 만든 문안. 화면은 그대로 보여 준다.
+export interface Guide {
+  explanation: string[]
+  company_message: string | null
+  citations: CitationCard[]
+}
+
+// 품목 화면 공통 props (Root가 /api/config로 정한다)
+export interface ScreenProps {
+  /** null이면 문장 분석 패널을 보여 준다. 문자열이면 패널 대신 이 안내를 보여 준다 */
+  analyzeOff: string | null
+  /** 분석 요청이 ANALYZE_DISABLED·ANALYZE_DAILY_LIMIT로 끝나면 부른다 (서버 안내 문구) */
+  onAnalyzeUnavailable: (message: string) => void
+  surveyUrl: string | null
+}
