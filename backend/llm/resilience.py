@@ -8,6 +8,8 @@
 3. 그래도 429이고 예비 모델(LLM_FALLBACK_MODEL)이 있으면 예비 모델 1회.
 4. 그래도 실패하면 LLMError(RATE_LIMITED). API는 "잠시 후 다시 시도하거나 폼에 직접 입력" 안내로 끝낸다.
 429가 아닌 실패는 재시도하지 않고 그대로 올린다. 로그에는 단계 이름만 남긴다 (입력·키 없음).
+counter(llm/usage.py)가 있으면 실제로 보내는 호출마다(재시도·예비 모델 포함) 호출 직전에 1회씩 센다.
+하루 상한에 도달하면 호출을 보내지 않고 LLMError(DAILY_LIMIT)를 그대로 올린다 (재시도하지 않음).
 """
 
 import logging
@@ -16,6 +18,7 @@ from collections.abc import Callable
 from typing import Any
 
 from llm.client import LLMClient, LLMError, LLMErrorKind, Turn
+from llm.usage import DailyCallCounter
 
 logger = logging.getLogger("by_the_book.llm")
 
@@ -32,11 +35,13 @@ class RetryingClient:
         *,
         sleep: Callable[[float], None] = time.sleep,
         max_retry_wait: float = MAX_RETRY_WAIT,
+        counter: DailyCallCounter | None = None,
     ) -> None:
         self._primary = primary
         self._fallback = fallback
         self._sleep = sleep
         self._max_retry_wait = max_retry_wait
+        self._counter = counter
 
     def __repr__(self) -> str:
         return f"RetryingClient(primary={self._primary!r}, fallback={self._fallback!r})"
@@ -49,6 +54,8 @@ class RetryingClient:
         self, *, system: str, turns: list[Turn], response_schema: dict[str, Any]
     ) -> str:
         def call(client: LLMClient) -> str:
+            if self._counter is not None:
+                self._counter.acquire()
             return client.generate_json(
                 system=system, turns=turns, response_schema=response_schema
             )

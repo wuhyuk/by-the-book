@@ -61,3 +61,25 @@ def test_detector_catches_forbidden_import(tmp_path: Path) -> None:
     )
     tops = {n.split(".")[0] for n in imported_modules(bad)}
     assert {"llm", "api"} <= tops
+
+
+GUIDE_DIR = RULES_DIR.parent / "guide"
+GUIDE_FILES = sorted(GUIDE_DIR.glob("*.py"))
+
+
+def test_guide_files_found() -> None:
+    assert {p.name for p in GUIDE_FILES} >= {"common.py", "gym.py", "laundry.py"}
+
+
+@pytest.mark.parametrize("path", GUIDE_FILES, ids=lambda p: p.name)
+def test_guide_does_not_import_llm_or_api(path: Path) -> None:
+    """guide/는 규칙 엔진 결과만으로 문안을 만든다 (LLM 없음, 2026-11-11)."""
+    for name in imported_modules(path):
+        top = name.lstrip(".").split(".")[0]
+        assert top not in FORBIDDEN, f"{path.name}: {name}"
+
+
+@pytest.mark.parametrize("path", RULE_FILES, ids=lambda p: p.name)
+def test_rules_do_not_import_guide(path: Path) -> None:
+    for name in imported_modules(path):
+        assert name.lstrip(".").split(".")[0] != "guide", f"{path.name}: {name}"

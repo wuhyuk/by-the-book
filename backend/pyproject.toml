@@ -24,7 +24,7 @@ dev = [
 py-modules = ["main"]
 
 [tool.setuptools.packages.find]
-include = ["api*", "llm*", "rag*", "rules*"]
+include = ["api*", "guide*", "llm*", "rag*", "rules*"]
 
 [tool.ruff]
 target-version = "py312"

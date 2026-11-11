@@ -47,7 +47,7 @@ class LaundryCalculateResponse(BaseModel):
     display: LaundryDisplay
 
 
-def _validate[T: BaseModel](model: type[T], body: bytes) -> T:
+def validate_body[T: BaseModel](model: type[T], body: bytes) -> T:
     """JSON 모드 검증. 오류에는 위치·종류만 남긴다 (입력값은 api/errors.py가 뺀다)."""
     try:
         return model.model_validate_json(body)
@@ -79,13 +79,13 @@ async def calculate(
     """확정된 입력으로 기준 금액을 계산하고 표시 정보를 붙인다."""
     body = await request.body()
     if item == "laundry":
-        laundry = _validate(LaundryInput, body)
+        laundry = validate_body(LaundryInput, body)
         lrule = load_laundry_rule()
         lresult = calculate_damage(laundry, lrule)
         return LaundryCalculateResponse(
             result=lresult, display=build_laundry_display(lresult, lrule)
         )
-    inp = _validate(GymInput, body)
+    inp = validate_body(GymInput, body)
     rule = load_rule(RULE_ID)
     result = calculate_refund(inp, rule)
     return CalculateResponse(result=result, display=build_display(result, rule))
