@@ -9,8 +9,7 @@ import {
   buildInput,
   COUNT_FIELDS,
   INITIAL_FORM,
-  isEmptyValue,
-  isUserValue,
+  followUpFields,
   mergeExtraction,
   type FormState,
 } from './formState'
@@ -94,17 +93,8 @@ function App() {
     setGuardrail(null)
     const merged = mergeExtraction(form, touched, ext)
     setForm(merged.form)
-    // 되묻기 안내는 합친 뒤에도 비어 있는 항목에만 붙인다
-    const stillEmpty = (f: string) =>
-      f in merged.form && isEmptyValue(f as keyof FormState, merged.form[f as keyof FormState])
-    // 필수 누락(missing)은 직접 고른 "모름"이어도 다시 묻고, 확인 안 됨(unverified)은 직접 고른 값이면 묻지 않는다
-    const missing = ext.missing.filter(stillEmpty)
-    const unverified = ext.unverified.filter(
-      (f) =>
-        stillEmpty(f) &&
-        !missing.includes(f) &&
-        !isUserValue(f as keyof FormState, merged.form[f as keyof FormState], touched),
-    )
+    // 되묻기 안내는 합친 뒤에도 비어 있는 항목에만 붙인다 (규칙은 followUpFields)
+    const { missing, unverified } = followUpFields(ext, merged.form, touched)
     const conflicts = Object.keys(merged.conflicts)
     const nextNotes: Record<string, string> = {}
     for (const f of unverified) nextNotes[f] = ANALYZE_TEXT.unverifiedNote

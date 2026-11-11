@@ -230,6 +230,32 @@ export function isUserValue(name: FieldName, value: FieldValue, touched: Readonl
   return !isEmptyValue(name, value)
 }
 
+/** 문장 분석 뒤 되묻기 목록 */
+export interface FollowUpFields {
+  missing: string[]
+  unverified: string[]
+}
+
+/**
+ * 문장 분석 뒤 되묻기 목록을 고른다 (합친 뒤의 폼 기준).
+ * - 필수 누락(missing): 합친 뒤에도 비어 있으면 묻는다. 직접 고른 "모름"이어도 다시 묻는다.
+ * - 확인 안 됨(unverified): 합친 뒤에도 비어 있고, 필수 누락에 없고, 사용자가 직접 고른 값이 아닐 때만 묻는다.
+ * - 폼에 없는 항목 이름은 버린다.
+ */
+export function followUpFields(
+  ext: Pick<AnalyzeResult, 'missing' | 'unverified'>,
+  form: FormState,
+  touched: ReadonlySet<string>,
+): FollowUpFields {
+  const known = (f: string): f is FieldName => f in form
+  const stillEmpty = (f: string) => known(f) && isEmptyValue(f, form[f])
+  const missing = ext.missing.filter(stillEmpty)
+  const unverified = ext.unverified.filter(
+    (f) => stillEmpty(f) && !missing.includes(f) && !isUserValue(f as FieldName, form[f as FieldName], touched),
+  )
+  return { missing, unverified }
+}
+
 /** 비어 있는 값: 빈 문자열, "모름"(예/아니오/모름), 체크하지 않음 */
 export function isEmptyValue(name: FieldName, value: FieldValue): boolean {
   if (typeof value === 'boolean') return !value

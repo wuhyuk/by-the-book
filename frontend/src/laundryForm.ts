@@ -187,6 +187,37 @@ export function isUserLaundryValue(name: Name, value: Value, touched: ReadonlySe
   return !isEmptyLaundryValue(name, value)
 }
 
+/** 추출 항목 이름 → 폼 항목 이름. 표에 없는 품목(item_unlisted)은 item_key 칸(UNLISTED)으로 보인다 */
+export function laundryFormKey(field: string): string {
+  return field === 'item_unlisted' ? 'item_key' : field
+}
+
+/**
+ * 문장 분석 뒤 되묻기 목록 (헬스장 followUpFields와 같은 규칙, 이름은 추출 항목 이름 그대로 돌려준다).
+ * - 필수 누락(missing): 합친 뒤에도 비어 있으면 묻는다. 직접 고른 "모름"이어도 다시 묻는다 (예: 입증 여부 "모름" → L10).
+ * - 확인 안 됨(unverified): 비어 있고, 필수 누락에 없고, 사용자가 직접 고른 값이 아닐 때만 묻는다.
+ */
+export function laundryFollowUpFields(
+  ext: Pick<LaundryAnalyzeResult, 'missing' | 'unverified'>,
+  form: LaundryForm,
+  touched: ReadonlySet<string>,
+): { missing: string[]; unverified: string[] } {
+  const key = (f: string): Name | null => {
+    const k = laundryFormKey(f)
+    return k in form ? (k as Name) : null
+  }
+  const stillEmpty = (f: string) => {
+    const k = key(f)
+    return k !== null && isEmptyLaundryValue(k, form[k])
+  }
+  const missing = ext.missing.filter(stillEmpty)
+  const unverified = ext.unverified.filter((f) => {
+    const k = key(f)
+    return k !== null && stillEmpty(f) && !missing.includes(f) && !isUserLaundryValue(k, form[k], touched)
+  })
+  return { missing, unverified }
+}
+
 export function isEmptyLaundryValue(name: Name, value: Value): boolean {
   if ((LAUNDRY_TRI_FIELDS as readonly string[]).includes(name)) return value === 'unknown'
   if (name === 'set_type') return value === 'none'
