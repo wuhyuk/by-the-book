@@ -19,10 +19,6 @@ CONSULT_1372_LINE = "1372 소비자상담센터(국번 없이 1372)에 상담해
 REVIEW_HEADER = "아래 사항에 따라 금액이 달라질 수 있어 확인이 필요합니다."
 NO_CALC_LINE = "계산하지 않았으므로 기준 금액과 업체용 문안은 만들지 않았습니다."
 COMPANY_CLOSING = "위 기준을 참고해 금액을 다시 확인해 주시면 감사하겠습니다."
-COMPANY_REVIEW_NOTE = (
-    "다만 고시에 정해져 있지 않은 부분이나 확인이 필요한 사정이 있어 "
-    "금액은 달라질 수 있습니다."
-)
 
 # 문안에 쓰지 않는 단정·법적 효력·법률 절차 표현 (테스트가 모든 출력에서 확인한다)
 FORBIDDEN_TERMS: tuple[str, ...] = (
@@ -49,7 +45,6 @@ FIXED_TEXTS: tuple[str, ...] = (
     REVIEW_HEADER,
     NO_CALC_LINE,
     COMPANY_CLOSING,
-    COMPANY_REVIEW_NOTE,
 )
 
 
@@ -80,6 +75,32 @@ def basis_line(citations: list[CitationCard]) -> str | None:
     return "근거: " + ", ".join(c.label for c in citations)
 
 
+def computed_sentence(basis: str, kind: str, lo: int, hi: int) -> str:
+    """업체용 문안의 금액 문장. 고시가 금액을 정한 것이 아니라 이 서비스가 계산한 값임을 밝힌다.
+
+    basis는 "「고시」(번호) 조항의 계산 방식"처럼 목적격 조사 '을'이 붙는 말로 끝난다.
+    kind는 '환급액'·'최소 환급액'·'배상액' (주격 조사 '이').
+    """
+    if lo == hi:
+        return f"{basis}을 적용해 계산한 결과 {kind}이 {won(lo)}으로 산정되었습니다."
+    return (
+        f"{basis}을 적용해 계산한 결과 {kind}이 계산 방식에 따라 "
+        f"{won(lo)}~{won(hi)} 범위로 산정되었습니다."
+    )
+
+
+def caveat_line(phrases: list[str]) -> str | None:
+    """업체용 문안의 단서 문장. phrases는 설명에 실제로 들어간 불확실성 항목에서만 만든다."""
+    if not phrases:
+        return None
+    return f"다만 {', '.join(phrases)}에 따라 금액이 달라질 수 있습니다."
+
+
+def _consult_needed(screen_line: DisplayLine | None) -> bool:
+    """사유 문구에 이미 1372 안내가 있으면 1372 줄을 다시 붙이지 않는다 (중복 방지)."""
+    return screen_line is None or "1372" not in screen_line.text
+
+
 def review_lines(lines: list[DisplayLine]) -> list[str]:
     """확인 사항 머리말 + 사유 문구 (화면 문구 그대로)."""
     if not lines:
@@ -92,7 +113,9 @@ def undeterminable_guide(
 ) -> Guide:
     """❔ 판단 불가: 금액 없음, 업체용 문안 없음, 1372 안내만."""
     explanation = [screen_line.text] if screen_line else []
-    explanation += [CONSULT_1372_LINE, DISCLAIMER_LINE]
+    if _consult_needed(screen_line):
+        explanation.append(CONSULT_1372_LINE)
+    explanation.append(DISCLAIMER_LINE)
     return Guide(explanation=explanation, company_message=None, citations=citations)
 
 
@@ -105,7 +128,7 @@ def not_calculated_guide(
     """🔍 계산 안 함 (누락·입력 오류·유효기간 이후 도달): 금액 없음, 업체용 문안 없음."""
     explanation = [screen_line.text] if screen_line else []
     explanation.append(NO_CALC_LINE)
-    if consult:
+    if consult and _consult_needed(screen_line):
         explanation.append(CONSULT_1372_LINE)
     explanation.append(DISCLAIMER_LINE)
     return Guide(explanation=explanation, company_message=None, citations=citations)
