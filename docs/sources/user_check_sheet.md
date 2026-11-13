@@ -1,7 +1,8 @@
 # 표 값 사용자 확인 시트
 
 > 작성 2026-11-11. 목적: 계산에 쓰는 원문 표 값 5개를 사용자가 원문 파일에서 직접 눈으로 확인한다 (15분 안팎).
-> 지금 이 값들은 Claude Code의 기계 대조로만 `verified: true`이고 `verification.user_checked: false`다 (MVP_SPEC 5.11, 9절 확정 2026-11-02 3번).
+> 작성 당시 이 값들은 Claude Code의 기계 대조로만 `verified: true`이고 `verification.user_checked: false`였다 (MVP_SPEC 5.11, 9절 확정 2026-11-02 3번).
+> **결과 (2026-11-13): 사용자가 5개 모두 원문과 같음을 확인했다.** 1~3번은 이 시트가 지정한 별표 Ⅱ PDF 123~125쪽의 표를 캡처해 칸 단위로, 4~5번은 원문에서 직접 확인했다. 이에 따라 세탁 `ratio_table`·`lifespan_table`·`unproven_fallback`, 헬스장 `industries[].penalty_rule`의 `verification.user_checked`를 `true`, `checked_at`을 `2026-11-13`으로 바꿨다 (아래 "확인 뒤 할 일"). 두 규칙 파일의 `source.retrieved_at`(세탁 2026-11-02, 헬스장 2026-10-26)은 바꾸지 않았다: 이 값은 고시 조문 카드의 확인일로도 화면에 나오는데, 이번에 사용자가 확인한 것은 별표 표 값이고 조문은 아니다. 카드별로 확인일을 나누려면 조문 스키마를 바꿔야 해서, 사용자 확인일은 `verification.checked_at`과 `method`·`notes`에만 기록했다 [결정 2026-11-13 사용자].
 > **확인 칸은 사용자가 채운다.** 사용자가 "확인했다"고 알려 주기 전에는 규칙 JSON의 `user_checked`를 바꾸지 않는다. 다르게 보이는 값이 있으면 "메모"에 적고 알려 준다 (그 경우 해당 블록을 `verified: false`로 되돌릴지 먼저 정한다).
 
 ## 준비 (2분)
@@ -24,7 +25,7 @@
 | 원문 인용 (옮김 문서) | 4년 행: "0~57 / 58~177 / **178~357** / 358~537 / …" , 머리 행: "95 / 80 / **70** / 60 / …" |
 | 코드에 들어간 값 | `backend/data/rules/laundry_damage.json` → `ratio_table.rows` 4번째(`life_years: 4`) → `{"min_days": 178, "max_days": 357, "ratio_percent": 70}` |
 | 이 값을 쓰는 승인 케이스 | L1(사용일수 334일 → 70%, 280,000원), L14·L15(357·356일 → 70%), L20(한복류 311일 → 70%) |
-| 확인 | ☐ 원문과 같음 ☐ 다름 |
+| 확인 | 원문과 같음 |
 | 메모 | |
 
 ### 2. 세탁 평균 내용연수: 한복류 = 4년 (두 소재 공통)
@@ -36,7 +37,7 @@
 | 원문 인용 (옮김 문서) | "한복류 \| 치마, 저고리, 바지, 마고자, 조끼, 두루마기 \| 견, 빌로드 / 기타 \| (빈칸) \| (빈칸) \| 4" |
 | 코드에 들어간 값 | `laundry_damage.json` → `lifespan_table.rows[id=hanbok]` → `"years": 4`, `years_applies_to_all_materials: true` (소재 선택 없음) |
 | 이 값을 쓰는 승인 케이스 | L20 (175,000원) |
-| 확인 | ☐ 원문과 같음 (값 하나, 4) ☐ 다름 |
+| 확인 | 원문과 같음 |
 | 메모 | |
 
 ### 3. 세탁 평균 내용연수: 카페트 = 모 6년 / 기타 5년
@@ -48,7 +49,7 @@
 | 원문 인용 (옮김 문서) | "실내장식류 \| 카페트 \| 모 / 기타 \| (빈칸) \| (빈칸) \| 6 / 5" |
 | 코드에 들어간 값 | `laundry_damage.json` → `lifespan_table.rows[id=carpet].variants` → `{"key": "wool", "label": "모", "years": 6}`, `{"key": "other", "label": "기타", "years": 5}` |
 | 이 값을 쓰는 승인 케이스 | L6 (모, 사용일수 3,286일 → 6년 행 10%, 100,000원) |
-| 확인 | ☐ 원문과 같음 ☐ 다름 |
+| 확인 | 원문과 같음 |
 | 메모 | |
 
 ### 4. 세탁 5-1. ③ "세탁요금의 20배"
@@ -60,7 +61,7 @@
 | 원문 인용 (옮김 문서) | "③ 고객이 세탁물의 품명, 구입가격, 구입일 등을 입증하지 못하여 배상액 산정이 불가한 경우에는 세탁업자는 고객에게 세탁요금의 20배를 배상함." |
 | 코드에 들어간 값 | `laundry_damage.json` → `unproven_fallback.laundry_fee_multiplier: 20` |
 | 이 값을 쓰는 승인 케이스 | L5 (세탁요금 8,000원 → 160,000원) |
-| 확인 | ☐ 원문과 같음 ☐ 다름 |
+| 확인 | 원문과 같음 |
 | 메모 | |
 
 ### 5. 헬스장 위약금 상한: 헬스·피트니스업 / 요가·필라테스업 → 총계약대금의 10%
@@ -72,15 +73,15 @@
 | 원문 인용 (옮김 문서) | "헬스·피트니스업 \| - \| 총계약대금의 10%" / "요가·필라테스업 \| - \| 총계약대금의 10%" (원문은 업종 칸 하나에 두 업종, 값은 한 번) |
 | 코드에 들어간 값 | `backend/data/rules/gym_refund.json` → `industries[id=fitness].penalty_rule.ratio: 0.10`, `industries[id=yoga_pilates].penalty_rule.ratio: 0.10`, `applies_as: "upper_limit"` (고시 제4조 ① "초과하지 못한다") |
 | 이 값을 쓰는 승인 케이스 | 헬스장 계산 케이스 전부 (예: P1 총계약대금 1,200,000원 → 상한 120,000원) |
-| 확인 | ☐ 원문과 같음 ☐ 다름 |
+| 확인 | 원문과 같음 |
 | 메모 | |
 
 ## 확인 뒤 할 일 (사용자가 알려 준 뒤 Claude Code가 한다)
 
-- 모두 같음: 해당 블록의 `verification.user_checked`를 `true`, `checked_at`을 확인 날짜로 바꾸고 `source.retrieved_at`·테스트(`test_*_rule_data.py`)를 함께 갱신한다 (CLAUDE.md 6절). 블록: 세탁 `ratio_table`(1번), `lifespan_table`(2·3번), `unproven_fallback`(4번), 헬스장 `industries[].penalty_rule`(5번).
+- 모두 같음: 해당 블록의 `verification.user_checked`를 `true`, `checked_at`을 확인 날짜로 바꾸고 `method`·`notes`·테스트(`test_*_rule_data.py`)를 함께 갱신한다 (CLAUDE.md 6절). `source.retrieved_at`은 조문 카드 확인일로도 쓰이므로 조문을 다시 확인한 경우가 아니면 바꾸지 않는다 [2026-11-13 수정, 처음 작성 때는 함께 갱신으로 적었음]. 블록: 세탁 `ratio_table`(1번), `lifespan_table`(2·3번), `unproven_fallback`(4번), 헬스장 `industries[].penalty_rule`(5번).
 - 하나라도 다름: 그 블록을 `verified: false`로 둘지 먼저 정한다. 그동안 그 블록을 쓰는 결과는 ✅·강건한 ⚠️를 낼 수 없다 (CLAUDE.md 절대 규칙 2).
-- 이 시트는 표본 확인이다. 표의 나머지 칸은 기계 대조 기록(`laundry_notice.md` 대조 기록, `gym_penalty_notice.md` 별표 재대조)에 의존한다.
+- 이 시트는 표본 확인이다. 표의 나머지 칸은 기계 대조 기록(`laundry_notice.md` 대조 기록, `gym_penalty_notice.md` 별표 재대조)에 의존한다. 2026-11-13 표본 5건이 모두 원문과 같았다. 세탁 `set_allocation`(Set 배분 비율)은 표본에 없어 `user_checked: false` 그대로다.
 
 | 확인자 | 확인 날짜 | 결과 요약 |
 |---|---|---|
-| | | |
+| 사용자 | 2026-11-13 | 표본 5건 모두 원문과 일치 |
