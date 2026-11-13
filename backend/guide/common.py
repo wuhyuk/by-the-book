@@ -38,6 +38,11 @@ FORBIDDEN_TERMS: tuple[str, ...] = (
     "제목:",
 )
 
+# 결과에 이 사유가 있으면 업체용 문안을 만들지 않는다 (company_message = None, 2026-11-13 사용자 결정).
+# 원문 확인이 끝나지 않은 기준 값으로 계산한 금액을 업체에 보낼 문안으로 만들지 않기 위해서다.
+# 설명에는 확인 목록(화면 문구)이 그대로 남는다. 헬스장·세탁 공통 코드(CommonFlag)의 값이다.
+NO_COMPANY_MESSAGE_CODES: frozenset[str] = frozenset({"RULE_UNVERIFIED"})
+
 # 템플릿에 직접 쓴 고정 문구 (숫자 출처 검사에서 고정 숫자로 인정하는 범위)
 FIXED_TEXTS: tuple[str, ...] = (
     DISCLAIMER_LINE,
@@ -87,6 +92,11 @@ def computed_sentence(basis: str, kind: str, lo: int, hi: int) -> str:
         f"{basis}을 적용해 계산한 결과 {kind}이 계산 방식에 따라 "
         f"{won(lo)}~{won(hi)} 범위로 산정되었습니다."
     )
+
+
+def company_message_allowed(flags: list[str]) -> bool:
+    """결과 flags에 NO_COMPANY_MESSAGE_CODES가 하나도 없을 때만 업체용 문안을 만든다."""
+    return not any(str(f) in NO_COMPANY_MESSAGE_CODES for f in flags)
 
 
 def caveat_line(phrases: list[str]) -> str | None:
