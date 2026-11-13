@@ -23,12 +23,14 @@ from guide.common import (
     DISCLAIMER_LINE,
     FIXED_TEXTS,
     FORBIDDEN_TERMS,
+    NO_COMPANY_MESSAGE_CODES,
     REVIEW_HEADER,
     Guide,
 )
 from guide.gym import CAVEAT_PHRASES as GYM_CAVEAT_PHRASES
 from guide.gym import FACT_CODES as GYM_FACT_CODES
 from guide.gym import build_gym_guide
+from guide.laundry import CAVEAT_PHRASES as LAUNDRY_CAVEAT_PHRASES
 from guide.laundry import build_laundry_guide
 from rules.badge import Badge, order_flags
 from rules.badge import FlagCode as F
@@ -36,10 +38,11 @@ from rules.gym import RefundKind, calculate_refund
 from rules.gym_display import FLAG_TEXTS as GYM_FLAG_TEXTS
 from rules.gym_display import NOTICE_TEXTS as GYM_NOTICE_TEXTS
 from rules.laundry import LaundryInput, calculate_damage
+from rules.laundry_codes import LaundryFlag
 from rules.laundry_display import FLAG_TEXTS as LAUNDRY_FLAG_TEXTS
 from rules.laundry_display import NOTICE_TEXTS as LAUNDRY_NOTICE_TEXTS
-from rules.laundry_rule import load_laundry_rule
-from rules.loader import load_rule
+from rules.laundry_rule import LaundryRule, load_laundry_rule
+from rules.loader import GymRule, load_rule
 
 GYM_RULE = load_rule("gym_refund")
 LAUNDRY_RULE = load_laundry_rule()
@@ -221,6 +224,40 @@ def test_warning_states_fact_with_offer_amount() -> None:
         f"안내해 주신 {won(100_000)}은 고시 기준으로 계산한 가장 작은 기준 금액"
         f"({won(160_000)})보다 적습니다."
     ) in lg.company_message
+    assert (
+        f"업체 제시액 {won(100_000)}은 고시 기준으로 계산한 가장 작은 기준 금액 "
+        f"{won(160_000)}보다 적습니다."
+    ) in lg.explanation
+
+
+def test_offer_warning_is_not_repeated() -> None:
+    """⚠️ 제시액 사유: 설명에는 금액을 넣은 줄 하나만 있고, 같은 뜻의 화면 한 줄은 겹쳐 쓰지 않는다.
+
+    헬스장 OFFER_BELOW_B(N2 등)와 세탁 OFFER_BELOW_STANDARD_MIN(L8 등) 모두 확인한다 (2026-11-13).
+    """
+    gym_short = GYM_FLAG_TEXTS[F.OFFER_BELOW_B]
+    checked = []
+    for c in GYM_CASES:
+        result, g = gym(c)
+        if F.OFFER_BELOW_B not in result.flags:
+            continue
+        checked.append(c.id)
+        assert gym_short not in g.explanation, c.id
+        offer_lines = [t for t in g.explanation if t.startswith("업체 제시액 ")]
+        assert len(offer_lines) == 1, c.id
+        assert offer_lines[0].startswith(f"업체 제시액 {won(c.inp.provider_offer)}은 ")
+    assert "N2" in checked
+    laundry_short = LAUNDRY_FLAG_TEXTS[LaundryFlag.OFFER_BELOW_STANDARD_MIN]
+    checked = []
+    for c in LAUNDRY_CASES:
+        result, g = laundry(c)
+        if LaundryFlag.OFFER_BELOW_STANDARD_MIN not in result.flags:
+            continue
+        checked.append(c.id)
+        assert laundry_short not in g.explanation, c.id
+        offer_lines = [t for t in g.explanation if t.startswith("업체 제시액 ")]
+        assert len(offer_lines) == 1, c.id
+    assert "L8" in checked
 
 
 def test_warning_company_message_has_caveat() -> None:
@@ -394,7 +431,7 @@ def test_gym_caveat_matches_review_items() -> None:
 
 
 def test_gym_caveat_covers_every_review_code() -> None:
-    """계산함 🔍 사유 코드는 단서 말이 있거나 사실 줄로 분류된다 (둘 중 하나만)."""
+    """계산함 🔍 사유 코드는 단서 말·사실 줄·업체용 문안 없음 중 정확히 하나로 분류된다."""
     review_codes = {
         F.SCOPE_UNCERTAIN_PT_ONLY, F.PERIOD_ONE_MONTH_BOUNDARY,
         F.REFUND_LIMIT_CLAUSE_UNKNOWN, F.WITHDRAWAL_STATUS_UNCONFIRMED,
@@ -403,7 +440,114 @@ def test_gym_caveat_covers_every_review_code() -> None:
         F.POSTPONEMENT,
     }  # fmt: skip
     for code in review_codes:
-        assert (code.value in GYM_CAVEAT_PHRASES) != (code.value in GYM_FACT_CODES)
+        groups = [GYM_CAVEAT_PHRASES, GYM_FACT_CODES, NO_COMPANY_MESSAGE_CODES]
+        assert sum(code.value in g for g in groups) == 1, code
+    assert set(GYM_CAVEAT_PHRASES) | GYM_FACT_CODES | NO_COMPANY_MESSAGE_CODES == {
+        c.value for c in review_codes
+    }
+
+
+def test_laundry_caveat_covers_every_review_code() -> None:
+    """세탁 계산함 🔍 사유: 단서 말·민감도 원인·업체용 문안 없음 중 정확히 하나."""
+    review_codes = {
+        LaundryFlag.EXEMPTION_CLAIMED.value, LaundryFlag.SPECIAL_AGREEMENT.value,
+        LaundryFlag.PARTIAL_FAULT_CLAIMED.value, LaundryFlag.DAMAGED_ITEM_RETURN.value,
+        LaundryFlag.DECISION_SENSITIVE.value, "RULE_UNVERIFIED",
+    }  # fmt: skip
+    sensitive = {LaundryFlag.DECISION_SENSITIVE.value}
+    groups = [set(LAUNDRY_CAVEAT_PHRASES), sensitive, set(NO_COMPANY_MESSAGE_CODES)]
+    for code in review_codes:
+        assert sum(code in g for g in groups) == 1, code
+    assert set().union(*groups) == review_codes
+
+
+# ---- 규칙 미검증: 설명 확인 목록은 그대로, 업체용 문안은 null (2026-11-13) ----
+
+
+def _unverified_gym_rule() -> GymRule:
+    """JSON은 그대로 두고, 모델 복사본에서 penalty_rule 블록 verified만 false로 바꾼다."""
+    data: dict[str, Any] = GYM_RULE.model_dump()
+    for industry in data["industries"]:
+        industry["penalty_rule"]["verified"] = False
+    return GymRule.model_validate(data)
+
+
+def _unverified_laundry_rule(block: str) -> LaundryRule:
+    b = getattr(LAUNDRY_RULE, block)
+    return LAUNDRY_RULE.model_copy(
+        update={block: b.model_copy(update={"verified": False})}
+    )
+
+
+def _expected_review_lines(flags: list[str], flag_texts: dict[Any, str]) -> list[str]:
+    """설명 확인 목록: 머리말 + 사유 화면 문구 (헬스장 사실 줄·⚠️ 제외는 호출한 쪽이 거른 flags)."""
+    texts_by_code = {str(k): v for k, v in flag_texts.items()}
+    return [REVIEW_HEADER, *(f"- {texts_by_code[f]}" for f in flags)]
+
+
+@pytest.mark.parametrize("cid", ["C1", "N2", "P1", "K1"])
+def test_gym_rule_unverified_has_no_company_message(cid: str) -> None:
+    """헬스장: penalty_rule이 미검증이면 업체용 문안은 null, 설명 확인 목록은 그대로."""
+    c = gym_case(cid)
+    rule = _unverified_gym_rule()
+    result = calculate_refund(c.inp, rule)
+    g = build_gym_guide(c.inp, result, rule)
+    assert result.calculated and F.RULE_UNVERIFIED in result.flags
+    assert result.badge == Badge.NEEDS_REVIEW  # ✅·⚠️였던 C1·N2·K1도 🔍 (엔진 기존 동작)
+    assert g.company_message is None
+    review = [
+        f.value
+        for f in order_flags(result.flags)
+        if f.value in GYM_CAVEAT_PHRASES or f.value in NO_COMPANY_MESSAGE_CODES
+    ]
+    lines = _expected_review_lines(review, GYM_FLAG_TEXTS)
+    i = g.explanation.index(REVIEW_HEADER)
+    assert g.explanation[i : i + len(lines)] == lines
+    assert f"- {GYM_FLAG_TEXTS[F.RULE_UNVERIFIED]}" in g.explanation
+    assert g.explanation[-1] == DISCLAIMER_LINE
+    assert g.citations  # 근거 카드는 그대로
+    # 금액 문장은 설명에 그대로 있다 (결과 값과 같음)
+    assert g.explanation[0] == gym(c)[1].explanation[0]
+
+
+@pytest.mark.parametrize(
+    ("cid", "block"),
+    [
+        ("L1", "ratio_table"),
+        ("L2", "lifespan_table"),
+        ("L8", "ratio_table"),
+        ("L13", "ratio_table"),
+        ("L5", "unproven_fallback"),
+    ],
+)
+def test_laundry_rule_unverified_has_no_company_message(cid: str, block: str) -> None:
+    """세탁: 결과가 쓰는 블록이 미검증이면 업체용 문안은 null, 설명 확인 목록은 그대로."""
+    c = laundry_case(cid)
+    rule = _unverified_laundry_rule(block)
+    inp = LaundryInput(**{**LAUNDRY_BASE, **c.inp})
+    result = calculate_damage(inp, rule)
+    g = build_laundry_guide(inp, result, rule)
+    assert result.calculated and "RULE_UNVERIFIED" in result.flags
+    assert result.badge == Badge.NEEDS_REVIEW
+    assert g.company_message is None
+    assert REVIEW_HEADER in g.explanation
+    texts_by_code = {str(k): v for k, v in LAUNDRY_FLAG_TEXTS.items()}
+    # 계산함 🔍 사유는 모두 확인 목록에 남는다 (민감도 문구는 결과 값이 들어가 접두어로 확인)
+    for f in result.flags:
+        if f == LaundryFlag.DECISION_SENSITIVE:
+            assert any(t.startswith("- 고시에 정해져 있지 않은") for t in g.explanation)
+        else:
+            assert f"- {texts_by_code[str(f)]}" in g.explanation, f
+    assert g.explanation[0] == laundry(c)[1].explanation[0]
+    assert g.explanation[-1] == DISCLAIMER_LINE
+
+
+def test_company_message_null_iff_rule_unverified_in_approved_cases() -> None:
+    """승인 케이스(실제 규칙)에는 규칙 미검증이 없고, 계산한 결과는 모두 업체용 문안이 있다."""
+    for result, g in [gym(c) for c in GYM_CASES] + [laundry(c) for c in LAUNDRY_CASES]:
+        assert "RULE_UNVERIFIED" not in result.flags
+        if result.calculated:
+            assert g.company_message is not None
 
 
 def test_laundry_caveat_matches_sensitivity_causes() -> None:
