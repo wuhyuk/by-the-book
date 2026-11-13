@@ -22,9 +22,9 @@
         "basis": "별표 위약금 기준 (상한: 제4조 ①)",
         "verified": true,
         "verification": {
-          "method": "공식 HWP 텍스트 추출 ↔ 법제처 별표 이미지 판독 일치",
-          "user_checked": false,
-          "checked_at": "2026-10-26"
+          "method": "공식 HWP 텍스트 추출 ↔ 법제처 별표 이미지 판독 일치 (2026-10-26). 2026-11-13 사용자가 별표 본문이미지에서 '총계약대금의 10%'를 직접 확인, 원문과 같음 (docs/sources/user_check_sheet.md 5번)",
+          "user_checked": true,
+          "checked_at": "2026-11-13"
         }
       }
     },
@@ -39,9 +39,9 @@
         "basis": "별표 위약금 기준 (상한: 제4조 ①)",
         "verified": true,
         "verification": {
-          "method": "공식 HWP 텍스트 추출 ↔ 법제처 별표 이미지 판독 일치",
-          "user_checked": false,
-          "checked_at": "2026-10-26"
+          "method": "공식 HWP 텍스트 추출 ↔ 법제처 별표 이미지 판독 일치 (2026-10-26). 2026-11-13 사용자가 별표 본문이미지에서 '총계약대금의 10%'를 직접 확인, 원문과 같음 (docs/sources/user_check_sheet.md 5번)",
+          "user_checked": true,
+          "checked_at": "2026-11-13"
         }
       }
     }
@@ -129,7 +129,7 @@
   },
   "notes": [
     "verified(최상위)는 unit_price_method가 미확정이므로 false다. 배지는 결과가 쓰는 블록의 verified로 판정한다 (penalty_rule, continuous_transaction_criteria).",
-    "penalty_rule.verified는 별표의 공식 HWP 텍스트 추출(flSeq=50614915)과 법제처 별표 이미지(flSeq=50614923) 판독이 전 행 일치해 true다 (2026-10-26). 사용자 육안 대조는 하지 않았다 (verification.user_checked: false).",
+    "penalty_rule.verified는 별표의 공식 HWP 텍스트 추출(flSeq=50614915)과 법제처 별표 이미지(flSeq=50614923) 판독이 전 행 일치해 true다 (2026-10-26). 2026-11-13 사용자가 별표 본문이미지(flSeq=50614923)에서 헬스·피트니스업/요가·필라테스업 '총계약대금의 10%'를 직접 확인해 원문과 같음 → verification.user_checked: true, checked_at: 2026-11-13 (docs/sources/user_check_sheet.md 5번). source.retrieved_at(2026-10-26)은 고시 조문 카드의 확인일로도 쓰이는데 사용자는 조문을 대조하지 않았으므로 바꾸지 않는다. 사용자 확인일은 verification.checked_at에만 둔다.",
     "별표 원본에서 헬스·피트니스업과 요가·필라테스업은 한 칸에 병합되어 위약금 기준 하나를 공유한다. clauses의 annex_penalty는 두 줄로 재구성한 것이다.",
     "scenarios A·B, rounding, day_count, refund_basis, period_thresholds_days는 원문(고시)에 없는 프로젝트 결정(in_source: false)이다.",
     "비율(ratio)은 Decimal로 읽는다 (json.loads(parse_float=Decimal)).",
