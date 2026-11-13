@@ -198,7 +198,7 @@ export const EXAMPLES: Record<Item, readonly string[]> = {
 
 // [초안 2026-11-12] 화면 공통 문구
 export const APP_TEXT = {
-  examplesTitle: '예시 문장 (누르면 입력창에 채워집니다)',
+  examplesTitle: '예시 문장 (가상 사례, 누르면 입력창에 채워집니다)',
   disclaimer:
     '이 서비스의 결과는 참고용이며 법률 자문이 아닙니다. 고시는 분쟁 해결의 기준이며, 실제 환급·배상 여부와 금액을 확정하지 않습니다.',
   // 분석 꺼짐(/api/config)일 때 패널 자리 안내 (서버 ANALYZE_DISABLED 문구와 같음)
