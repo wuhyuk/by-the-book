@@ -62,6 +62,8 @@ def test_source_fields(rule: GymRule) -> None:
     assert src.url.startswith("https://www.law.go.kr/")
     assert src.effective_date == "2019-11-19"
     assert src.last_amended == "2019-11-19"
+    # 사용자 별표 확인일(2026-11-13)은 penalty_rule.verification.checked_at에만 둔다.
+    # retrieved_at은 조문 카드 확인일로도 쓰여 이전 값을 유지한다.
     assert src.retrieved_at == "2026-10-26"
     for clause in rule.related_clauses:
         assert clause.source.name
@@ -70,11 +72,15 @@ def test_source_fields(rule: GymRule) -> None:
 
 
 def test_verified_flags(rule: GymRule) -> None:
-    """최상위 verified는 false, 결과가 쓰는 블록은 true (MVP_SPEC 4절)."""
+    """최상위 verified는 false, 결과가 쓰는 블록은 true (MVP_SPEC 4절).
+
+    penalty_rule은 2026-11-13 사용자가 별표 원문과 직접 대조했다 (user_check_sheet.md 5번).
+    """
     assert rule.verified is False
     for industry in rule.industries:
         assert industry.penalty_rule.verified is True
-        assert industry.penalty_rule.verification.user_checked is False
+        assert industry.penalty_rule.verification.user_checked is True
+        assert industry.penalty_rule.verification.checked_at == "2026-11-13"
     assert rule.params.continuous_transaction_criteria.verified is True
 
 
