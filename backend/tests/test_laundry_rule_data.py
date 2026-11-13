@@ -85,6 +85,10 @@ def test_hanbok_single_value_in_source(rule: LaundryRule) -> None:
     assert row.years == 4 and row.variants is None
     assert row.years_applies_to_all_materials_in_source is True
     assert row.years_alternative is None
+    # 칸 구조(값 하나, 가로선 없음)는 2026-11-13 사용자 표본 대조로도 확인 (시트 2번)
+    assert row.years_scope_check is not None
+    assert row.years_scope_check.user_checked is True
+    assert row.years_scope_check.checked_at == "2026-11-13"
 
 
 def test_unproven_fallback_is_20(rule: LaundryRule) -> None:
@@ -92,7 +96,11 @@ def test_unproven_fallback_is_20(rule: LaundryRule) -> None:
 
 
 def test_block_verification_status(rule: LaundryRule) -> None:
-    """블록은 기계 대조로 verified: true, 사용자 표본 대조 전 (Q-S2). 최상위는 false."""
+    """블록은 기계 대조로 verified: true (Q-S2). 최상위는 false.
+
+    2026-11-13 사용자 표본 대조(user_check_sheet.md 1~4번)로 ratio_table·lifespan_table·
+    unproven_fallback은 user_checked: true. set_allocation은 표본에 없어 false 그대로다.
+    """
     assert rule.verified is False
     for block in (
         rule.ratio_table,
@@ -101,7 +109,10 @@ def test_block_verification_status(rule: LaundryRule) -> None:
         rule.unproven_fallback,
     ):
         assert block.verified is True
-        assert block.verification.user_checked is False
+    for block in (rule.ratio_table, rule.lifespan_table, rule.unproven_fallback):
+        assert block.verification.user_checked is True
+        assert block.verification.checked_at == "2026-11-13"
+    assert rule.set_allocation.verification.user_checked is False
 
 
 def test_decisions_marked_not_in_source(rule: LaundryRule) -> None:
@@ -111,7 +122,9 @@ def test_decisions_marked_not_in_source(rule: LaundryRule) -> None:
 
 
 def test_source_has_retrieved_at(rule: LaundryRule) -> None:
-    assert rule.source.retrieved_at
+    # 사용자 표 확인일(2026-11-13)은 블록 verification.checked_at에만 둔다.
+    # retrieved_at은 조문 카드 확인일로도 쓰여 이전 값을 유지한다.
+    assert rule.source.retrieved_at == "2026-11-02"
     assert rule.source.notice_number == "공정거래위원회고시 제2025-14호"
     for c in rule.related_clauses:
         assert c.source.retrieved_at
