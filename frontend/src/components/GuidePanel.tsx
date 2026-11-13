@@ -1,5 +1,5 @@
 // 설명·업체용 문안 (POST /api/guide). 계산에 보낸 입력을 그대로 다시 보내고 서버가 다시 계산한 문안을 보여 준다.
-// 숫자는 서버 문안 그대로다 (화면에서 만들지 않는다). 업체용 문안이 null이면(❔·계산 안 함) 그 영역을 숨긴다.
+// 숫자는 서버 문안 그대로다 (화면에서 만들지 않는다). 업체용 문안이 null이면(❔·계산 안 함·규칙 미검증) 그 영역을 숨긴다.
 import { useEffect, useState } from 'react'
 import { fetchGuide } from '../api'
 import { APP_TEXT, GUIDE_TEXT } from '../texts'

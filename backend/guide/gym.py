@@ -11,6 +11,7 @@ from guide.common import (
     amount_or_range,
     basis_line,
     caveat_line,
+    company_message_allowed,
     computed_sentence,
     not_calculated_guide,
     review_lines,
@@ -32,6 +33,8 @@ FORMULA_CLAUSE_ID = "art5_1"
 FACT_CODES = frozenset({F.USAGE_STARTED.value})
 
 # 업체용 문안 단서에 쓰는 말 (🔍 계산함 사유 → 불확실성 항목). 설명에 그 사유가 있을 때만 쓴다.
+# 규칙 미검증(RULE_UNVERIFIED)은 여기에 없다: 그 사유가 있으면 업체용 문안 자체를 만들지 않는다
+# (guide.common.NO_COMPANY_MESSAGE_CODES, 2026-11-13).
 CAVEAT_PHRASES: dict[str, str] = {
     F.SCOPE_UNCERTAIN_PT_ONLY.value: "PT만 계약한 경우 이 기준이 적용되는지 여부",
     F.PERIOD_ONE_MONTH_BOUNDARY.value: "계약 기간이 1개월 경계에 있어 이 기준이 적용되는지 여부",
@@ -39,7 +42,6 @@ CAVEAT_PHRASES: dict[str, str] = {
     F.WITHDRAWAL_STATUS_UNCONFIRMED.value: "청약철회 해당 여부",
     F.SESSION_VALIDITY_MISSING.value: "횟수제 이용권의 유효기간",
     F.REFUND_BASIS_UNKNOWN.value: "계약할 때 정한 환급 기준(기간 또는 횟수)",
-    F.RULE_UNVERIFIED.value: "원문 확인이 끝나지 않은 기준 값",
     F.LIST_PRICE_NOT_USABLE.value: "정상가(할인 전 가격) 적용 여부",
     F.INTERPRETATION_DEPENDENT.value: "이용분 계산 방식",
     F.POSTPONEMENT.value: "이용 연기 기간",
@@ -119,21 +121,27 @@ def build_gym_guide(inp: GymInput, result: GymResult, rule: GymRule) -> Guide:
             "기준상 전액 환급하도록 되어 있습니다."
         )
     for line in robust:
-        explanation.append(line.text)
         if (
             line.code == F.OFFER_BELOW_B.value
             and min_b is not None
             and offer is not None
         ):
+            # 금액을 넣은 줄만 쓴다 (같은 뜻의 화면 한 줄을 겹쳐 쓰지 않음, 2026-11-13)
             explanation.append(
                 f"업체 제시액 {won(offer)}은 정상가 기준(B)으로 계산한 기준 금액 중 "
                 f"가장 작은 값 {won(min_b)}보다 적습니다."
             )
+        else:
+            explanation.append(line.text)
     explanation += [line.text for line in facts]
     explanation += review_lines(review)
     if (basis := basis_line(display.citations)) is not None:
         explanation.append(basis)
     explanation.append(DISCLAIMER_LINE)
+    if not company_message_allowed(result.flags):
+        return Guide(
+            explanation=explanation, company_message=None, citations=display.citations
+        )
 
     s = rule.source
     company = [

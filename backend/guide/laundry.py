@@ -10,6 +10,7 @@ from guide.common import (
     Guide,
     basis_line,
     caveat_line,
+    company_message_allowed,
     computed_sentence,
     not_calculated_guide,
     review_lines,
@@ -33,8 +34,9 @@ CAVEAT_PHRASES: dict[str, str] = {
     L.SPECIAL_AGREEMENT.value: "배상에 관한 특약",
     L.PARTIAL_FAULT_CLAIMED.value: "고객 일부 책임에 따른 공제",
     L.DAMAGED_ITEM_RETURN.value: "손상된 세탁물 인도에 따른 감액",
-    "RULE_UNVERIFIED": "원문 확인이 끝나지 않은 기준 값",
 }
+# 규칙 미검증(RULE_UNVERIFIED)은 여기에 없다: 그 사유가 있으면 업체용 문안 자체를 만들지 않는다
+# (guide.common.NO_COMPANY_MESSAGE_CODES, 2026-11-13).
 SENSITIVITY_PHRASES = {
     "use_days": "고시에 정해져 있지 않은 사용일수 산입 방식(구입일을 세는지)",
     "rounding": "원 미만 처리(내림·반올림)",
@@ -102,16 +104,22 @@ def build_laundry_guide(
         ]
     offer = inp.provider_offer
     for line in robust:
-        explanation.append(line.text)
         if offer is not None:
+            # 금액을 넣은 줄만 쓴다 (같은 뜻의 화면 한 줄을 겹쳐 쓰지 않음, 2026-11-13)
             explanation.append(
                 f"업체 제시액 {won(offer)}은 고시 기준으로 계산한 가장 작은 기준 금액 "
                 f"{won(lo)}보다 적습니다."
             )
+        else:
+            explanation.append(line.text)
     explanation += review_lines(review)
     if (basis := basis_line(display.citations)) is not None:
         explanation.append(basis)
     explanation.append(DISCLAIMER_LINE)
+    if not company_message_allowed(result.flags):
+        return Guide(
+            explanation=explanation, company_message=None, citations=display.citations
+        )
 
     s = rule.source
     damage = DAMAGE_LABELS[inp.damage_type]

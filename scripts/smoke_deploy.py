@@ -178,7 +178,20 @@ def run(base: str, analyze: bool) -> int:
     return 1 if c.failed else 0
 
 
+def configure_stdio() -> None:
+    """stdout·stderr를 UTF-8(errors="replace")로 맞춘다.
+
+    Windows 콘솔·파이프의 기본 인코딩(cp949)은 배지 기호(✅·⚠️)를 인코딩하지 못해
+    print에서 UnicodeEncodeError로 멈춘다. reconfigure가 없는 스트림은 그대로 둔다.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
+
+
 def main() -> None:
+    configure_stdio()
     parser = argparse.ArgumentParser(description="기준대로 배포 확인")
     parser.add_argument("base_url", help="배포 주소 (예: https://example.onrender.com)")
     parser.add_argument(
