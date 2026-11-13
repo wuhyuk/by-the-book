@@ -3,7 +3,7 @@
 > 상태: **초안**. 현재 단계에 필요한 결정이 끝나기 전에는 그 단계를 구현하지 않는다. 결정이 나면 이 문서를 먼저 갱신한다.
 > **현재 단계: 1차 배포 라운드 (일정 변경 2026-11-11, 8.1 "1차 배포 일정"). PR-A `feat/guide-and-switches` main 병합 #14. 지금은 PR-B `feat/web-deploy-pack`(1개월 경계 문구, 분석 순서·설정 보완, 화면, 배포 패키지 `Dockerfile`·`docs/DEPLOY.md`·`scripts/smoke_deploy.py`), 다음은 11/14(토) 1차 배포 → 11/14~11/17 버그 수정만 → 11/18까지 사용자 만족도 정량평가(응답 10명 이상)**. VS4 복원 R1은 결정·승인 기록만 했고(12.10) 코드는 11/18 이후로 미뤘다. VS4 축소 A는 main 병합 #11·#12, R1 케이스 보고서는 #13. 세탁 계약은 12절, 작업 기록은 `docs/sources/vs4_report.md`, 케이스 검증은 `docs/sources/vs4_cases_approval.md`(승인 완료 2026-11-10). 2026-11-06부터 구현 순서는 8.1절 수직 슬라이스 계획을 따른다.
 > 완료한 단계: 0 (고시 원문 확인, 2026-10-26), 1 (저장소 뼈대, 2026-10-19), 2 (규칙 엔진 + 테스트, main 병합 #4), 세탁·가전 사전 조사 (main 병합 #5, 2026-11-06), VS1 (main 병합 #6), VS2 (PR 2-1 `/api/calculate` main 병합 #8, PR 2-2·2-3 화면·관통 확인 main 병합 #9), VS3 (`/api/analyze`·되묻기 화면, main 병합 #10).
-> 세탁·가전 사전 조사 산출물: `docs/sources/laundry_*.md`, `docs/sources/appliance_*.md`, `backend/data/rules/laundry_*.json`·`appliance_*.json` 초안. 세탁은 결정 반영(2026-11-02·11-06, 표 블록 4개 `verified: true`·`user_checked: false`, 최상위 `false`), 명세는 2026-11-10 12절로 옮겼다. 가전은 모두 `verified: false`로 보관하며 v0.1 범위 밖이다. 결정은 `docs/sources/stage0_laundry_appliance_report.md` 9절.
+> 세탁·가전 사전 조사 산출물: `docs/sources/laundry_*.md`, `docs/sources/appliance_*.md`, `backend/data/rules/laundry_*.json`·`appliance_*.json` 초안. 세탁은 결정 반영(2026-11-02·11-06, 표 블록 4개 `verified: true`, 최상위 `false`. `user_checked`는 2026-11-13 사용자 표본 대조로 `ratio_table`·`lifespan_table`·`unproven_fallback` `true`, `set_allocation` `false`), 명세는 2026-11-10 12절로 옮겼다. 가전은 모두 `verified: false`로 보관하며 v0.1 범위 밖이다. 결정은 `docs/sources/stage0_laundry_appliance_report.md` 9절.
 
 ## 1. MVP 한 줄
 
@@ -488,7 +488,7 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 | 반올림 | [결정] 이용분 half up, 위약금 원 미만 내림 |
 | 일수 계산 | [결정] 시작일·도달일 모두 산입, 0~계약 일수로 제한 |
 | 계속거래 요건 | [원문] 법 제2조 제10호. 기간 경계 28/31/32일은 [결정] |
-| 별표 | [원문] 공식 HWP 재추출·별표 이미지 판독 일치 (2026-10-26). `penalty_rule.verified: true`, `user_checked: false` |
+| 별표 | [원문] 공식 HWP 재추출·별표 이미지 판독 일치 (2026-10-26). `penalty_rule.verified: true`. 2026-11-13 사용자가 별표 본문이미지에서 "총계약대금의 10%"를 직접 확인해 원문과 같음 → `user_checked: true`, `checked_at: 2026-11-13` (`docs/sources/user_check_sheet.md` 5번) |
 | 표준약관 | [원문] 제10048호(2025-05-23 개정) 최신, 요가·필라테스 제10083호(2026-07-16 제정) 별도 존재 |
 | 고시 현행성 | [원문] 제2019-9호 이후 개정 없음 (2026-10-26) |
 | 방문판매법 2026-09-29 개정 | 인용 조문(제2조 제10호, 제31조, 제32조)에 개정 표시 없음 [해석] |
@@ -499,7 +499,7 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 |---|---|
 | `POST /api/analyze` | 문장 → 추출 결과(`item`, `fields`, `missing`, `evidence`) |
 | `POST /api/calculate` | 확정된 필드 → 계산 결과(`refund`, `steps`, `badge`, `source`) |
-| `POST /api/guide` | `/api/calculate`와 같은 본문 → 서버가 다시 계산한 결과로 설명 문장·업체용 문안·근거 조항 (`backend/guide/`, LLM 없음, 템플릿) [결정 2026-11-11 사용자]. ❔·계산 안 함이면 업체용 문안 `null`. 인용은 엔진이 정한 조항 ID의 카드만 쓰므로 검색 결과에 없는 조항을 인용할 수 없다 (절대 규칙 7) |
+| `POST /api/guide` | `/api/calculate`와 같은 본문 → 서버가 다시 계산한 결과로 설명 문장·업체용 문안·근거 조항 (`backend/guide/`, LLM 없음, 템플릿) [결정 2026-11-11 사용자]. ❔·계산 안 함이면 업체용 문안 `null`. 계산했어도 결과에 `RULE_UNVERIFIED`(원문 확인이 끝나지 않은 값)가 있으면 업체용 문안 `null`, 설명의 확인 목록은 그대로 [결정 2026-11-13 사용자]. 인용은 엔진이 정한 조항 ID의 카드만 쓰므로 검색 결과에 없는 조항을 인용할 수 없다 (절대 규칙 7) |
 | `GET /api/config` | `{analyze_enabled, survey_url}`. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
 | `GET /healthz` | 배포 헬스체크 `{"status": "ok"}` (외부 호출 없음). 그 밖의 `/api` 밖 경로는 화면(`frontend/dist`, SPA 폴백), 없는 `/api/*`는 404 JSON (`docs/DEPLOY.md`) |
 
@@ -592,7 +592,7 @@ VS5 TODO [제안, 2026-11-08 사용자 지시로 기록, 외부 배포판용] �
 
 | 항목 | 상태 | 담당 | 메모 |
 |---|---|---|---|
-| 별표 대조 | 완료 (사용자 육안 대조 안 함) | Claude Code | 공식 HWP 재추출·별표 이미지 판독·기존 표 세 가지가 전 행 일치. `penalty_rule.verified: true`, `verification.user_checked: false` |
+| 별표 대조 | 완료 (사용자 육안 대조 2026-11-13) | Claude Code, 사용자 | 공식 HWP 재추출·별표 이미지 판독·기존 표 세 가지가 전 행 일치. `penalty_rule.verified: true`. 2026-11-13 사용자 표본 대조 일치로 `verification.user_checked: true` (`user_check_sheet.md` 5번) |
 | 고시번호·시행일·개정이력·현행성 | 완료 | Claude Code | 제2019-9호 이후 개정 없음 (2026-10-26 재확인) |
 | 고시 본문 현행본 대조 (제1~8조) | 완료 | Claude Code | 글자 단위 일치 |
 | 계속거래 정의 원문 | 완료 | Claude Code | 기간 경계 28/31/32일 유지 (2026-10-26 결정) |
@@ -619,7 +619,7 @@ VS5 TODO [제안, 2026-11-08 사용자 지시로 기록, 외부 배포판용] �
 
 1. 단계 7 확장 품목: 세탁 1개 (안 1). 가전은 조사 문서·JSON 초안만 보관하고 v0.1 이후로 미룬다. 가전 질문(Q-A1~A8)은 가전을 시작할 때 결정한다. 일정표와 세탁 축소안은 보고서 10절
 2. 사유 코드: 공통 Enum + 품목별 Enum, 품목별 코드 집합·표시 우선순위는 명시 목록. 기존 헬스장 코드 이름은 바꾸지 않는다
-3. 세탁 블록 `verified`: 헬스장 선례대로 기계 대조가 모두 일치하면 블록별 `true`, `user_checked: false`. 사용자 표본 대조는 나중에
+3. 세탁 블록 `verified`: 헬스장 선례대로 기계 대조가 모두 일치하면 블록별 `true`, `user_checked: false`. 사용자 표본 대조는 나중에 → **2026-11-13 사용자 표본 대조 완료** (`docs/sources/user_check_sheet.md`): 별표 Ⅱ PDF 123~125쪽 표를 캡처해 칸 단위로 확인(세탁 배상비율표 4년 행 70%, 한복류 4년, 카페트 모 6·기타 5)하고 5-1.③ "세탁요금의 20배"와 헬스장 별표 "총계약대금의 10%"는 원문에서 직접 확인, 5건 모두 원문과 같음. 세탁 `ratio_table`·`lifespan_table`·`unproven_fallback`과 헬스장 `industries[].penalty_rule`의 `user_checked: true`, `checked_at: 2026-11-13`. 두 규칙 파일의 `source.retrieved_at`(세탁 2026-11-02, 헬스장 2026-10-26)은 고시 조문 카드의 확인일로도 쓰이므로 바꾸지 않았다 (사용자가 확인한 것은 별표 표 값이고, 카드별 확인일을 나누려면 조문 스키마 변경이 필요하다) [결정 2026-11-13 사용자]. `set_allocation`은 표본에 없어 `false` 그대로. 배지 판정은 `verified`만 쓰므로 바뀌지 않는다
 4. 세탁 계산: 원 미만 내림, 사용일수 = 의뢰일 − 구입일(첫날 산입 안 함), Set 일부 손상은 7. 배분(복원할 때), 표에 없는 품목은 계산하지 않고 ❔ `ITEM_NOT_IN_TABLE` + 1372 안내 (모두 `in_source: false` 또는 해석 표시). 한복류 두 소재 4년은 2026-11-06 원문 칸 구조(HWPX 셀 속성, PDF 125쪽 이미지)로 확인해 `in_source: true`로 바꿨다. 세부는 `docs/sources/laundry_spec_draft.md`. 구현 전에 그 내용을 이 문서의 새 절로 옮긴다
 5. 세탁 ✅ 조건: 결정 민감도 검사. `in_source: false` 결정을 대안으로 바꿔 다시 계산해도 조회 행과 배상액이 모두 같을 때만 ✅, 달라지면 🔍 `DECISION_SENSITIVE` (2026-11-06 이름 수락). 메시지에는 원인 결정(사용일수 산입 / 원 미만 처리)과 금액 범위를 넣는다. 1원 차이도 🔍. 검사는 명세에 나열한 대안만 본다 (명세 L4.1 "검토하지 않은 대안"). 결정 값만으로 🔍를 빼는 안은 채택하지 않는다 (2026-11-02 2차)
 6. 세탁 범위: 축소 A가 기본안. Set 일부 손상·배분, 부속물, 소재·용도 미상 시 여러 후보 계산은 복원 후보이며 11/8·11/15에 복원 여부를 정한다 (보고서 10.3절). 축소 A에서 Set 일부·부속물은 ❔ `SET_PARTIAL_UNSUPPORTED`·`ATTACHMENT_UNSUPPORTED` + "기준표에 규정은 있으나 이번 버전에서 지원하지 않음" 안내 (2026-11-06)
@@ -765,7 +765,7 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 
 결정 순서는 4절과 같고 `rules/badge.py`의 `decide_badge`를 그대로 쓴다.
 
-블록 단위 검증 **[기본값 2026-11-10]**: 결과가 쓰는 블록만 본다. 입증 가능 경로는 `ratio_table`·`lifespan_table`, 입증 불가(20배) 경로는 `unproven_fallback`이다 (초안의 "(20배면) unproven_fallback"을 20배 결과는 표를 쓰지 않는다는 뜻으로 읽었다). 하나라도 `verified: false`이면 `RULE_UNVERIFIED`(🔍)를 붙이고 ⚠️ 코드는 뺀다. 최상위 `verified`(현재 `false`)는 배지 판정에 쓰지 않는다. 현재 네 블록 모두 `verified: true`, `user_checked: false` [결정 2026-11-02 Q-S2].
+블록 단위 검증 **[기본값 2026-11-10]**: 결과가 쓰는 블록만 본다. 입증 가능 경로는 `ratio_table`·`lifespan_table`, 입증 불가(20배) 경로는 `unproven_fallback`이다 (초안의 "(20배면) unproven_fallback"을 20배 결과는 표를 쓰지 않는다는 뜻으로 읽었다). 하나라도 `verified: false`이면 `RULE_UNVERIFIED`(🔍)를 붙이고 ⚠️ 코드는 뺀다. 최상위 `verified`(현재 `false`)는 배지 판정에 쓰지 않는다. 현재 네 블록 모두 `verified: true` [결정 2026-11-02 Q-S2]. `user_checked`는 2026-11-13 사용자 표본 대조로 `ratio_table`·`lifespan_table`·`unproven_fallback`이 `true`, `set_allocation`은 `false` (9절 2026-11-02 3번). 배지 판정에는 `user_checked`를 쓰지 않는다.
 
 **결정 민감도 검사** [결정 2026-11-02 사용자 지시, 2026-11-06 Q-L10]: ✅는 원문에 없는 결정을 바꿔도 결과가 같을 때만 준다.
 
