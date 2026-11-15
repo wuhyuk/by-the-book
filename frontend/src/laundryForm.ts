@@ -1,5 +1,7 @@
 // 세탁 입력 폼 상태와 LaundryInput 변환 (MVP_SPEC 12.1). 화면에 보이지 않는 조건부 항목은 null로 보낸다.
-// 입력 문자열을 정수로 바꾸는 것 외에 숫자를 만들지 않는다. 내용연수·배상비율은 화면이 알지 못한다.
+// 입력 문자열을 정수로 바꾸는 것 외에 숫자를 만들지 않는다. 내용연수·배상비율·Set 배분 비율은 화면이 알지 못한다.
+// R2(세트 의류 일부 손상, /api/config enabled_features에 set_partial)가 켜져 있을 때만 손상 벌·일부 의뢰 항목을 쓴다.
+// 꺼져 있으면 요청 본문은 지금과 같다 (R2 항목을 보내지 않음).
 import { parseWon, type TriChoice } from './formState.ts'
 import type { LaundryAnalyzeResult, LaundryInput, LaundryItemOption, TriState } from './types.ts'
 
@@ -17,6 +19,9 @@ export interface LaundryForm {
   laundry_fee: string
   set_type: LaundryInput['set_type']
   set_part: NonNullable<LaundryInput['set_part']> | ''
+  hanbok_kind: NonNullable<LaundryInput['hanbok_kind']> | '' // R2
+  damaged_parts: SetPart[] // R2, 체크박스 (Set 벌 순서로 정렬해 보낸다)
+  set_partial_request: TriChoice // R2, 일부만 골랐을 때만 묻는다
   receipt_issued: TriChoice
   manufacturing_cause_claimed: TriChoice
   attachment_only: TriChoice
@@ -40,6 +45,9 @@ export const INITIAL_LAUNDRY_FORM: LaundryForm = {
   laundry_fee: '',
   set_type: 'none',
   set_part: '',
+  hanbok_kind: '',
+  damaged_parts: [],
+  set_partial_request: 'unknown',
   receipt_issued: 'unknown',
   manufacturing_cause_claimed: 'unknown',
   attachment_only: 'unknown',
@@ -66,20 +74,55 @@ export const LAUNDRY_TRI_FIELDS = [
 const MONEY_FIELDS = ['purchase_price', 'laundry_fee', 'provider_offer'] as const
 type MoneyField = (typeof MONEY_FIELDS)[number]
 
+export type SetPart = 'top' | 'mid' | 'bottom'
+
+/** Set 유형별 벌 (서버 rules/laundry.py SET_PARTS와 같은 순서). */
+export const SET_TYPE_PARTS: Record<LaundryInput['set_type'], readonly SetPart[]> = {
+  none: [],
+  top_bottom: ['top', 'bottom'],
+  top_mid_bottom: ['top', 'mid', 'bottom'],
+  hanbok: ['top', 'bottom'],
+}
+
 export interface LaundryVisibility {
   ratioFields: boolean // 입증 가능 또는 모름: 품목·구입가격·날짜
   feeField: boolean // 입증 불가 또는 모름: 세탁요금
   variant: LaundryItemOption | null // 소재·용도를 고를 행
-  setPart: boolean
+  setPart: boolean // R2 꺼짐: 손상 부분 선택
+  setTypes: LaundryInput['set_type'][] // 고를 수 있는 Set 유형 (R2 켜짐이면 품목 행에 맞는 것만)
+  hanbokKind: boolean // R2: 한복 조합
+  damagedParts: readonly SetPart[] // R2: 손상 벌 체크박스
+  partialRequest: boolean // R2: 일부만 골랐을 때만 "일부만 맡겼는지"
 }
 
-export function laundryVisibility(f: LaundryForm, items: LaundryItemOption[]): LaundryVisibility {
+const ALL_SET_TYPES: LaundryInput['set_type'][] = ['none', 'top_bottom', 'top_mid_bottom', 'hanbok']
+
+/** R2: 손상 벌이 그 Set의 일부(전부는 아님)인지. 서버 _partial과 같은 판정. */
+export function isPartialSet(f: LaundryForm): boolean {
+  const parts = SET_TYPE_PARTS[f.set_type]
+  const chosen = parts.filter((p) => f.damaged_parts.includes(p))
+  return chosen.length > 0 && chosen.length < parts.length
+}
+
+export function laundryVisibility(
+  f: LaundryForm,
+  items: LaundryItemOption[],
+  setPartial = false,
+): LaundryVisibility {
   const row = items.find((i) => i.key === f.item_key) ?? null
+  const rowTypes = (row?.set_types ?? []).filter((t): t is LaundryInput['set_type'] =>
+    (ALL_SET_TYPES as string[]).includes(t),
+  )
+  const r2Set = setPartial && f.set_type !== 'none'
   return {
     ratioFields: f.proof_available !== 'no',
     feeField: f.proof_available !== 'yes',
     variant: row && row.variants.length > 0 ? row : null,
-    setPart: f.set_type !== 'none',
+    setPart: !setPartial && f.set_type !== 'none',
+    setTypes: setPartial && rowTypes.length > 0 ? rowTypes : ALL_SET_TYPES,
+    hanbokKind: r2Set && f.set_type === 'hanbok',
+    damagedParts: r2Set ? SET_TYPE_PARTS[f.set_type] : [],
+    partialRequest: r2Set && isPartialSet(f),
   }
 }
 
@@ -91,8 +134,12 @@ export type LaundryBuildResult =
   | { ok: false; invalidFields: MoneyField[]; missingFields: ('service_type' | 'damage_type')[] }
 
 /** 폼 → LaundryInput. 숫자 형식 오류와 필수 선택 누락은 보내기 전에 막는다. 그 밖의 누락은 엔진이 판정한다. */
-export function buildLaundryInput(f: LaundryForm, items: LaundryItemOption[]): LaundryBuildResult {
-  const v = laundryVisibility(f, items)
+export function buildLaundryInput(
+  f: LaundryForm,
+  items: LaundryItemOption[],
+  setPartial = false,
+): LaundryBuildResult {
+  const v = laundryVisibility(f, items, setPartial)
   const parsed = {} as Record<MoneyField, number | null>
   const invalidFields: MoneyField[] = []
   for (const name of MONEY_FIELDS) {
@@ -130,7 +177,34 @@ export function buildLaundryInput(f: LaundryForm, items: LaundryItemOption[]): L
       uncollected: tri(f.uncollected),
       receipt_issued: tri(f.receipt_issued),
       provider_offer: parsed.provider_offer,
+      ...(setPartial ? r2Fields(f, v) : {}),
     },
+  }
+}
+
+/** R2 켜짐일 때만 붙이는 항목. 손상 벌은 Set 벌 순서로 보낸다. set_part는 쓰지 않는다. */
+function r2Fields(f: LaundryForm, v: LaundryVisibility): Partial<LaundryInput> {
+  const r2Set = f.set_type !== 'none'
+  return {
+    set_part: null,
+    hanbok_kind: v.hanbokKind && f.hanbok_kind !== '' ? f.hanbok_kind : null,
+    damaged_parts: r2Set ? v.damagedParts.filter((p) => f.damaged_parts.includes(p)) : null,
+    set_partial_request: v.partialRequest ? tri(f.set_partial_request) : null,
+  }
+}
+
+/** R2 켜짐: 세트 관련 값은 폼으로만 받는다. 문장 분석 결과의 set_type·set_part는 쓰지 않는다. */
+export function withoutSetFields(ext: LaundryAnalyzeResult): LaundryAnalyzeResult {
+  const keep = (f: string) => f !== 'set_type' && f !== 'set_part'
+  const fields = Object.fromEntries(Object.entries(ext.fields).filter(([k]) => keep(k)))
+  const evidence = Object.fromEntries(Object.entries(ext.evidence).filter(([k]) => keep(k)))
+  return {
+    ...ext,
+    fields,
+    evidence,
+    unverified: ext.unverified.filter(keep),
+    missing: ext.missing.filter(keep),
+    confirm: ext.confirm.filter(keep),
   }
 }
 
@@ -184,6 +258,7 @@ export function laundryExtractedValues(
 export function isUserLaundryValue(name: Name, value: Value, touched: ReadonlySet<string>): boolean {
   if (!touched.has(name)) return false
   if ((LAUNDRY_TRI_FIELDS as readonly string[]).includes(name) || name === 'set_type') return true
+  if (name === 'set_partial_request') return true
   return !isEmptyLaundryValue(name, value)
 }
 
@@ -219,6 +294,8 @@ export function laundryFollowUpFields(
 }
 
 export function isEmptyLaundryValue(name: Name, value: Value): boolean {
+  if (Array.isArray(value)) return value.length === 0
+  if (name === 'set_partial_request') return value === 'unknown'
   if ((LAUNDRY_TRI_FIELDS as readonly string[]).includes(name)) return value === 'unknown'
   if (name === 'set_type') return value === 'none'
   return value === ''
