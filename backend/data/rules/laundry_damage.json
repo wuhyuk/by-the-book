@@ -821,9 +821,9 @@
     },
     "verified": true,
     "verification": {
-      "method": "HWPX 텍스트 ↔ PDF 123쪽 이미지 판독 일치. 2026-11-02 승격 전 재대조(배분 비율 문구·값) 일치. 일부 손상 시 적용 방식(해석)은 params.set_partial_damage로 옮김. 기계 대조 일치로 true, 사용자 표본 대조 전 [결정 2026-11-02 Q-S2]",
-      "user_checked": false,
-      "checked_at": "2026-11-02"
+      "method": "HWPX 텍스트 ↔ PDF 123쪽 이미지 판독 일치. 2026-11-02 승격 전 재대조(배분 비율 문구·값) 일치. 일부 손상 시 적용 방식(해석)은 params.set_partial_damage로 옮김. 기계 대조 일치로 true [결정 2026-11-02 Q-S2]. 2026-11-15 사용자 표본 대조(별표 Ⅱ ⑯세탁업 7., PDF 123쪽: 상·하 65/35, 상·중·하 55/35/10(상의/하의/중의), 한복 50/50) 원문과 같음 (docs/sources/user_check_sheet.md 확인 기록 2026-11-15 행, R2 Q14 (b))",
+      "user_checked": true,
+      "checked_at": "2026-11-15"
     }
   },
   "unproven_fallback": {
@@ -881,7 +881,7 @@
     "deductions_basis": "2.① 고객 일부 책임 공제, 2.② 손상품 인도 시 일부 감액: 원문에 금액·비율 없음 → 사유 코드로만 표시"
   },
   "notes": [
-    "초안(사전 조사, 2026-11-02). 블록 4개(ratio_table, lifespan_table, set_allocation, unproven_fallback)는 기계 대조 일치로 verified: true, user_checked: false다 [결정 2026-11-02 Q-S2, 헬스장 선례]. 사용자 표본 대조는 나중에 한다. → 2026-11-13 사용자 표본 대조(docs/sources/user_check_sheet.md 1~4번) 결과 모두 원문과 같아 ratio_table·lifespan_table·unproven_fallback의 user_checked를 true로 바꿨다. set_allocation은 표본에 없어 user_checked: false 그대로다. 표의 나머지 칸은 기계 대조 기록에 의존한다. source.retrieved_at(2026-11-02)은 고시 조문 카드의 확인일로도 쓰이는데 사용자는 표 값만 대조했으므로 바꾸지 않는다. 사용자 확인일은 각 블록의 verification.checked_at에만 둔다.",
+    "초안(사전 조사, 2026-11-02). 블록 4개(ratio_table, lifespan_table, set_allocation, unproven_fallback)는 기계 대조 일치로 verified: true, user_checked: false다 [결정 2026-11-02 Q-S2, 헬스장 선례]. 사용자 표본 대조는 나중에 한다. → 2026-11-13 사용자 표본 대조(docs/sources/user_check_sheet.md 1~4번) 결과 모두 원문과 같아 ratio_table·lifespan_table·unproven_fallback의 user_checked를 true로 바꿨다. set_allocation은 표본에 없어 user_checked: false 그대로다. 표의 나머지 칸은 기계 대조 기록에 의존한다. source.retrieved_at(2026-11-02)은 고시 조문 카드의 확인일로도 쓰이는데 사용자는 표 값만 대조했으므로 바꾸지 않는다. 사용자 확인일은 각 블록의 verification.checked_at에만 둔다. → 2026-11-15 set_allocation(7.①~③)도 사용자 표본 대조(user_check_sheet.md 확인 기록 2026-11-15 행) 결과 원문과 같아 user_checked: true (R2 Q14 (b)).",
     "최상위 verified는 false로 둔다: 아래 밑줄 문장의 의미를 확인하지 않았다. (세탁 표준약관 조항의 두 번째 경로 확인은 2026-11-11에 끝났다, 아래 표준약관 메모)",
     "비율은 정수 퍼센트(ratio_percent)로 저장한다. 금액 계산은 정수·분수 연산으로 하고 float를 쓰지 않는다.",
     "rows[].bands[].max_days가 null이면 상한 없음(원문 '548~' 등).",

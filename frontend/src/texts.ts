@@ -134,6 +134,11 @@ export const ITEM_TAB_LABEL = { gym: '헬스장·요가·필라테스', laundry:
 export const LAUNDRY_TEXT = {
   lead: '세탁소에 맡긴 옷이 손상되거나 분실됐을 때 소비자분쟁해결기준의 배상 기준 금액을 고시의 계산식대로 보여 드립니다.',
   supported: '지원 범위: 세탁소에 맡긴 세탁물의 손상·분실 (무인세탁소, 세탁 지연, 세트 일부·부속물 손상은 아직 지원하지 않습니다)',
+  // [제안 2026-11-15, 승인 대기] R2(set_partial) 켜짐일 때의 지원 범위와 세트 안내
+  supportedSetPartial:
+    '지원 범위: 세탁소에 맡긴 세탁물의 손상·분실, 세트 의류 일부의 손상·분실 (무인세탁소, 세탁 지연, 부속물 손상은 아직 지원하지 않습니다)',
+  setScopeNote:
+    '마고자·조끼·두루마기가 들어간 한복 등 다른 구성의 세트나, 벌마다 가격이 따로 정해진 세트는 이 서비스에서 계산하지 않습니다.',
   placeholder:
     '예: 2025년 11월 1일에 40만원에 산 겨울 정장을 2026년 10월 1일에 세탁소에 맡겼는데 색이 변했어요. 영수증은 있어요.',
   itemsLoadError: '품목 목록을 불러오지 못했습니다. 백엔드가 실행 중인지 확인해 주세요.',
@@ -141,6 +146,8 @@ export const LAUNDRY_TEXT = {
   submitting: '확인 중…',
   amountTitle: '기준 금액',
   ratioLabel: '물품구입가격 × 배상비율',
+  // [제안 2026-11-15] R2 배분 결과 (숫자는 엔진 결과 set_share_percent)
+  setRatioLabel: (share: number) => `Set 구입가격 × 손상 벌 비율 ${share}% × 배상비율`,
   fallbackLabel: '세탁요금 × 20',
   fallbackTitle: '입증이 어려울 때의 기준 금액 (세탁요금 × 20)',
   range: (min: string, max: string) => `고시에 없는 결정에 따라 ${min}~${max}`,
@@ -166,6 +173,10 @@ export const LAUNDRY_FIELD_LABEL: Record<string, string> = {
   laundry_fee: '세탁요금',
   set_type: '세트 의류',
   set_part: '손상·분실된 부분',
+  // [제안 2026-11-15] R2 항목 (set_partial_request 질문은 사용자 지시 문구)
+  hanbok_kind: '한복 구성',
+  damaged_parts: '손상·분실된 벌 (모두 고르세요)',
+  set_partial_request: '세탁소에 맡긴 것이 세트 중 일부뿐인가요?',
   receipt_issued: '세탁소에서 인수증을 받았나요',
   manufacturing_cause_claimed: '업체가 원단·제조 불량을 주장하나요',
   attachment_only: '털·칼라·모자 같은 탈부착 부속물만 손상됐나요',
@@ -182,6 +193,16 @@ export const LAUNDRY_VALUE_LABEL: Record<string, Record<string, string>> = {
   damage_type: { defect: '하자 (탈색·변색·손상 등)', loss: '분실·소실', other: '그 외 (세탁 지연 등)' },
   set_type: { none: '세트 아님', top_bottom: '상·하의 한 벌', top_mid_bottom: '상·중·하의 한 벌', hanbok: '한복 치마저고리·바지저고리' },
   set_part: { whole: '한 벌 전체', top: '상의', mid: '중의', bottom: '하의' },
+  // R2
+  hanbok_kind: { chima_jeogori: '치마저고리', baji_jeogori: '바지저고리' },
+}
+
+// [제안 2026-11-15] R2 손상 벌 체크박스 이름 (한복: 저고리 = 상의, 치마·바지 = 하의, MVP_SPEC 12.1 [해석])
+export const SET_PART_LABEL: Record<string, Record<string, string>> = {
+  default: { top: '상의', mid: '중의', bottom: '하의' },
+  hanbok: { top: '저고리', bottom: '치마·바지' },
+  chima_jeogori: { top: '저고리', bottom: '치마' },
+  baji_jeogori: { top: '저고리', bottom: '바지' },
 }
 
 // [초안 2026-11-12] 첫 화면 예시 문장 (가상 사례, 누르면 입력창에 채운다)

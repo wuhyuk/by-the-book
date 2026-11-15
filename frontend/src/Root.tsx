@@ -15,6 +15,8 @@ export function Root() {
   const [item, setItem] = useState<Item>('gym')
   const [analyzeOff, setAnalyzeOff] = useState<string | null>(null)
   const [surveyUrl, setSurveyUrl] = useState<string | null>(null)
+  // 켜 둔 복원 기능 (2026-11-15). 설정을 못 읽으면 빈 목록 = 지금 화면 그대로
+  const [features, setFeatures] = useState<readonly string[]>([])
 
   useEffect(() => {
     let alive = true
@@ -22,13 +24,14 @@ export function Root() {
       if (!alive || config === null) return
       if (!config.analyze_enabled) setAnalyzeOff(APP_TEXT.analyzeOff)
       setSurveyUrl(config.survey_url)
+      setFeatures(config.enabled_features ?? [])
     })
     return () => {
       alive = false
     }
   }, [])
 
-  const screen = { analyzeOff, onAnalyzeUnavailable: setAnalyzeOff, surveyUrl }
+  const screen = { analyzeOff, onAnalyzeUnavailable: setAnalyzeOff, surveyUrl, features }
   return (
     <>
       <p className="site-disclaimer" data-testid="site-disclaimer">

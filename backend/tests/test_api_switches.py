@@ -19,6 +19,7 @@ from test_gym_calc import CASES
 from test_llm_extraction import raw
 
 import api.analyze as analyze_module
+import api.settings as settings_module
 from api.analyze import (
     DAILY_LIMIT_CODE,
     DAILY_LIMIT_MESSAGE,
@@ -81,8 +82,23 @@ def extraction_reply() -> str:
 def test_settings_defaults() -> None:
     s = load_app_settings({}, env_file=None)
     assert s == AppSettings(
-        analyze_enabled=True, daily_analyze_limit=450, survey_url=None
+        analyze_enabled=True,
+        daily_analyze_limit=450,
+        survey_url=None,
+        enabled_features=(),
     )
+
+
+@pytest.mark.parametrize(
+    ("value", "features"),
+    [("", ()), ("set_partial", ("set_partial",)), (" set_partial , ", ("set_partial",)),
+     ("variant_unknown, set_partial", ("set_partial",)), ("SET_PARTIAL", ()),
+     ("other", ())],
+)  # fmt: skip
+def test_settings_enabled_features(value: str, features: tuple[str, ...]) -> None:
+    """ENABLED_FEATURES (2026-11-15): 쉼표 구분, 공백 허용, 아는 이름(set_partial)만 켠다."""
+    s = load_app_settings({"ENABLED_FEATURES": value}, env_file=None)
+    assert s.enabled_features == features
 
 
 @pytest.mark.parametrize(
@@ -123,7 +139,11 @@ def test_settings_file_values_and_env_first(tmp_path: Any) -> None:
 def test_config_default() -> None:
     r = client.get("/api/config")
     assert r.status_code == 200
-    assert r.json() == {"analyze_enabled": True, "survey_url": None}
+    assert r.json() == {
+        "analyze_enabled": True,
+        "survey_url": None,
+        "enabled_features": [],
+    }
 
 
 def test_config_reflects_settings(override: Any) -> None:
@@ -133,14 +153,22 @@ def test_config_reflects_settings(override: Any) -> None:
     assert client.get("/api/config").json() == {
         "analyze_enabled": False,
         "survey_url": "https://s.example",
+        "enabled_features": [],
     }
+
+
+def test_config_enabled_features_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ENABLED_FEATURES=set_partial이면 화면 설정에 그 이름이 나간다."""
+    monkeypatch.setenv("ENABLED_FEATURES", "set_partial")
+    settings_module.app_settings.cache_clear()
+    assert client.get("/api/config").json()["enabled_features"] == ["set_partial"]
 
 
 def test_config_exposes_no_secret(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_API_KEY", FAKE_KEY)
     r = client.get("/api/config")
     assert FAKE_KEY not in r.text
-    assert set(r.json()) == {"analyze_enabled", "survey_url"}
+    assert set(r.json()) == {"analyze_enabled", "survey_url", "enabled_features"}
 
 
 # ---- ANALYZE_ENABLED=false ----

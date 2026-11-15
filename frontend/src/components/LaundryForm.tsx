@@ -1,13 +1,15 @@
 // 세탁 입력 폼 (MVP_SPEC 12.1). 품목·소재·용도는 서버가 준 표 행 이름 그대로 고른다 (내용연수 숫자 없음).
 import type { FormEvent, ReactNode } from 'react'
 import type { TriChoice } from '../formState'
-import { laundryVisibility, UNLISTED, type LaundryForm as Form } from '../laundryForm'
-import { ANALYZE_TEXT, LAUNDRY_FIELD_LABEL, LAUNDRY_TEXT, LAUNDRY_VALUE_LABEL } from '../texts'
+import { laundryVisibility, UNLISTED, type LaundryForm as Form, type SetPart } from '../laundryForm'
+import { ANALYZE_TEXT, LAUNDRY_FIELD_LABEL, LAUNDRY_TEXT, LAUNDRY_VALUE_LABEL, SET_PART_LABEL } from '../texts'
 import type { LaundryItemOption } from '../types'
 
 interface Props {
   form: Form
   items: LaundryItemOption[]
+  /** R2 세트 의류 일부 손상 (ENABLED_FEATURES=set_partial). 꺼져 있으면 지금 폼 그대로 */
+  setPartial?: boolean
   onChange: (next: Form) => void
   onSubmit: () => void
   submitting: boolean
@@ -18,14 +20,41 @@ interface Props {
 
 type Key = keyof Form
 
-export function LaundryForm({ form, items, onChange, onSubmit, submitting, fieldErrors, notes, evidence }: Props) {
-  const v = laundryVisibility(form, items)
+export function LaundryForm({
+  form,
+  items,
+  setPartial = false,
+  onChange,
+  onSubmit,
+  submitting,
+  fieldErrors,
+  notes,
+  evidence,
+}: Props) {
+  const v = laundryVisibility(form, items, setPartial)
   const set = <K extends Key>(key: K, value: Form[K]) => {
     const next = { ...form, [key]: value }
-    if (key === 'item_key') next.variant_key = '' // 품목을 바꾸면 소재·용도를 다시 고른다
-    if (key === 'set_type') next.set_part = ''
+    if (key === 'item_key') {
+      next.variant_key = '' // 품목을 바꾸면 소재·용도를 다시 고른다
+      // R2: 새 품목 행에서 고를 수 없는 Set 유형이면 세트 아님으로 되돌린다 (Q5 (c))
+      const allowed = laundryVisibility(next, items, setPartial).setTypes
+      if (!allowed.includes(next.set_type)) next.set_type = 'none'
+    }
+    if (key === 'set_type' || next.set_type !== form.set_type) {
+      next.set_part = ''
+      next.hanbok_kind = ''
+      next.damaged_parts = []
+      next.set_partial_request = 'unknown'
+    }
     onChange(next)
   }
+
+  const togglePart = (part: SetPart, checked: boolean) => {
+    const parts = checked ? [...form.damaged_parts, part] : form.damaged_parts.filter((p) => p !== part)
+    set('damaged_parts', parts)
+  }
+
+  const partLabels = SET_PART_LABEL[form.hanbok_kind || (form.set_type === 'hanbok' ? 'hanbok' : 'default')]
 
   const field = (name: Key, control: ReactNode, hint?: ReactNode) => {
     const cls = fieldErrors[name] ? 'field field-error' : notes[name] ? 'field field-ask' : 'field'
@@ -161,8 +190,49 @@ export function LaundryForm({ form, items, onChange, onSubmit, submitting, field
       )}
       <fieldset>
         <legend>세트·부속물</legend>
-        {select('set_type', labeled('set_type'))}
+        {select(
+          'set_type',
+          labeled('set_type').filter(([k]) => v.setTypes.includes(k as Form['set_type'])),
+        )}
+        {setPartial && form.set_type !== 'none' && (
+          <p className="hint" data-testid="set-scope-note">
+            {LAUNDRY_TEXT.setScopeNote}
+          </p>
+        )}
         {v.setPart && select('set_part', setParts, '선택해 주세요')}
+        {v.hanbokKind && select('hanbok_kind', labeled('hanbok_kind'), '선택해 주세요')}
+        {v.damagedParts.length > 0 &&
+          field(
+            'damaged_parts',
+            <div className="checks" id="l-damaged_parts" role="group" aria-label={LAUNDRY_FIELD_LABEL.damaged_parts}>
+              {v.damagedParts.map((p) => (
+                <label key={p} className="check">
+                  <input
+                    type="checkbox"
+                    name="damaged_parts"
+                    value={p}
+                    checked={form.damaged_parts.includes(p)}
+                    onChange={(e) => togglePart(p, e.target.checked)}
+                  />
+                  {partLabels[p]}
+                </label>
+              ))}
+            </div>,
+          )}
+        {v.partialRequest &&
+          field(
+            'set_partial_request',
+            <select
+              id="l-set_partial_request"
+              name="set_partial_request"
+              value={form.set_partial_request}
+              onChange={(e) => set('set_partial_request', e.target.value as TriChoice)}
+            >
+              <option value="unknown">선택해 주세요</option>
+              <option value="yes">예</option>
+              <option value="no">아니오</option>
+            </select>,
+          )}
         {tri('attachment_only')}
       </fieldset>
       <fieldset>

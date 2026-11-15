@@ -3,7 +3,7 @@
 - 작성일: 2026-11-02 / 결정 반영: 2026-11-02 1차 (Q-L1 D0, Q-C1 내림, Q-L3 배분, Q-L4·L6 ❔, Q-L5 계산 후 🔍, Q-S2 블록 `verified: true`), 2차 (결정 민감도 검사, 축소 A, L10·`ITEM_NOT_IN_TABLE` 수락), 3차 2026-11-06 (Q-L9 ❔ 코드·문구, Q-L10 `DECISION_SENSITIVE` 메시지에 원인·범위. 기대 배지·금액은 바뀌지 않음. 한복류 `in_source: true`는 한복류 케이스가 없어 영향 없음)
 - 상태: **L1~L22 모두 사용자 승인(보고서 검토), 2026-11-10** (사용자 답 "승인: L1 … L22, 제외: 없음"). 독립 검증은 `vs4_cases_approval.md`. 테스트: `backend/tests/test_laundry_cases.py`.
 - 승인 때 함께 정한 것 (2026-11-10): 안내 코드를 기대값에 넣는다(Q2). Q1(a) `receipt_issued` 입력(분실 케이스 L5·L6은 입력이 없어 `NO_RECEIPT_LOSS` 없음), Q3·Q5·Q6 기본값 승인. Q4 변경: 값이 하나인 행(한복류 등)의 `variant_key`는 무시한다 (L20에 `variant_key=silk`를 넣어도 같은 결과). Q-L11 닫음: 사용일수 D0 − 1은 검사하지 않는다 (L6 ✅).
-- 복원 기능(MVP_SPEC 12.10)이 켜지면 L4·L7·L18의 기대값이 바뀐다. 그때는 `vs4_restore_cases.md`의 복원 케이스 승인 뒤 바꾼다.
+- 복원 기능(MVP_SPEC 12.10)이 켜지면 L4·L7·L18의 기대값이 바뀐다. 그때는 `vs4_restore_cases.md`의 복원 케이스 승인 뒤 바꾼다. L4는 R2(Set 일부) 켜짐 기대값을 2026-11-15 재승인했다 (L4 절).
 - 기준 문서: `laundry_spec_draft.md` (범위 L0, 입력 L1, 범위 판정 L2, 계산식 L3, 배지·민감도 검사 L4, 안내 L5). 원문: `laundry_notice.md`.
 - 재계산 (2026-11-02, 2차): 민감도 검사 4조합(D0·D1 × 내림·half up)을 서로 다른 두 계산기로 각각 계산해 L1~L3, L6, L8, L14, L15의 결과 값·조합 결과가 모두 일치함을 확인했다. 스크립트는 저장소에 두지 않았다.
   - 방식 A: `datetime` 날짜 차, `Fraction`, 배상비율표를 구간 상·하한 비교로 조회
@@ -83,6 +83,7 @@
 - 화면 한 줄: "세트 의류의 일부만 손상·분실된 경우는 소비자분쟁해결기준의 기준표에 배상액 배분 규정이 있으나, 이번 버전에서는 지원하지 않습니다. 1372 또는 한국소비자원에 문의해 주세요."
 - 복원하면: 사용일수 200 → 70%, 7.① 배분 300,000 × 65% × 70% = 136,500. 대안(1벌 전체 기준) 210,000과 달라 🔍 `DECISION_SENSITIVE`, 범위 136,500~210,000. D0·D1, 내림·half up으로는 136,500 그대로
 - 검증 상태: **사용자 승인(보고서 검토)** 2026-11-10
+- **R2 켜짐 재승인 [사용자 승인 2026-11-15]** (`ENABLED_FEATURES`에 `set_partial`이 있을 때만, `vs4_restore_r2_cases.md` 4.1·R2-1): 입력 `set_type = "top_bottom"`, `damaged_parts = ["top"]`, `set_partial_request = False` → 🔍 `DECISION_SENSITIVE`, 결정 값 136,500, 범위 **136,500~210,000**, 원인 Set 배분, 인용 10개(`laundry_types`, `laundry_1`, `laundry_5_1`, `cpa16_3`, `laundry_ratio_table`, `laundry_lifespan_table`, `laundry_6`, `laundry_7`, `laundry_terms_art9`, `laundry_terms_art10_3`). 화면 한 줄 "세트 의류 일부 손상의 배분 방식(고시 7.의 비율 적용 여부)에 따라 기준 금액이 136,500원~210,000원으로 달라질 수 있습니다." R2가 꺼져 있으면 위 기대값(❔ `SET_PARTIAL_UNSUPPORTED`) 그대로다 (테스트: `test_laundry_cases.py` L4, `test_laundry_r2_api.py`)
 
 ### L5. 입증 불가 — 세탁요금 20배
 

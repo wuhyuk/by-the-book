@@ -155,6 +155,10 @@ export interface LaundryInput {
   laundry_fee: number | null
   set_type: 'none' | 'top_bottom' | 'top_mid_bottom' | 'hanbok'
   set_part: 'top' | 'mid' | 'bottom' | 'whole' | null
+  // R2 (set_partial 켜짐일 때만 보낸다. 폼으로만 받는다)
+  hanbok_kind?: 'chima_jeogori' | 'baji_jeogori' | null
+  damaged_parts?: ('top' | 'mid' | 'bottom')[] | null
+  set_partial_request?: TriState
   attachment_only: TriState
   special_agreement: TriState
   customer_partial_fault: TriState
@@ -178,13 +182,19 @@ export interface LaundryResult {
   fallback_amount: number | null
   sensitivity_min: number | null
   sensitivity_max: number | null
-  sensitivity_causes: ('use_days' | 'rounding')[]
+  sensitivity_causes: ('use_days' | 'rounding' | 'set_partial_damage')[]
   sensitivity_ratio_alt: number | null
   steps: Step[]
   flags: string[]
   missing: string[]
   notices: string[]
   citations: string[]
+  // R2 출력 (꺼져 있거나 Set이 아니면 null)
+  set_type: string | null
+  hanbok_kind: string | null
+  damaged_parts: string[] | null
+  set_share_percent: number | null
+  set_base_raw: string | null
 }
 
 export interface LaundryDisplay {
@@ -217,6 +227,7 @@ export interface LaundryItemOption {
   examples: string | null
   variant_by: 'use' | 'material' | null
   variants: DisplayLine[]
+  set_types?: string[] // 이 품목 행에서 고를 수 있는 Set 유형 (서버가 준다)
 }
 
 export interface LaundryAnalyzeResult {
@@ -232,6 +243,7 @@ export interface LaundryAnalyzeResult {
 export interface AppConfig {
   analyze_enabled: boolean
   survey_url: string | null
+  enabled_features?: string[] // 켜 둔 복원 기능 (ENABLED_FEATURES). set_partial = 세탁 세트 일부 손상
 }
 
 // POST /api/guide (backend/guide/). 서버가 다시 계산한 결과로 만든 문안. 화면은 그대로 보여 준다.
@@ -248,4 +260,6 @@ export interface ScreenProps {
   /** 분석 요청이 ANALYZE_DISABLED·ANALYZE_DAILY_LIMIT로 끝나면 부른다 (서버 안내 문구) */
   onAnalyzeUnavailable: (message: string) => void
   surveyUrl: string | null
+  /** 켜 둔 복원 기능 (/api/config enabled_features). 세탁 화면만 쓴다 */
+  features: readonly string[]
 }

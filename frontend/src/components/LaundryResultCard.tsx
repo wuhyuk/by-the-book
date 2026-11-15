@@ -72,7 +72,13 @@ export function LaundryResultCard({ data }: { data: LaundryCalculateResponse }) 
           <div className="basis">
             <h3>{result.method === 'fallback' ? LAUNDRY_TEXT.fallbackTitle : LAUNDRY_TEXT.amountTitle}</h3>
             <dl>
-              <dt>{result.method === 'fallback' ? LAUNDRY_TEXT.fallbackLabel : LAUNDRY_TEXT.ratioLabel}</dt>
+              <dt>
+                {result.method === 'fallback'
+                  ? LAUNDRY_TEXT.fallbackLabel
+                  : result.set_share_percent !== null && result.set_share_percent < 100
+                    ? LAUNDRY_TEXT.setRatioLabel(result.set_share_percent)
+                    : LAUNDRY_TEXT.ratioLabel}
+              </dt>
               <dd data-testid="laundry-amount">{won(result.amount)}</dd>
             </dl>
             {result.method === 'ratio' && result.life_years !== null && result.ratio_percent !== null && (

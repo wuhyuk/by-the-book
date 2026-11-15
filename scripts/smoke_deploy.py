@@ -6,7 +6,9 @@
 
 확인:
 1. GET /healthz → {"status": "ok"}
-2. GET /api/config → analyze_enabled(bool), survey_url(str|null)
+2. GET /api/config → analyze_enabled(bool), survey_url(str|null), enabled_features(list[str])
+2-1. 세탁 Set 일부 손상 (승인 L4 입력, 2026-11-15): enabled_features에 set_partial이 없으면 ❔
+     SET_PARTIAL_UNSUPPORTED, 있으면 🔍 DECISION_SENSITIVE 136,500~210,000 (L4 재승인 값)
 3. POST /api/calculate 승인 케이스 3건 (✅ C1, ⚠️ N2, 🔍 P1) → 배지와 환급액이 승인값과 같은지
 4. POST /api/guide (같은 3건) → 문안에 승인 금액이 있고, 고지 한 줄이 있는지
 5. (--analyze만) POST /api/analyze 문장 1개 → 200(추출) 또는 안내 코드(꺼짐·상한·한도)
@@ -68,6 +70,16 @@ CASES: list[dict[str, Any]] = [
     },
 ]  # fmt: skip
 
+# 승인 L4 (세탁, 2026-11-10)와 R2 재승인 L4 (2026-11-15). 기대값은 docs/sources/laundry_cases_draft.md L4
+L4_COMMON: dict[str, Any] = {
+    "judgment_requested": False, "service_type": "laundry_shop", "damage_type": "defect",
+    "item_key": "womens_suit", "variant_key": "spring_fall", "purchase_price": 300_000,
+    "purchase_date": "2026-02-22", "request_date": "2026-09-10", "proof_available": True,
+    "set_type": "top_bottom",
+}  # fmt: skip
+L4_OFF = {**L4_COMMON, "set_part": "top"}
+L4_ON = {**L4_COMMON, "damaged_parts": ["top"], "set_partial_request": False}
+
 ANALYZE_TEXT = (
     "헬스장 1년권을 2026년 1월 1일부터 2026년 12월 31일까지 쓰기로 하고 "
     "120만원을 결제했는데, 2026년 3월 31일에 해지하겠다고 문자를 보냈어요."
@@ -111,6 +123,25 @@ def won(n: int) -> str:
     return f"{n:,}원"
 
 
+def check_set_partial(base: str, c: Checker, on: bool) -> None:
+    """세탁 Set 일부 손상 (승인 L4 입력). 플래그에 따라 기대값이 다르다."""
+    path = "/api/calculate?item=laundry"
+    if on:
+        status, data = request(base, "POST", path, L4_ON)
+        r = data.get("result", {}) if isinstance(data, dict) else {}
+        ok = status == 200 and r.get("flags") == ["DECISION_SENSITIVE"]
+        ok = ok and (r.get("sensitivity_min"), r.get("sensitivity_max")) == (
+            136_500,
+            210_000,
+        )
+        c.check("POST /api/calculate 세탁 L4 (Set 일부, 켜짐 🔍)", ok, f"HTTP {status}")
+    else:
+        status, data = request(base, "POST", path, L4_OFF)
+        r = data.get("result", {}) if isinstance(data, dict) else {}
+        ok = status == 200 and r.get("flags") == ["SET_PARTIAL_UNSUPPORTED"]
+        c.check("POST /api/calculate 세탁 L4 (Set 일부, 꺼짐 ❔)", ok, f"HTTP {status}")
+
+
 def run(base: str, analyze: bool) -> int:
     base = base.rstrip("/")
     c = Checker()
@@ -124,15 +155,20 @@ def run(base: str, analyze: bool) -> int:
     ok = (
         status == 200
         and isinstance(data, dict)
-        and set(data) == {"analyze_enabled", "survey_url"}
+        and set(data) == {"analyze_enabled", "survey_url", "enabled_features"}
         and isinstance(data["analyze_enabled"], bool)
+        and isinstance(data["enabled_features"], list)
     )
     c.check("GET /api/config", ok, f"HTTP {status}")
+    features: list[str] = []
     if ok:
+        features = data["enabled_features"]
         print(
             f"    analyze_enabled={data['analyze_enabled']}, "
-            f"survey_url={'있음' if data['survey_url'] else '없음'}"
+            f"survey_url={'있음' if data['survey_url'] else '없음'}, "
+            f"enabled_features={features}"
         )
+    check_set_partial(base, c, "set_partial" in features)
 
     for case in CASES:
         status, data = request(base, "POST", "/api/calculate", case["body"])

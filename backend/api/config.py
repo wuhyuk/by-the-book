@@ -1,6 +1,7 @@
 """화면 설정 라우터 GET /api/config (2026-11-11). 운영 설정 중 화면에 필요한 값만 돌려준다.
 
 analyze_enabled = 스위치(ANALYZE_ENABLED) 켜짐 그리고 오늘(KST) 하루 상한 미도달 (2026-11-12 결정).
+enabled_features = 켜 둔 복원 기능 이름 목록 (ENABLED_FEATURES, 2026-11-15). 화면은 이 값으로 입력 항목을 보인다.
 """
 
 from typing import Annotated
@@ -20,6 +21,7 @@ class ConfigResponse(BaseModel):
 
     analyze_enabled: bool
     survey_url: str | None
+    enabled_features: list[str]
 
 
 @router.get("/config", response_model=ConfigResponse)
@@ -31,4 +33,5 @@ def config(
     return ConfigResponse(
         analyze_enabled=settings.analyze_enabled and not counter.exhausted(),
         survey_url=settings.survey_url,
+        enabled_features=list(settings.enabled_features),
     )

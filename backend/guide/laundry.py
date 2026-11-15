@@ -18,7 +18,7 @@ from guide.common import (
     won,
 )
 from rules.badge import Badge
-from rules.laundry import LaundryInput, LaundryResult
+from rules.laundry import LaundryInput, LaundryResult, part_labels
 from rules.laundry_codes import LaundryFlag, LaundryNotice
 from rules.laundry_display import NOTICE_TEXTS, build_laundry_display
 from rules.laundry_rule import LaundryRule
@@ -40,6 +40,8 @@ CAVEAT_PHRASES: dict[str, str] = {
 SENSITIVITY_PHRASES = {
     "use_days": "고시에 정해져 있지 않은 사용일수 산입 방식(구입일을 세는지)",
     "rounding": "원 미만 처리(내림·반올림)",
+    # R2 (12.10 Set 배분 문구의 앞부분)
+    "set_partial_damage": "세트 의류 일부 손상의 배분 방식(고시 7.의 비율 적용 여부)",
 }
 
 
@@ -64,6 +66,23 @@ def _item_text(inp: LaundryInput, rule: LaundryRule) -> str:
         if row is not None:
             return f"맡긴 세탁물({row.item or row.category})"
     return "맡긴 세탁물"
+
+
+def _set_line(inp: LaundryInput, result: LaundryResult) -> str | None:
+    """Set 배분 줄 (R2). 숫자는 입력 구입가격과 엔진 결과 필드(set_share_percent)에서만 가져온다."""
+    share = result.set_share_percent
+    if share is None or inp.purchase_price is None or result.method != "ratio":
+        return None
+    names = "·".join(part_labels(inp))
+    if share == 100:
+        return (
+            f"세트 의류의 모든 벌({names})이 손상·분실되어 Set 구입가격 "
+            f"{won(inp.purchase_price)} 전체를 기준으로 계산했습니다 (고시 6.①)."
+        )
+    return (
+        f"Set {won(inp.purchase_price)} × {names} {share}%: 고시 7.의 배분 비율을 "
+        "적용해 계산했습니다."
+    )
 
 
 def build_laundry_guide(
@@ -102,6 +121,8 @@ def build_laundry_guide(
                 f"이 기준으로 계산한 배상액은 {won(amount)}입니다."
             )
         ]
+    if (set_line := _set_line(inp, result)) is not None:
+        explanation.append(set_line)
     offer = inp.provider_offer
     for line in robust:
         if offer is not None:

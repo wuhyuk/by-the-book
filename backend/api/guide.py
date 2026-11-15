@@ -5,11 +5,12 @@
 요청 본문은 로그에 남기지 않는다.
 """
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 
 from api.calculate import RULE_ID, validate_body
+from api.settings import AppSettings, get_app_settings
 from guide.common import Guide
 from guide.gym import build_gym_guide
 from guide.laundry import build_laundry_guide
@@ -34,13 +35,18 @@ router = APIRouter(prefix="/api")
         "x-laundry-request-schema": LaundryInput.model_json_schema(),
     },
 )
-async def guide(request: Request, item: Literal["gym", "laundry"] = "gym") -> Guide:
+async def guide(
+    request: Request,
+    settings: Annotated[AppSettings, Depends(get_app_settings)],
+    item: Literal["gym", "laundry"] = "gym",
+) -> Guide:
     """확정된 입력으로 다시 계산해 설명 문장·업체용 문안·근거 조항을 만든다."""
     body = await request.body()
     if item == "laundry":
         laundry = validate_body(LaundryInput, body)
         lrule = load_laundry_rule()
-        return build_laundry_guide(laundry, calculate_damage(laundry, lrule), lrule)
+        lresult = calculate_damage(laundry, lrule, settings.enabled_features)
+        return build_laundry_guide(laundry, lresult, lrule)
     inp = validate_body(GymInput, body)
     rule = load_rule(RULE_ID)
     return build_gym_guide(inp, calculate_refund(inp, rule), rule)

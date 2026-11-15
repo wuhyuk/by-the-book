@@ -500,7 +500,7 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 | `POST /api/analyze` | 문장 → 추출 결과(`item`, `fields`, `missing`, `evidence`) |
 | `POST /api/calculate` | 확정된 필드 → 계산 결과(`refund`, `steps`, `badge`, `source`) |
 | `POST /api/guide` | `/api/calculate`와 같은 본문 → 서버가 다시 계산한 결과로 설명 문장·업체용 문안·근거 조항 (`backend/guide/`, LLM 없음, 템플릿) [결정 2026-11-11 사용자]. ❔·계산 안 함이면 업체용 문안 `null`. 계산했어도 결과에 `RULE_UNVERIFIED`(원문 확인이 끝나지 않은 값)가 있으면 업체용 문안 `null`, 설명의 확인 목록은 그대로 [결정 2026-11-13 사용자]. 인용은 엔진이 정한 조항 ID의 카드만 쓰므로 검색 결과에 없는 조항을 인용할 수 없다 (절대 규칙 7) |
-| `GET /api/config` | `{analyze_enabled, survey_url}`. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
+| `GET /api/config` | `{analyze_enabled, survey_url, enabled_features}`. `enabled_features` = `ENABLED_FEATURES`(쉼표 구분)에서 아는 이름만 (지금은 `set_partial`, 12.10) [결정 2026-11-15 사용자]. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
 | `GET /healthz` | 배포 헬스체크 `{"status": "ok"}` (외부 호출 없음). 그 밖의 `/api` 밖 경로는 화면(`frontend/dist`, SPA 폴백), 없는 `/api/*`는 404 JSON (`docs/DEPLOY.md`) |
 
 `/api/ask`(자유 질의)는 MVP 범위 밖이다.
@@ -707,7 +707,10 @@ VS5 TODO [제안, 2026-11-08 사용자 지시로 기록, 외부 배포판용] �
 | `proof_available` | `bool \| None` | 필수 (`None`이면 누락) | 품명·구입가격·구입일을 인수증 또는 고객 입증으로 정할 수 있는지. `False`면 20배 **[원문]** 5-1.③ |
 | `laundry_fee` | `int \| None` | 입증 불가 시 필수 | 세탁요금 **[원문]** 5-1.③ |
 | `set_type` | `"none" \| "top_bottom" \| "top_mid_bottom" \| "hanbok"` | 선택 (기본 `none`) | **[원문]** 7.①~③. 축소 A는 Set 여부 판정에만 쓴다 |
-| `set_part` | `"top" \| "mid" \| "bottom" \| "whole" \| None` | `set_type ≠ none`이면 필수 | 손상·분실된 부분. `whole`이 아니면 ❔ |
+| `set_part` | `"top" \| "mid" \| "bottom" \| "whole" \| None` | `set_type ≠ none`이면 필수 (R2 꺼짐) | 손상·분실된 부분. `whole`이 아니면 ❔. **R2(`set_partial`)가 켜져 있으면 쓰지 않는다** (값이 오면 `INVALID_INPUT`) |
+| `hanbok_kind` | `"chima_jeogori" \| "baji_jeogori" \| None` | R2 켜짐 + `set_type = hanbok`이면 필수 | 한복 조합 (치마저고리 / 바지저고리, 7.③). 한복이 아닌 Set에 오면 `INVALID_INPUT`. 누락 처리는 이번 구현에서 정함 **[기본값 2026-11-15, 승인 대기]** (12.10 R2) |
+| `damaged_parts` | `list["top" \| "mid" \| "bottom"] \| None` | R2 켜짐 + `set_type ≠ none`이면 필수 (빈 목록도 누락) | 손상·분실된 벌 (복수 선택). 한복은 저고리 = `top`, 치마·바지 = `bottom` **[해석, 2026-11-15 승인 Q7 (a)]**. 중복·그 Set에 없는 벌은 `INVALID_INPUT` [결정 2026-11-15 Q3 (a)·Q6 (a)/(a)] |
+| `set_partial_request` | `bool \| None` | R2 켜짐 + 입증 가능 + 부분 손상이면 필수 | 1벌 중 그 부분만 세탁 의뢰했는지 (6.②). 모든 벌 손상이면 쓰지 않는다(값이 와도 무시) [결정 2026-11-15 Q2 (a)·Q15 (c)+(a)] |
 | `attachment_only` | `bool \| None` | 선택 | 탈부착 부속물만 손상 **[원문]** 8. `True`면 ❔ |
 | `special_agreement` | `bool \| None` | 선택 | 배상 특약 **[원문]** 1.② |
 | `customer_partial_fault` | `bool \| None` | 선택 | 업체가 고객 일부 책임을 주장 **[원문]** 2.① |
@@ -716,6 +719,8 @@ VS5 TODO [제안, 2026-11-08 사용자 지시로 기록, 외부 배포판용] �
 | `uncollected` | `bool \| None` | 선택 | 업체가 장기 미회수(통지 후 30일, 완성예정일 다음날부터 3개월)를 주장 **[원문]** 3.② |
 | `receipt_issued` | `bool \| None` | 선택 | 인수증을 받았는지. 안내 `NO_RECEIPT_LOSS`에만 쓴다 (배지 판정에 쓰지 않음). 초안 L5가 "인수증 미교부"를 조건으로 쓰면서 입력 필드가 없어 추가 **[기본값 2026-11-10]** |
 | `provider_offer` | `int \| None` | 선택 | 업체 제시액 |
+
+R2 입력(`hanbok_kind`, `damaged_parts`, `set_partial_request`)은 폼으로만 받는다. 문장 분석(LLM) 추출 대상이 아니다 [결정 2026-11-15]. R2가 꺼져 있을 때 이 값이 오면 `INVALID_INPUT` (R1 Q9와 같은 방식).
 
 입력 검증 (실패하면 🔍 `INVALID_INPUT`, 계산 안 함) **[기본값 2026-11-10]**: 계산에 쓰는 금액(`purchase_price` 또는 `laundry_fee`) ≤ 0, `provider_offer` < 0 (0원 제시는 받는다), `request_date < purchase_date`, `item_key`가 표에 없음, `variant_key`가 그 행의 후보에 없음, `set_part`가 `set_type`에 없는 부분(예: `top_bottom`에 `mid`). 입증 불가(20배) 경로에서는 품목·날짜·구입가격을 쓰지 않으므로 검증하지 않는다. 내용연수가 한 값인 행(한복류 등, `variants` 없음)에 `variant_key`가 오면 오류로 보지 않고 **무시한다** (결과가 같으므로) [결정 2026-11-10 사용자, Q4 변경].
 
@@ -736,6 +741,7 @@ VS5 TODO [제안, 2026-11-08 사용자 지시로 기록, 외부 배포판용] �
 | 9 | 입력 검증 실패 | 🔍 `INVALID_INPUT` (계산 안 함) | 배지 순서 2 |
 
 - 순서 5·6은 `proof_available`과 무관하게 먼저 판정한다. 순서 7은 `proof_available = True`일 때만 본다 (20배는 내용연수를 쓰지 않는다).
+- **R2 켜짐 [결정 2026-11-15, `vs4_restore_r2_cases.md` 3.3]**: 순서 5가 바뀐다. 손상 벌이 모두 그 Set의 벌이고 전부는 아니며(부분 손상) `proof_available = False`이면 ❔ `SET_PARTIAL_FALLBACK_UNDEFINED` (순서 5-2, Q8 (b)·Q19 (a)). 입증 가능 부분 손상은 계산한다 (`SET_PARTIAL_UNSUPPORTED`는 나오지 않음). 누락(순서 8)은 12.1 표 순서 뒤에 `hanbok_kind`(한복), `damaged_parts`, `set_partial_request`(입증 가능 + 부분 손상). 입력 오류(순서 9)에 손상 벌 중복, Set에 없는 벌, R2 켜짐에서 `set_part`, Set 유형과 품목 행 불일치(한복류 행은 `none`/`hanbok`만, 그 밖의 행은 `none`/`top_bottom`/`top_mid_bottom`만, Q5 (c)+(a))를 더한다. ④ 개별 가격 세트와 ③ 밖 한복 조합(5-1)은 이번 범위 밖이라 입력으로 받지 않는다.
 - 순서 5는 `set_part`가 그 Set에 있는 부분일 때만 건다. Set에 없는 부분(예: 상·하 Set의 `mid`)은 순서 9의 입력 오류다 **[기본값 2026-11-10]** (초안은 순서 5를 먼저 적어 이 입력 오류가 나올 수 없었다).
 - 누락 판정 (순서 8): `proof_available = None`이면 `["proof_available"]`만 (어느 계산식을 쓸지 정할 수 없음, 케이스 L10 수락 2026-11-02). `True`면 `item_key`(표에 없다고 답하지 않은 경우), 행에 값이 여럿이면 `variant_key`, `purchase_price`, `purchase_date`, `request_date`. `False`면 `laundry_fee`. 입증 여부를 답한 경우(`True`·`False`)에만 `set_type ≠ none`이고 `set_part = None`이면 `set_part`를 더한다 (입증 여부를 모르면 그것 하나만 묻는다, 2026-11-10 리뷰 반영). 순서는 12.1 표 순서.
 - 면책(3.①·②), 특약(1.②), 감액(2.①·②)은 ❔로 막지 않고 계산 후 🔍 사유로 붙인다 **[결정 2026-11-02 Q-L5]**.
@@ -773,8 +779,9 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 |---|---|---|---|
 | 사용일수 첫날 산입 (`params.use_days`) | D0 | D1 = D0 + 1 | 사용일수 산입 |
 | 원 미만 처리 (`params.rounding`) | 내림 | half up | 원 미만 처리 |
+| 범위 (`params.set_partial_damage`, R2 켜짐에서 배분을 쓰고 `set_partial_request`가 `True`가 아닐 때만) | 배분 (7.) | 1벌 전체 (6.①, 비율 100%) | Set 배분 |
 
-1. 결정 값의 결과를 결과 값으로 둔다. 2. 모든 조합(D0·D1 × 내림·half up = 4가지)을 다시 계산한다. 3. 각 조합의 조회 결과(내용연수 행, 배상비율 칸)와 배상액이 모두 결과 값과 같으면 통과, 하나라도 다르면 🔍 `DECISION_SENSITIVE`. 4. 원인 결정은 그 결정 **하나만** 대안으로 바꿨을 때 결과가 달라지는 결정이다. 어느 결정도 혼자서는 바꾸지 않고 함께 바꿀 때만 달라지면 모두 원인으로 적는다. 5. 20배는 결정을 쓰지 않아 항상 통과. 6. ⚠️ `OFFER_BELOW_STANDARD_MIN`은 4조합 결과의 최솟값과 비교한다.
+1. 결정 값의 결과를 결과 값으로 둔다. 2. 모든 조합(D0·D1 × 내림·half up = 4가지, 범위 결정이 있으면 × 배분·1벌 전체 = 8가지)을 다시 계산한다. 3. 각 조합의 조회 결과(내용연수 행, 배상비율 칸)와 배상액이 모두 결과 값과 같으면 통과, 하나라도 다르면 🔍 `DECISION_SENSITIVE`. 4. 원인 결정은 그 결정 **하나만** 대안으로 바꿨을 때 결과가 달라지는 결정이다. 어느 결정도 혼자서는 바꾸지 않고 함께 바꿀 때만 달라지면 모두 원인으로 적는다. 5. 20배는 결정을 쓰지 않아 항상 통과. 6. ⚠️ `OFFER_BELOW_STANDARD_MIN`은 4 또는 8조합 결과의 최솟값과 비교한다. (4번 문장은 2026-11-15 R2에서도 고치지 않았다. R2 보고서 3.4 개정안은 채택하지 않음 [결정 2026-11-15 Q18 (b)].) R2 결정 값 = `floor(Set 구입가격 × 비율 합 × 배상비율 ÷ 10,000)` (정수 곱 뒤 마지막에 한 번만 원 미만 처리, 원 미만 처리 시점은 결정이 아니다, Q10).
 
 검사의 한계: 위 표의 대안만 다시 계산한다. 검토하지 않은 대안(사용일수 D0 − 1, 올림·10원 단위, 정가 대 결제가, 품목·소재 매핑, 혼방 소재, 감액 금액)은 `laundry_spec_draft.md` L4.1 표에 있다. 사용일수 D0 − 1은 검사 대상에 넣지 않는다 [결정 2026-11-10 사용자, Q-L11 닫음]. 칸 첫날 케이스 L6은 ✅ 그대로다.
 
@@ -785,6 +792,8 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 | 사용일수 산입만 | "고시에 정해져 있지 않은 사용일수 산입 방식(구입일을 세는지)에 따라 배상비율이 {ratio_percent}%에서 {sensitivity_ratio_alt}%로 바뀌어, 기준 금액이 {min}원~{max}원으로 달라질 수 있습니다." |
 | 원 미만 처리만 (폭 1원) | "고시에 정해져 있지 않은 원 미만 처리(내림·반올림)에 따른 1원 차이가 있습니다 ({min}원~{max}원)." |
 | 사용일수 산입과 원 미만 처리 | "고시에 정해져 있지 않은 사용일수 산입 방식과 원 미만 처리에 따라 기준 금액이 {min}원~{max}원으로 달라질 수 있습니다." |
+| Set 배분만 (R2) | "세트 의류 일부 손상의 배분 방식(고시 7.의 비율 적용 여부)에 따라 기준 금액이 {min}원~{max}원으로 달라질 수 있습니다." [승인 2026-11-15] |
+| Set 배분 + 다른 원인 (R2) | "고시에 정해져 있지 않은 {원인들}에 따라 기준 금액이 {min}원~{max}원으로 달라질 수 있습니다." ({원인들}은 사용일수 산입·원 미만 처리·Set 배분 순으로 "·"로 이음) [승인 2026-11-15] |
 
 원 미만 처리만이 원인이면 폭은 항상 1원이다 (half up과 내림의 차이는 최대 1원).
 
@@ -796,7 +805,8 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 | ❔ | `UNSUPPORTED_SERVICE` | 순서 2 | "무인세탁소(셀프빨래방) 등 세탁소에 맡기지 않은 경우는 이 서비스에서 지원하지 않습니다. 1372에 문의해 주세요." **[기본값 2026-11-10, 승인 대기]** |
 | ❔ | `UNSUPPORTED_DAMAGE` | 순서 3 | "세탁 지연 등 하자·분실이 아닌 피해는 기준표에 배상액 계산 방식이 없어 계산하지 않습니다. 1372에 문의해 주세요." **[기본값 2026-11-10, 승인 대기]** |
 | ❔ | `MANUFACTURING_CAUSE` | 순서 4 | "의복류 등 다른 품목 기준의 대상일 수 있습니다. 1372에 문의해 주세요." [결정 2026-11-02 Q-L6] |
-| ❔ | `SET_PARTIAL_UNSUPPORTED` | 순서 5 | "세트 의류의 일부만 손상·분실된 경우는 소비자분쟁해결기준의 기준표에 배상액 배분 규정이 있으나, 이번 버전에서는 지원하지 않습니다. 1372 또는 한국소비자원에 문의해 주세요." [결정 2026-11-06 Q-L9] |
+| ❔ | `SET_PARTIAL_FALLBACK_UNDEFINED` (R2 켜짐) | 순서 5-2 | "품명·구입가격·구입일을 입증하기 어려워 세탁요금의 20배를 기준으로 하는 경우, 기준표에는 세트 의류의 일부만 손상·분실되었을 때 그 금액을 어떻게 정하는지 나와 있지 않아 이 서비스에서는 계산하지 않습니다. 1372 또는 한국소비자원에 문의해 주세요." [승인 2026-11-15 Q19 (a)] |
+| ❔ | `SET_PARTIAL_UNSUPPORTED` (R2 꺼짐) | 순서 5 | "세트 의류의 일부만 손상·분실된 경우는 소비자분쟁해결기준의 기준표에 배상액 배분 규정이 있으나, 이번 버전에서는 지원하지 않습니다. 1372 또는 한국소비자원에 문의해 주세요." [결정 2026-11-06 Q-L9] |
 | ❔ | `ATTACHMENT_UNSUPPORTED` | 순서 6 | "탈부착 부속물(털, 칼라, 모자 등)이 손상된 경우는 소비자분쟁해결기준의 기준표에 규정이 있으나, 이번 버전에서는 지원하지 않습니다. 1372 또는 한국소비자원에 문의해 주세요." [결정 2026-11-06 Q-L9] |
 | ❔ | `ITEM_NOT_IN_TABLE` | 순서 7 | "이 세탁물은 고시의 품목별 평균 내용연수표에 없어 이 서비스에서는 계산하지 않습니다. 1372에 문의해 주세요." |
 | 🔍 계산 안 함 | `MISSING_REQUIRED`, `INVALID_INPUT` (공통) | 순서 8·9 | 헬스장과 같음 |
@@ -808,7 +818,7 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 | 🔍 | `RULE_UNVERIFIED` (공통) | 쓰는 블록이 `verified: false` | 헬스장과 같음 |
 | 🔍 | `DECISION_SENSITIVE` | 민감도 검사에서 결과가 달라짐 | 위 표 |
 
-화면 표시 우선순위 (`rules/laundry_codes.py` `LAUNDRY_DISPLAY_PRIORITY`, 위 표 순서) **[기본값 2026-11-10, 승인 대기]**: ❔(12.2 순서) → 🔍 계산 안 함 → ⚠️ → 🔍(면책 → 특약 → 일부 책임 → 손상품 인도 → 규칙 미검증 → 결정 민감). 헬스장과 같이 기준 적용 여부를 흔드는 사유를 앞에 둔다.
+화면 표시 우선순위 (`rules/laundry_codes.py` `LAUNDRY_DISPLAY_PRIORITY`, 위 표 순서. `SET_PARTIAL_FALLBACK_UNDEFINED`는 `SET_PARTIAL_UNSUPPORTED` 바로 뒤, 2026-11-15) **[기본값 2026-11-10, 승인 대기]**: ❔(12.2 순서) → 🔍 계산 안 함 → ⚠️ → 🔍(면책 → 특약 → 일부 책임 → 손상품 인도 → 규칙 미검증 → 결정 민감). 헬스장과 같이 기준 적용 여부를 흔드는 사유를 앞에 둔다.
 
 코드 구성: 공통 Enum `CommonFlag`(`JUDGMENT_REQUESTED`, `MISSING_REQUIRED`, `INVALID_INPUT`, `RULE_UNVERIFIED`)과 세탁 Enum `LaundryFlag`·`LaundryNotice`를 `rules/laundry_codes.py`에 둔다. 헬스장 `rules/badge.py`의 `FlagCode`·`NoticeCode`·`DISPLAY_PRIORITY`는 이름·값·순서를 바꾸지 않고(9절 2026-11-02 2번), 공통 코드와 같은 값의 멤버를 그대로 갖는다 (테스트로 값 일치를 확인).
 
@@ -843,6 +853,10 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 | `sensitivity_min` / `sensitivity_max` | `int \| None` | 4조합 결과의 최솟값·최댓값 (통과하면 `amount`와 같다) |
 | `sensitivity_causes` | `list["use_days" \| "rounding"]` | 원인 결정, 통과하면 빈 목록 |
 | `sensitivity_ratio_alt` | `int \| None` | 사용일수 산입이 원인일 때 대안 D1로 조회한 배상비율 |
+| `sensitivity_causes` 값 (R2) | `"set_partial_damage"` 추가 | 범위(배분/1벌 전체)가 원인일 때 |
+| `set_type`, `hanbok_kind`, `damaged_parts` | R2 입력 그대로 | R2 켜짐 + Set일 때만, 그 밖에는 `None` [결정 2026-11-15 Q13 (a)] |
+| `set_share_percent` | `int \| None` | 손상 벌의 비율 합 (모든 벌이면 100, 규칙 JSON `set_allocation.shares_percent`) |
+| `set_base_raw` | `str \| None` | 원 미만 처리 전 배분 기준 가격 = Set 구입가격 × 비율 합 ÷ 100 (정확한 소수 문자열, 예 `"195000.65"`) |
 
 ### 12.7 근거 조항 ID
 
@@ -851,6 +865,8 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 | 계산한 결과 (항상) | `laundry_types`, `laundry_1`, `laundry_5_1`, `cpa16_3` (권고 기준) |
 | 배상비율 계산 | `laundry_ratio_table`, `laundry_lifespan_table`. 두 카드 본문에는 원문 한 줄 뒤에 이번 계산에 적용한 칸(내용연수 행·사용일수 칸·배상비율)과 품목 행(품목·소재/용도 → 내용연수)을 덧붙인다. 사용일수 산입 방식이 원인인 `DECISION_SENSITIVE`면 대안 칸도 적는다. 숫자는 엔진 결과와 규칙 JSON 표 값에서만 가져온다 (`rules/laundry_display.py` `applied_ratio_text`·`applied_item_text`) [2026-11-12 사용자 지시] |
 | Set 전체 (1벌 기준) | `laundry_6` |
+| R2 Set 일부(배분) | `laundry_6` 바로 뒤에 `laundry_7` (모든 벌 손상은 `laundry_6`만) [결정 2026-11-15 Q12 (a)+(b)] |
+| ❔ `SET_PARTIAL_FALLBACK_UNDEFINED` | `laundry_5_1`, `laundry_7` [결정 2026-11-15 Q19 (a)] |
 | 감액 사유 (`PARTIAL_FAULT_CLAIMED`, `DAMAGED_ITEM_RETURN`) | `laundry_2` |
 | 면책 사유 (`EXEMPTION_CLAIMED`) | `laundry_3` |
 | `NO_RECEIPT_LOSS` | `laundry_5` |
@@ -871,11 +887,12 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 - `GET /api/laundry/items`: 품목·소재·용도 선택지 (규칙 JSON 표 행의 ID·이름·소재/용도 이름 그대로. 내용연수 숫자는 화면 선택에 쓰지 않는다).
 - `POST /api/analyze?item=laundry`: 세탁 추출 스키마(12.1 필드)로 추출하고 헬스장과 같은 근거 확인(금액·날짜는 근거 구절에서 코드가 읽은 값, 예/아니오는 필드별 단서 낱말)을 통과한 값만 채운다. 품목 행(`item_key`, `variant_key`, `item_unlisted`)은 LLM의 표 행 선택이므로 채택해도 폼에서 확인을 받는다 (`confirm`). 사용일수·배상비율·금액은 엔진만 계산한다.
 - 화면: 맨 위 품목 선택(헬스장 / 세탁). 품목마다 폼·결과 상태를 따로 둔다.
+- R2 (2026-11-15): `/api/calculate?item=laundry`·`/api/guide?item=laundry`는 `ENABLED_FEATURES`를 엔진에 넘긴다. `/api/laundry/items`는 행마다 고를 수 있는 Set 유형(`set_types`)을 준다 (화면 제한용, 엔진 검증과 같은 목록). 화면은 `/api/config`의 `enabled_features`에 `set_partial`이 있을 때만 Set 유형·손상 벌·"일부만 맡겼는지" 항목을 보인다. 문장 분석 결과의 `set_type`·`set_part`는 R2가 켜져 있으면 폼에 채우지 않는다 (세트 관련 필드는 폼으로만 받는다).
 
 ### 12.10 복원 후보 (VS4 복원, 2026-11-10 착수) — 승인 전에는 꺼 둔다
 
 > 순서: R1 소재·용도 미상 → R2 Set 일부 손상 → R3 탈부착 부속물 [결정 2026-11-10 사용자]. RAG 요구 여부가 정해질 때까지 3개 모두 진행하는 안이 기본이다.
-> **켜는 방법** (복원 구현 때 만든다. 지금 코드에는 이 상수가 없고 12.1~12.9만 동작한다): 엔진 상수 `rules/laundry.py` `ENABLED_FEATURES`(기본 빈 집합)에 `variant_unknown`·`set_partial`·`attachment`를 넣는다. 꺼져 있으면 12.1~12.9 그대로 동작한다 (승인 케이스 L4 ❔·L7 🔍 계산 안 함·L18 ❔ 유지). 복원 케이스가 승인되면 그 기능을 켜고, 그때 L4·L7·L18의 기대값을 새 승인 케이스로 바꾼다 (승인된 기대값을 승인 없이 바꾸지 않기 위해 이렇게 둔다).
+> **켜는 방법** (2026-11-15 R2 구현에서 정함): 운영 설정 환경변수 `ENABLED_FEATURES`(쉼표 구분, 공백 허용, 기본 빈 문자열)에 기능 이름을 넣는다 (`docs/DEPLOY.md`). API가 읽어 엔진 `calculate_damage(..., features)`에 넘긴다. 지금 구현한 이름은 `set_partial`(R2)뿐이고, `variant_unknown`(R1)·`attachment`(R3)는 구현 때 더한다. 모르는 이름은 무시한다. 꺼져 있으면 12.1~12.9 그대로 동작한다 (승인 케이스 L4 ❔·L7 🔍 계산 안 함·L18 ❔ 유지). 복원 케이스가 승인되면 그 기능을 켜고, 그때 L4·L7·L18의 기대값을 새 승인 케이스로 바꾼다 (승인된 기대값을 승인 없이 바꾸지 않기 위해 이렇게 둔다).
 > 원문 근거: 별표 Ⅱ ⑯세탁업 6.·7.·8. (`laundry_6`, `laundry_7`, `laundry_8`), 배분 비율 `set_allocation` 블록. 표시는 12절과 같다. **[해석 기본값]**은 원문에 없거나 원문만으로 정해지지 않아 이 절에서 처음 정한 것이며 사용자 승인 대상이다 (복원 케이스 보고서 `docs/sources/vs4_restore_cases.md`는 복원 구현 PR에서 만든다). R3의 해석은 잠정 승인했다 **[해석 잠정 승인 2026-11-11 사용자]** (R3 절).
 
 공통 계산 틀: 결과를 하나 이상의 **후보**로 계산한다. 후보마다 내용연수 행, 기준 가격, 배분 비율(기본 100%)을 갖고, 배상액 = `floor(기준 가격 × 배분 비율 × 배상비율 ÷ 10,000)` (정수 곱 뒤 한 번만 원 미만 처리, 12.3과 같음). 후보마다 12.4 결정 민감도 검사를 한다. 후보가 둘 이상이면 `amount`는 `None`, `candidates`에 후보별 결과를 두고, `sensitivity_min`·`sensitivity_max`는 모든 후보·조합의 최솟값·최댓값이다. ⚠️ `OFFER_BELOW_STANDARD_MIN`은 그 최솟값과 비교한다 (12.4 원칙: 가장 작은 해석과 비교).
@@ -906,6 +923,8 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 - **재승인 대기**: R1-3(Q1로 배지가 🔍 → ✅로 바뀜), R1-4·R1-5c(D4·D5 반영 문구·범위 확인), R1-6(Q10 반영 확인). 결정을 반영한 개정 보고서를 낸 뒤 다시 승인받는다. 그 전에는 테스트 기대값으로 쓰지 않는다.
 
 #### R2 Set 일부 손상·분실 (`set_partial`)
+
+> **구현 2026-11-15** (사용자 승인, `docs/sources/vs4_restore_r2_cases.md` 2판 상태 줄). 이 절 아래 원래 계획 중 ④ 개별 가격(`part_price`)은 이번 범위 밖이다. 입력은 12.1의 `damaged_parts`·`hanbok_kind`·`set_partial_request`, 범위 판정은 12.2 R2 줄, 결정 표·문구는 12.4, 출력은 12.6, 인용은 12.7. `set_partial_request`는 기본 `False`가 아니라 부분 손상이면 필수(없으면 `MISSING_REQUIRED`)다 (Q2 (a)). `True`이면 1벌 전체 대안을 검사하지 않는다 (6.② 읽기는 [해석]). 승인 케이스 41건과 L4 재승인 값은 테스트 `test_laundry_r2_cases.py`·`test_laundry_r2_api.py`. 아래 문단은 계획 기록으로 남긴다.
 
 - 입력: `set_type ≠ none`이고 `set_part`가 그 Set의 부분(상의·중의·하의). 추가 입력 `part_price: int | None`(손상·분실된 부분의 가격이 따로 정해져 있으면 그 가격, 7.④), `set_partial_request: bool`(기본 `False`, 소비자가 1벌 중 그 부분만 세탁 의뢰함, 6.②).
 - 기준 가격과 배분:
