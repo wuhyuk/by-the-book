@@ -3,18 +3,18 @@
 import { useEffect, useState } from 'react'
 import { fetchGuide } from '../api'
 import { APP_TEXT, GUIDE_TEXT } from '../texts'
-import type { Guide, GymInput, Item, LaundryInput } from '../types'
+import type { ApplianceInput, Guide, GymInput, LaundryInput, ScreenItem } from '../types'
 import { CopyBlock } from './CopyBlock'
 
 interface Props {
-  item: Item
-  input: GymInput | LaundryInput
+  item: ScreenItem
+  input: GymInput | LaundryInput | ApplianceInput
   surveyUrl: string | null
 }
 
 type State = { kind: 'loading' } | { kind: 'ok'; guide: Guide } | { kind: 'error' }
 /** 받은 응답과 그 응답을 요청한 입력. 입력이 바뀌면 새 응답이 올 때까지 '불러오는 중'으로 본다 */
-type Loaded = { input: GymInput | LaundryInput; state: State }
+type Loaded = { input: GymInput | LaundryInput | ApplianceInput; state: State }
 
 export function GuidePanel({ item, input, surveyUrl }: Props) {
   const [loaded, setLoaded] = useState<Loaded | null>(null)
