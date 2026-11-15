@@ -11,12 +11,14 @@
 """
 
 import json
+from collections.abc import Sequence
 from datetime import date
 from functools import cache
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, ValidationError, create_model
 
+from llm.clause_selection import generate_with_clauses
 from llm.client import LLMClient, LLMError, LLMErrorKind, Turn
 from llm.extraction import PROMPT_DIR, AnalyzeResult, FieldValue
 from llm.grounding import (
@@ -26,6 +28,7 @@ from llm.grounding import (
     evidence_in_text,
     judgment_grounded,
 )
+from rag.search import Candidate
 
 SYSTEM_PROMPT_FILE = PROMPT_DIR / "laundry_extract_system.md"
 EXAMPLES_FILE = PROMPT_DIR / "laundry_extract_examples.json"
@@ -280,14 +283,26 @@ def check_extraction(raw: RawLaundryExtraction, text: str) -> AnalyzeResult:
     )
 
 
-def analyze_laundry_text(masked_text: str, client: LLMClient) -> AnalyzeResult:
-    """마스킹된 문장을 LLM으로 추출하고 확인한다. 마스킹은 호출하는 쪽(api)이 먼저 한다."""
+def analyze_laundry_text(
+    masked_text: str, client: LLMClient, candidates: Sequence[Candidate] | None = None
+) -> AnalyzeResult:
+    """마스킹된 문장을 LLM으로 추출하고 확인한다. 마스킹은 호출하는 쪽(api)이 먼저 한다.
+
+    candidates(기능 플래그 rag)가 있으면 같은 호출 한 번에 조항 후보를 넣고 고른 ID를 받는다 (MVP_SPEC 15.2).
+    """
     turns = [*few_shot_turns(), Turn(role="user", text=masked_text)]
-    out = client.generate_json(
-        system=system_prompt(), turns=turns, response_schema=response_schema()
+    out, selected = generate_with_clauses(
+        client,
+        system=system_prompt(),
+        turns=turns,
+        schema=response_schema(),
+        candidates=candidates,
     )
     try:
         raw = RawLaundryExtraction.model_validate_json(out)
     except ValidationError:
         raise LLMError(LLMErrorKind.BAD_RESPONSE) from None
-    return check_extraction(raw, masked_text)
+    result = check_extraction(raw, masked_text)
+    if selected is None:
+        return result
+    return result.model_copy(update={"selected_clause_ids": selected})

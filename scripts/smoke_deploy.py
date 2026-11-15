@@ -17,7 +17,9 @@
 2-4. GET /api/sources/art5_1 → 200 조항 원문, /api/sources/no_such_clause → 404 (플래그 없음)
 3. POST /api/calculate 승인 케이스 3건 (✅ C1, ⚠️ N2, 🔍 P1) → 배지와 환급액이 승인값과 같은지
 4. POST /api/guide (같은 3건) → 문안에 승인 금액이 있고, 고지 한 줄이 있는지
-5. (--analyze만) POST /api/analyze 문장 1개 → 200(추출) 또는 안내 코드(꺼짐·상한·한도)
+5. (--analyze만) POST /api/analyze 문장 1개 → 200(추출) 또는 안내 코드(꺼짐·상한·한도).
+   200이면 enabled_features에 rag가 있을 때 응답에 clauses{candidates, selected}(후보 5개 이하, selected ⊆ candidates),
+   없을 때 clauses 키가 없는지 본다 (MVP_SPEC 15.2, 2026-11-16).
 기대값은 docs/sources/gym_cases_draft.md의 승인 케이스 값 그대로다 (backend/tests/test_gym_calc.py와 같음).
 --analyze는 실제 Gemini 호출 1건을 쓴다. 키는 이 스크립트에 넣지 않는다 (서버 환경변수에만 있음).
 응답 본문은 출력하지 않고 통과·실패와 필드 이름만 출력한다.
@@ -212,6 +214,23 @@ def check_sources(base: str, c: Checker) -> None:
     c.check("GET /api/sources (없는 ID 404)", status == 404, f"HTTP {status}")
 
 
+def check_clauses(c: Checker, data: dict[str, Any], rag: bool) -> None:
+    """문장 분석 응답의 조항 후보 (rag). 꺼져 있으면 키가 없어야 한다."""
+    clauses = data.get("clauses")
+    if not rag:
+        c.check(
+            "POST /api/analyze 조항 후보 (rag 꺼짐, 키 없음)", "clauses" not in data
+        )
+        return
+    ok = isinstance(clauses, dict)
+    if ok:
+        cand = [x.get("clause_id") for x in clauses.get("candidates", [])]
+        sel = [x.get("clause_id") for x in clauses.get("selected", [])]
+        ok = len(cand) <= 5 and set(sel) <= set(cand)
+        print(f"    조항 후보 {cand}, 고른 조항 {sel}")
+    c.check("POST /api/analyze 조항 후보 (rag 켜짐)", ok)
+
+
 def run(base: str, analyze: bool) -> int:
     base = base.rstrip("/")
     c = Checker()
@@ -275,6 +294,7 @@ def run(base: str, analyze: bool) -> int:
             c.check("POST /api/analyze (추출)", data.get("status") == "extracted")
             if data.get("extraction"):
                 print(f"    채운 항목: {sorted(data['extraction'].get('fields', {}))}")
+            check_clauses(c, data, "rag" in features)
         else:
             c.check(
                 "POST /api/analyze (안내 코드)",

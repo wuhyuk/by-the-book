@@ -15,6 +15,7 @@ import type {
   ApplianceInput,
   ApplianceItemOption,
   ScreenItem,
+  ClauseSource,
 } from './types'
 
 export type Outcome<T> =
@@ -138,6 +139,17 @@ export async function fetchApplianceItems(): Promise<ApplianceItemOption[] | nul
   try {
     const response = await fetch('/api/appliance/items', { cache: 'no-store' })
     return response.ok ? ((await response.json()) as ApplianceItemOption[]) : null
+  } catch {
+    return null
+  }
+}
+
+// GET /api/sources/{id}: 조항 원문 (허용 문자만 보낸다). 실패하면 null
+export async function fetchSource(id: string): Promise<ClauseSource | null> {
+  if (!/^[a-z0-9_]{1,64}$/.test(id)) return null
+  try {
+    const response = await fetch(`/api/sources/${id}`, { cache: 'no-store' })
+    return response.ok ? ((await response.json()) as ClauseSource) : null
   } catch {
     return null
   }

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { ANALYZE_UNAVAILABLE_CODES, analyze, calculateLaundry, fetchLaundryItems } from './api'
 import { AnalyzePanel } from './components/AnalyzePanel'
+import { ClausePanel } from './components/ClausePanel'
 import { FollowUp } from './components/FollowUp'
 import { GuardrailCard } from './components/GuardrailCard'
 import { GuidePanel } from './components/GuidePanel'
@@ -27,6 +28,7 @@ import {
   EXAMPLES,
 } from './texts'
 import type {
+  ClauseSuggestions,
   GuardrailDisplay,
   LaundryAnalyzeResult,
   LaundryCalculateResponse,
@@ -67,6 +69,8 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
+  // 관련 조항 (자동 검색, rag 켜짐일 때만 응답에 있음). 금액 계산에 쓰지 않는다
+  const [clauses, setClauses] = useState<ClauseSuggestions | null>(null)
   const [guardrail, setGuardrail] = useState<GuardrailDisplay | null>(null)
   const [notes, setNotes] = useState<Record<string, string>>({})
   const [evidence, setEvidence] = useState<Record<string, string>>({})
@@ -114,6 +118,7 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
     const data = outcome.data
     setResponse(null)
     setFieldErrors({})
+    setClauses(data.clauses ?? null)
     if (data.status === 'guardrail' && data.guardrail) {
       setGuardrail(data.guardrail)
       setAnalysis(null)
@@ -243,6 +248,7 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
       <div className="layout">
         <div>
           {analysis && <FollowUp {...analysis} labels={LAUNDRY_FIELD_LABEL} />}
+          {clauses && <ClausePanel data={clauses} />}
           <LaundryForm
             form={form}
             items={items}

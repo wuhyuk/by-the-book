@@ -140,3 +140,53 @@ def test_smoke_offer_gap_next_steps_on(monkeypatch: pytest.MonkeyPatch) -> None:
     assert code == 0, out
     assert "N2 차액 (켜짐)" in out
     assert "N2 다음 행동 (켜짐)" in out
+
+
+# ---- 조항 후보 (rag, 2026-11-16): --analyze를 가짜 LLM으로 돌린다 (실제 Gemini 호출 없음) ----
+
+
+@pytest.mark.parametrize("features", [(), ("rag",)])
+def test_smoke_analyze_clauses(
+    monkeypatch: pytest.MonkeyPatch, features: tuple[str, ...]
+) -> None:
+    import json
+
+    from test_llm_extraction import raw
+
+    sys.path.insert(0, str(SCRIPTS))
+    import smoke_deploy
+
+    from api.analyze import get_client_provider
+    from api.settings import AppSettings, get_app_settings
+    from main import app
+
+    class Fake:
+        model = "fake-model"
+
+        def generate_json(self, **kw: Any) -> str:
+            # rag가 켜져 있을 때만 스키마에 clause_ids가 있다 (꺼짐이면 기존 스키마 그대로)
+            out = raw({})
+            if "clause_ids" in kw["response_schema"]["properties"]:
+                out["clause_ids"] = ["art5_1", "art5_1", "not_a_clause"]
+            return json.dumps(out)
+
+    client = TestClient(app)
+
+    def fake_request(base: str, method: str, path: str, body: Any = None) -> Any:
+        res = client.request(method, path, json=body)
+        return res.status_code, res.json()
+
+    monkeypatch.setattr(smoke_deploy, "request", fake_request)
+    app.dependency_overrides[get_app_settings] = lambda: AppSettings(
+        enabled_features=features
+    )
+    app.dependency_overrides[get_client_provider] = lambda: Fake
+    out = io.StringIO()
+    try:
+        monkeypatch.setattr(sys, "stdout", out)
+        code = smoke_deploy.run("http://test", analyze=True)
+    finally:
+        app.dependency_overrides.clear()
+    assert code == 0, out.getvalue()
+    label = "rag 켜짐" if features else "rag 꺼짐, 키 없음"
+    assert f"조항 후보 ({label})" in out.getvalue()

@@ -241,6 +241,25 @@ export const GUIDE_TEXT = {
   loadFailed: '설명 문안을 불러오지 못했습니다. 위 결과 카드는 그대로 볼 수 있습니다.',
 } as const
 
+// [제안 2026-11-16] 관련 조항 (자동 검색) 영역 (rag 켜짐일 때만). 확인 상태 문구는 사람이 확인한 것으로 읽히지 않게 쓴다
+// (verified = 기계 대조, user_checked null = 조항 단위 사용자 대조 기록 없음, 2026-11-16 사용자 조건).
+export const CLAUSE_TEXT = {
+  title: '관련 조항 (자동 검색)',
+  note: '자동 검색한 관련 조항입니다. 금액 계산에는 쓰이지 않고, 계산은 아래 기준표로 합니다.',
+  aiPicked: 'AI가 고른 조항',
+  none: '검색된 조항이 없습니다.',
+  showSource: '원문 보기',
+  loading: '원문을 불러오는 중…',
+  failed: '원문을 불러오지 못했습니다.',
+  retrievedAt: (d: string) => `기준일 ${d}`,
+  machinePassed: '자동 대조 통과',
+  machineNotPassed: '자동 대조 미완료',
+  userNone: '조항 단위 사용자 대조 기록 없음',
+  userChecked: '사용자 표본 대조 기록 있음',
+  userNotChecked: '사용자 대조 전',
+  source: '출처',
+} as const
+
 // [제안 2026-11-16] 다음 행동 영역 (next_steps 켜짐일 때만). 제목·항목·채널 문구는 서버 응답 그대로 쓴다.
 export const NEXT_STEPS_TEXT = {
   phone: (n: string) => `전화 ${n} (국번 없이)`,

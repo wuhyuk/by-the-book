@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ANALYZE_UNAVAILABLE_CODES, analyze, calculate } from './api'
 import { AnalyzePanel } from './components/AnalyzePanel'
+import { ClausePanel } from './components/ClausePanel'
 import { FollowUp } from './components/FollowUp'
 import { GuardrailCard } from './components/GuardrailCard'
 import { GuidePanel } from './components/GuidePanel'
@@ -15,7 +16,7 @@ import {
   type FormState,
 } from './formState'
 import { ANALYZE_TEXT, EXAMPLES, FIELD_LABEL, INPUT_ERROR, ISSUE_TYPE_LABEL, SUPPORTED_INDUSTRIES, VALUE_LABEL } from './texts'
-import type { CalculateResponse, GuardrailDisplay, GymInput, ScreenProps } from './types'
+import type { CalculateResponse, ClauseSuggestions, GuardrailDisplay, GymInput, ScreenProps } from './types'
 
 interface Analysis {
   filledCount: number
@@ -58,6 +59,8 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenPr
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
+  // 관련 조항 (자동 검색, rag 켜짐일 때만 응답에 있음). 금액 계산에 쓰지 않는다
+  const [clauses, setClauses] = useState<ClauseSuggestions | null>(null)
   const [guardrail, setGuardrail] = useState<GuardrailDisplay | null>(null)
   const [notes, setNotes] = useState<Record<string, string>>({})
   const [evidence, setEvidence] = useState<Record<string, string>>({})
@@ -85,6 +88,7 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenPr
     const data = outcome.data
     setResponse(null)
     setFieldErrors({})
+    setClauses(data.clauses ?? null)
     if (data.status === 'guardrail' && data.guardrail) {
       setGuardrail(data.guardrail)
       setAnalysis(null)
@@ -193,6 +197,7 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenPr
       <div className="layout">
         <div>
           {analysis && <FollowUp {...analysis} />}
+          {clauses && <ClausePanel data={clauses} />}
           <GymForm
             form={form}
             onChange={(next) => {
