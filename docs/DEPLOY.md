@@ -38,7 +38,7 @@
 | `ANALYZE_ENABLED` | 선택 | `true` | 문장 분석 스위치. 아래 파싱 규칙 |
 | `DAILY_ANALYZE_LIMIT` | 선택 | `450` | 하루(한국시간) Gemini 호출 상한. 0 이상의 정수. 아니면 기본값 |
 | `SURVEY_URL` | 선택 | 비움 | 만족도 설문 주소 (`https://…`). 비우면 화면에 설문 버튼이 없다. http(s)가 아니면 무시 |
-| `ENABLED_FEATURES` | 선택 | 비움 | 켤 기능 이름 (쉼표 구분). `set_partial`(세탁 세트 의류 일부 손상 배분 계산), `appliance`(가전 탭, 품질보증기간 경과 후 부품 미보유 환급). 둘 다 켜려면 `set_partial,appliance`. 비우면 아무것도 켜지 않는다 (4.5) |
+| `ENABLED_FEATURES` | 선택 | 비움 | 켤 기능 이름 (쉼표 구분). `set_partial`(세탁 세트 의류 일부 손상 배분 계산), `appliance`(가전 탭, 품질보증기간 경과 후 부품 미보유 환급). `offer_gap`(업체 제시액과 기준 금액의 차액 한 줄), `next_steps`(설명 아래 다음 행동: 준비 자료·상담 경로), `rag`(조항 검색, 2단계용, 지금은 효과 없음). 여러 개는 `set_partial,appliance,offer_gap,next_steps`처럼 쉼표로 함께 쓴다. 비우면 아무것도 켜지 않는다 (4.5·4.7) |
 
 - `ANALYZE_ENABLED` 파싱 (대소문자 무시, 앞뒤 공백 무시): `true`·`1`·`yes`·`on` → 켬, `false`·`0`·`no`·`off` → 끔, **빈 값 → 켬**, **그 밖의 값 → 끔** (오타는 안전하게 끈다. 로그에 설정 이름만 경고).
 - LLM 설정 세 개(`LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL`) 없이 배포하면 `ANALYZE_ENABLED=false`로 둔다. 켜 둔 채 키가 없으면 화면에 문장 입력창이 보이지만 분석 요청은 503("지금은 문장 분석을 쓸 수 없습니다…")으로 끝난다. 폼 계산은 영향 없다.
@@ -100,13 +100,25 @@
 - 끄기: `ENABLED_FEATURES`에서 `appliance`를 지우고 저장·배포한다. 가전 탭이 사라지고 `item=appliance` 요청은 422, `/api/appliance/items`는 404가 된다 (켜기 전과 같은 응답). smoke 스크립트는 "가전 (꺼짐 422)"를 통과한다.
 - 가전은 폼 입력만 받으므로 문장 분석(Gemini) 호출 수에는 영향이 없다.
 
+### 4.7 차액·다음 행동 켜고 끄기 (`offer_gap`, `next_steps`, 2026-11-16, MVP_SPEC 14절)
+
+- 켜기: `ENABLED_FEATURES`에 `offer_gap`·`next_steps`를 더한다 (예: `set_partial,appliance,offer_gap,next_steps`). 저장한 뒤 배포(재시작)한다. 둘은 따로 켤 수 있다.
+- `offer_gap`: 계산했고 업체 제시액이 있으며 `RULE_UNVERIFIED`가 아닐 때 `/api/calculate` 결과에 `offer_gap`, 표시에 `offer_gap_text`, `/api/guide` 설명에 같은 한 줄이 생긴다. 배지와 업체용 문안은 바뀌지 않는다.
+- `next_steps`: `/api/guide` 응답에 `next_steps`(체크리스트·상담 경로 3곳·고지)가 생긴다. ❔·계산 안 함·`RULE_UNVERIFIED`이면 상담 경로만. 화면은 설명 아래 접히는 "다음 행동" 영역을 보이고, 결과 카드의 상담 창구 목록과 설명의 1372 줄은 그 영역으로 합친다.
+- 확인: `GET /api/config` → `enabled_features`에 이름이 있다. smoke 스크립트가 "N2 차액 (켜짐)", "N2 다음 행동 (켜짐)"을 통과한다.
+- 끄기: 이름을 지우고 저장·배포한다. 응답에 새 키가 나오지 않는다 (smoke "N2 차액 (꺼짐, 키 없음)", "N2 다음 행동 (꺼짐, 키 없음)").
+- 상담 경로의 전화번호·주소는 2026-11-16 공식 누리집에서 확인한 값이다 (`backend/guide/next_steps.py`). 기관 주소가 바뀌면 그 파일과 확인일을 함께 고친다.
+- 둘 다 Gemini를 부르지 않아 문장 분석 호출 수에 영향이 없다.
+- `rag`는 이름만 받아 둔다 (2단계 조항 검색에서 쓴다). 지금은 켜도 아무것도 바뀌지 않는다.
+- 조항 조회 `GET /api/sources/{id}`는 플래그 없이 항상 켜져 있다 (조항 원문 읽기 전용).
+
 ## 5. 배포 확인
 
 ```bash
 python scripts/smoke_deploy.py https://<배포 주소>
 ```
 
-- 확인 항목: `/healthz`, `/api/config`(`enabled_features` 포함), 세탁 Set 일부 손상 1건(승인 L4 입력: 꺼짐이면 ❔, `set_partial` 켜짐이면 🔍 136,500~210,000), 가전 1건(승인 A-1: 꺼짐이면 422, `appliance` 켜짐이면 ✅ 920,000), 승인 케이스 계산 3건(✅ C1, ⚠️ N2, 🔍 P1)의 배지·환급액, 같은 3건의 `/api/guide` 문안(승인 금액·고지 한 줄·인용).
+- 확인 항목: `/healthz`, `/api/config`(`enabled_features` 포함), 세탁 Set 일부 손상 1건(승인 L4 입력: 꺼짐이면 ❔, `set_partial` 켜짐이면 🔍 136,500~210,000), 가전 1건(승인 A-1: 꺼짐이면 422, `appliance` 켜짐이면 ✅ 920,000), 차액·다음 행동(승인 N2: 꺼짐이면 새 키 없음, 켜짐이면 차액 40,000원·채널 3곳), 조항 조회(`/api/sources/art5_1` 200, 없는 ID 404), 승인 케이스 계산 3건(✅ C1, ⚠️ N2, 🔍 P1)의 배지·환급액, 같은 3건의 `/api/guide` 문안(승인 금액·고지 한 줄·인용).
 - `--analyze`를 붙이면 문장 하나를 `/api/analyze`로 보낸다 (**Gemini 호출 1건**, 사용자가 직접 실행). 200이면 추출 성공, 아니면 안내 코드(`ANALYZE_DISABLED`, `ANALYZE_DAILY_LIMIT`, `rate_limited`)를 출력한다. 키가 없으면 `not_configured`로 실패한다.
 - 표준 라이브러리만 쓰므로 저장소의 `backend/.venv` 없이도 Python 3.12로 돌릴 수 있다.
 - 시작할 때 출력 인코딩을 UTF-8(`errors="replace"`)로 맞추므로 Windows 콘솔(cp949)에서도 배지 기호(✅·⚠️) 때문에 멈추지 않는다.
