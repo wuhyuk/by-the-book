@@ -10,10 +10,11 @@ import api.settings as settings_module
 
 @pytest.fixture(autouse=True)
 def default_app_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    """ANALYZE_ENABLED=true, DAILY_ANALYZE_LIMIT=450, SURVEY_URL 없음. 카운터는 테스트마다 새로."""
+    """ANALYZE_ENABLED=true, DAILY_ANALYZE_LIMIT=450, SURVEY_URL·ENABLED_FEATURES 없음. 카운터는 테스트마다 새로."""
     monkeypatch.setenv("ANALYZE_ENABLED", "true")
     monkeypatch.setenv("DAILY_ANALYZE_LIMIT", "450")
     monkeypatch.setenv("SURVEY_URL", "")
+    monkeypatch.setenv("ENABLED_FEATURES", "")
     settings_module.app_settings.cache_clear()
     analyze_module.daily_counter.cache_clear()
     yield
