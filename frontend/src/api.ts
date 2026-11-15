@@ -11,6 +11,10 @@ import type {
   LaundryInput,
   LaundryItemOption,
   ValidationIssue,
+  ApplianceCalculateResponse,
+  ApplianceInput,
+  ApplianceItemOption,
+  ScreenItem,
 } from './types'
 
 export type Outcome<T> =
@@ -118,6 +122,23 @@ export async function fetchConfig(): Promise<AppConfig | null> {
 }
 
 // POST /api/guide. 본문은 /api/calculate에 보낸 입력 그대로다 (서버가 다시 계산한다).
-export function fetchGuide(item: Item, input: GymInput | LaundryInput): Promise<Outcome<Guide>> {
-  return postCalculate<Guide>(item === 'gym' ? '/api/guide' : '/api/guide?item=laundry', input)
+export function fetchGuide(
+  item: ScreenItem,
+  input: GymInput | LaundryInput | ApplianceInput,
+): Promise<Outcome<Guide>> {
+  return postCalculate<Guide>(item === 'gym' ? '/api/guide' : `/api/guide?item=${item}`, input)
+}
+
+// 가전 P2 (ENABLED_FEATURES=appliance일 때만 화면에 탭이 있다)
+export function calculateAppliance(input: ApplianceInput): Promise<Outcome<ApplianceCalculateResponse>> {
+  return postCalculate<ApplianceCalculateResponse>('/api/calculate?item=appliance', input)
+}
+
+export async function fetchApplianceItems(): Promise<ApplianceItemOption[] | null> {
+  try {
+    const response = await fetch('/api/appliance/items', { cache: 'no-store' })
+    return response.ok ? ((await response.json()) as ApplianceItemOption[]) : null
+  } catch {
+    return null
+  }
 }

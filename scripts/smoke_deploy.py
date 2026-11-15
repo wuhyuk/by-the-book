@@ -9,6 +9,8 @@
 2. GET /api/config → analyze_enabled(bool), survey_url(str|null), enabled_features(list[str])
 2-1. 세탁 Set 일부 손상 (승인 L4 입력, 2026-11-15): enabled_features에 set_partial이 없으면 ❔
      SET_PARTIAL_UNSUPPORTED, 있으면 🔍 DECISION_SENSITIVE 136,500~210,000 (L4 재승인 값)
+2-2. 가전 (승인 케이스 A-1, 2026-11-15): enabled_features에 appliance가 없으면 item=appliance가 422,
+     있으면 ✅ 920,000 (docs/sources/appliance_cases.md A-1)
 3. POST /api/calculate 승인 케이스 3건 (✅ C1, ⚠️ N2, 🔍 P1) → 배지와 환급액이 승인값과 같은지
 4. POST /api/guide (같은 3건) → 문안에 승인 금액이 있고, 고지 한 줄이 있는지
 5. (--analyze만) POST /api/analyze 문장 1개 → 200(추출) 또는 안내 코드(꺼짐·상한·한도)
@@ -80,6 +82,13 @@ L4_COMMON: dict[str, Any] = {
 L4_OFF = {**L4_COMMON, "set_part": "top"}
 L4_ON = {**L4_COMMON, "damaged_parts": ["top"], "set_partial_request": False}
 
+# 가전 승인 케이스 A-1 (docs/sources/appliance_cases.md, 2026-11-15)
+APPLIANCE_A1: dict[str, Any] = {
+    "judgment_requested": False, "item_key": "tv", "purchase_price": 1_200_000,
+    "purchase_date": "2022-03-15", "request_date": "2025-03-15",
+    "manufacture_date": "2022-01-10", "parts_unavailable": True, "certificate_confirmed": True,
+}  # fmt: skip
+
 ANALYZE_TEXT = (
     "헬스장 1년권을 2026년 1월 1일부터 2026년 12월 31일까지 쓰기로 하고 "
     "120만원을 결제했는데, 2026년 3월 31일에 해지하겠다고 문자를 보냈어요."
@@ -121,6 +130,21 @@ class Checker:
 
 def won(n: int) -> str:
     return f"{n:,}원"
+
+
+def check_appliance(base: str, c: Checker, on: bool) -> None:
+    """가전 (승인 A-1). 꺼져 있으면 item=appliance가 422여야 한다."""
+    status, data = request(base, "POST", "/api/calculate?item=appliance", APPLIANCE_A1)
+    if on:
+        r = data.get("result", {}) if isinstance(data, dict) else {}
+        ok = (
+            status == 200
+            and r.get("badge") == "✅ 기준 확인"
+            and r.get("amount") == 920_000
+        )
+        c.check("POST /api/calculate 가전 A-1 (켜짐 ✅ 920,000)", ok, f"HTTP {status}")
+    else:
+        c.check("POST /api/calculate 가전 (꺼짐 422)", status == 422, f"HTTP {status}")
 
 
 def check_set_partial(base: str, c: Checker, on: bool) -> None:
@@ -169,6 +193,7 @@ def run(base: str, analyze: bool) -> int:
             f"enabled_features={features}"
         )
     check_set_partial(base, c, "set_partial" in features)
+    check_appliance(base, c, "appliance" in features)
 
     for case in CASES:
         status, data = request(base, "POST", "/api/calculate", case["body"])

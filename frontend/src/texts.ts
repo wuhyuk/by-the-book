@@ -240,3 +240,35 @@ export const GUIDE_TEXT = {
   loading: '문안을 만드는 중…',
   loadFailed: '설명 문안을 불러오지 못했습니다. 위 결과 카드는 그대로 볼 수 있습니다.',
 } as const
+
+// ---- 가전 P2 (MVP_SPEC 13절, ENABLED_FEATURES=appliance일 때만) ----
+export const APPLIANCE_TAB_LABEL = '가전'
+
+export const APPLIANCE_TEXT = {
+  // [제안 2026-11-15, 사용자 지시 문구] 가전 탭 맨 위 지원 범위
+  lead: '품질보증기간이 지난 뒤, 수리용 부품이 없어 수리할 수 없는 경우의 환급액을 계산합니다. TV·냉장고·세탁기·전기청소기·노트북만 지원합니다.',
+  // [제안 2026-11-15] 아래는 이번 구현에서 정한 화면 문구 (승인 대기)
+  itemsLoadError: '가전 품목 목록을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.',
+  unlistedOption: '목록에 없는 품목',
+  manufactureHint: '제품 라벨의 제조일(제조연월만 있으면 그 달 말일). 모르면 비워 두세요.',
+  certificateHint: '품질보증서에 적힌 품질보증기간·부품보유기간을 확인했다면 "예". 고시 표보다 긴 기간이 적혀 있으면 아래에 입력하세요.',
+  submit: '기준 금액 확인',
+  submitting: '확인 중…',
+  amountTitle: '환급 기준 금액',
+  amountLabel: '정액 감가상각 잔여 금액 + 구입가의 10%',
+  lookup: (life: number, used: number) => `내용연수 ${life}개월 · 사용 ${used}개월`,
+  range: (min: string, max: string) => `고시에 없는 결정에 따라 ${min}~${max}`,
+} as const
+
+export const APPLIANCE_FIELD_LABEL: Record<string, string> = {
+  item_key: '품목',
+  purchase_price: '구입가',
+  purchase_date: '구입일 (인도일이 다르면 인도일)',
+  request_date: '수리를 맡긴(접수한) 날',
+  manufacture_date: '제조일 (선택)',
+  parts_unavailable: '업체가 수리용 부품이 없어 수리할 수 없다고 했나요',
+  certificate_confirmed: '품질보증서의 기간을 확인했나요',
+  certificate_warranty_months: '보증서의 품질보증기간 (개월, 선택)',
+  certificate_parts_years: '보증서의 부품보유기간 (년, 선택)',
+  provider_offer: '업체가 제시한 환급액',
+}

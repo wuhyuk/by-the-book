@@ -9,11 +9,14 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Request
 
-from api.calculate import RULE_ID, validate_body
+from api.calculate import APPLIANCE, RULE_ID, require_appliance, validate_body
 from api.settings import AppSettings, get_app_settings
+from guide.appliance import build_appliance_guide
 from guide.common import Guide
 from guide.gym import build_gym_guide
 from guide.laundry import build_laundry_guide
+from rules.appliance import ApplianceInput, calculate_appliance
+from rules.appliance_rule import load_appliance_rule
 from rules.gym import GymInput, calculate_refund
 from rules.laundry import LaundryInput, calculate_damage
 from rules.laundry_rule import load_laundry_rule
@@ -33,15 +36,23 @@ router = APIRouter(prefix="/api")
             "content": {"application/json": {"schema": GymInput.model_json_schema()}},
         },
         "x-laundry-request-schema": LaundryInput.model_json_schema(),
+        "x-appliance-request-schema": ApplianceInput.model_json_schema(),
     },
 )
 async def guide(
     request: Request,
     settings: Annotated[AppSettings, Depends(get_app_settings)],
-    item: Literal["gym", "laundry"] = "gym",
+    item: Literal["gym", "laundry", "appliance"] = "gym",
 ) -> Guide:
     """확정된 입력으로 다시 계산해 설명 문장·업체용 문안·근거 조항을 만든다."""
     body = await request.body()
+    if item == APPLIANCE:
+        require_appliance(settings)
+        appliance = validate_body(ApplianceInput, body)
+        arule = load_appliance_rule()
+        return build_appliance_guide(
+            appliance, calculate_appliance(appliance, arule), arule
+        )
     if item == "laundry":
         laundry = validate_body(LaundryInput, body)
         lrule = load_laundry_rule()

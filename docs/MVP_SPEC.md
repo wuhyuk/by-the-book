@@ -500,7 +500,8 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 | `POST /api/analyze` | 문장 → 추출 결과(`item`, `fields`, `missing`, `evidence`) |
 | `POST /api/calculate` | 확정된 필드 → 계산 결과(`refund`, `steps`, `badge`, `source`) |
 | `POST /api/guide` | `/api/calculate`와 같은 본문 → 서버가 다시 계산한 결과로 설명 문장·업체용 문안·근거 조항 (`backend/guide/`, LLM 없음, 템플릿) [결정 2026-11-11 사용자]. ❔·계산 안 함이면 업체용 문안 `null`. 계산했어도 결과에 `RULE_UNVERIFIED`(원문 확인이 끝나지 않은 값)가 있으면 업체용 문안 `null`, 설명의 확인 목록은 그대로 [결정 2026-11-13 사용자]. 인용은 엔진이 정한 조항 ID의 카드만 쓰므로 검색 결과에 없는 조항을 인용할 수 없다 (절대 규칙 7) |
-| `GET /api/config` | `{analyze_enabled, survey_url, enabled_features}`. `enabled_features` = `ENABLED_FEATURES`(쉼표 구분)에서 아는 이름만 (지금은 `set_partial`, 12.10) [결정 2026-11-15 사용자]. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
+| `POST /api/calculate?item=appliance`, `POST /api/guide?item=appliance`, `GET /api/appliance/items` | 가전 P2 (13절). `ENABLED_FEATURES`에 `appliance`가 있을 때만. 꺼져 있으면 지금과 같은 응답(`item` 쿼리 422 `literal_error`, items 404) [결정 2026-11-15 사용자] |
+| `GET /api/config` | `{analyze_enabled, survey_url, enabled_features}`. `enabled_features` = `ENABLED_FEATURES`(쉼표 구분)에서 아는 이름만 (`set_partial` 12.10, `appliance` 13절) [결정 2026-11-15 사용자]. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
 | `GET /healthz` | 배포 헬스체크 `{"status": "ok"}` (외부 호출 없음). 그 밖의 `/api` 밖 경로는 화면(`frontend/dist`, SPA 폴백), 없는 `/api/*`는 404 JSON (`docs/DEPLOY.md`) |
 
 `/api/ask`(자유 질의)는 MVP 범위 밖이다.
@@ -584,7 +585,7 @@ VS5 TODO [제안, 2026-11-08 사용자 지시로 기록, 외부 배포판용] �
 | ~11/18 | 사용자 만족도 정량평가 (응답자 10명 이상) |
 | 11/29 | 최종 마감, `v0.1.0` 태그 |
 
-11/18 이후로 미룬 것 (그 전에는 만들지 않는다): VS4 복원 R1 코드(결정·승인은 12.10에 기록), R2 Set 일부, R3 부속물, 평가 30건, 평가 결과 SQLite 저장, 범용 LLM 비교, 가전.
+11/18 이후로 미룬 것 (그 전에는 만들지 않는다): VS4 복원 R1 코드(결정·승인은 12.10에 기록), R2 Set 일부, R3 부속물, 평가 30건, 평가 결과 SQLite 저장, 범용 LLM 비교, 가전. (R2는 2026-11-15 플래그 `set_partial`, 가전 P2는 2026-11-15 플래그 `appliance` 뒤에 구현, 9절·12.10·13절)
 
 ### 단계 0 체크리스트
 
@@ -617,7 +618,7 @@ VS5 TODO [제안, 2026-11-08 사용자 지시로 기록, 외부 배포판용] �
 
 **확정 (2026-11-02, 세탁·가전 사전 조사 답)** 질문·선택지는 `docs/sources/stage0_laundry_appliance_report.md` 7절, 답 전체는 9절.
 
-1. 단계 7 확장 품목: 세탁 1개 (안 1). 가전은 조사 문서·JSON 초안만 보관하고 v0.1 이후로 미룬다. 가전 질문(Q-A1~A8)은 가전을 시작할 때 결정한다. 일정표와 세탁 축소안은 보고서 10절
+1. 단계 7 확장 품목: 세탁 1개 (안 1). 가전은 조사 문서·JSON 초안만 보관하고 v0.1 이후로 미룬다. 가전 질문(Q-A1~A8)은 가전을 시작할 때 결정한다. 일정표와 세탁 축소안은 보고서 10절. → **2026-11-15 갱신 [결정 사용자]**: 가전 P2(품질보증기간 경과 후 부품 미보유 → 감가 환급)만 기능 플래그 `appliance` 뒤에서 구현한다 (13절, `docs/sources/appliance_cases.md` 승인). 기본은 꺼짐이라 배포 화면은 켜기 전까지 지금과 같다. P1(반복 하자 교환·환급 요건)과 3)·4)의 감가 환급, Q-A2·Q-A6·Q-A8은 여전히 범위 밖
 2. 사유 코드: 공통 Enum + 품목별 Enum, 품목별 코드 집합·표시 우선순위는 명시 목록. 기존 헬스장 코드 이름은 바꾸지 않는다
 3. 세탁 블록 `verified`: 헬스장 선례대로 기계 대조가 모두 일치하면 블록별 `true`, `user_checked: false`. 사용자 표본 대조는 나중에 → **2026-11-13 사용자 표본 대조 완료** (`docs/sources/user_check_sheet.md`): 별표 Ⅱ PDF 123~125쪽 표를 캡처해 칸 단위로 확인(세탁 배상비율표 4년 행 70%, 한복류 4년, 카페트 모 6·기타 5)하고 5-1.③ "세탁요금의 20배"와 헬스장 별표 "총계약대금의 10%"는 원문에서 직접 확인, 5건 모두 원문과 같음. 세탁 `ratio_table`·`lifespan_table`·`unproven_fallback`과 헬스장 `industries[].penalty_rule`의 `user_checked: true`, `checked_at: 2026-11-13`. 두 규칙 파일의 `source.retrieved_at`(세탁 2026-11-02, 헬스장 2026-10-26)은 고시 조문 카드의 확인일로도 쓰이므로 바꾸지 않았다 (사용자가 확인한 것은 별표 표 값이고, 카드별 확인일을 나누려면 조문 스키마 변경이 필요하다) [결정 2026-11-13 사용자]. `set_allocation`은 표본에 없어 `false` 그대로. 배지 판정은 `verified`만 쓰므로 바뀌지 않는다
 4. 세탁 계산: 원 미만 내림, 사용일수 = 의뢰일 − 구입일(첫날 산입 안 함), Set 일부 손상은 7. 배분(복원할 때), 표에 없는 품목은 계산하지 않고 ❔ `ITEM_NOT_IN_TABLE` + 1372 안내 (모두 `in_source: false` 또는 해석 표시). 한복류 두 소재 4년은 2026-11-06 원문 칸 구조(HWPX 셀 속성, PDF 125쪽 이미지)로 확인해 `in_source: true`로 바꿨다. 세부는 `docs/sources/laundry_spec_draft.md`. 구현 전에 그 내용을 이 문서의 새 절로 옮긴다
@@ -945,3 +946,37 @@ amount   = floor(purchase_price × ratio ÷ 100)    ← 정수 곱 뒤 한 번�
 - 인용: `laundry_8`.
 
 복원 코드는 세탁 Enum에 추가하고 12.4 우선순위에서 🔍 계산함 묶음의 맨 앞(면책 앞)에 `ATTACHMENT_SCOPE`, `VARIANT_UNKNOWN`, `ATTACHMENT_BASIS` 순으로 둔다 **[초안, 승인 대기]**. 기능이 꺼져 있으면 이 코드들은 나오지 않는다.
+
+## 13. 가전 P2 규칙 엔진 계약 (`backend/rules/appliance.py`) [결정 2026-11-15 사용자]
+
+> 이 절이 가전 구현의 **단일 기준 문서**다. 근거 원문·케이스·결정은 `docs/sources/appliance_cases.md`(승인 2026-11-15), 원문 대조표는 `docs/sources/appliance_verify_sheet.md`(S1~S18, 두 경로 기계 대조와 사용자 대조 모두 일치), 규칙 JSON은 `backend/data/rules/appliance_warranty.json`.
+> 켜는 방법: `ENABLED_FEATURES`에 `appliance` (다른 이름과 쉼표로 함께, 예 `set_partial,appliance`, `docs/DEPLOY.md` 4.5). 꺼져 있으면 API·화면이 지금과 같다 (가전 탭 없음, `item=appliance` 422, `/api/appliance/items` 404).
+
+### 13.1 범위
+
+- 계산하는 것: 별표 Ⅱ ① (2-2) 5) "부품보유기간 이내에 수리용 부품을 보유하고 있지 않아 발생한 피해 / 품질보증기간 경과 후 → 정액 감가 상각한 잔여 금액에 구입가의 10%를 가산하여 환급" **[원문]**.
+- 지원 품목: TV, 냉장고, 세탁기, 전기청소기, 노트북 (규칙 JSON `params.p2.supported_items`, D-11, 사용자가 바꿀 수 있음). 그 밖은 ❔ `APPLIANCE_ITEM_NOT_SUPPORTED`.
+- 하지 않는 것: P1(반복 하자 교환·환급 요건), 5)의 품질보증기간 이내 두 줄, 3)·4)의 감가 환급(가산 대상 미결), 중고품(⑫), 설치업(⑭), 문장 분석(가전은 폼 입력만).
+
+### 13.2 입력·범위 판정·계산·배지
+
+`appliance_cases.md` 3.3(입력), 3.4(범위 판정 순서 1~7), 3.5(계산·배지·인용), 3.6(코드·문구) 그대로다. 요약:
+
+```text
+W = max(고시 품질보증 개월, 보증서 품질보증 개월)          ← 시행령 별표 1 4.가 (D-10)
+L = 12 × max(고시 부품보유 년, 보증서 부품보유 년)          ← 별표 Ⅳ, D-1
+u = 구입일(인도일)부터 수리 접수일까지 완전한 개월 (D-2, D-3, D-5), 끝수 있으면 +1 (D-4)
+결정 값 = floor(구입가 − 구입가 × u ÷ L + 구입가 × 10 ÷ 100), 구입가를 넘으면 구입가 (D-6, D-7)
+```
+
+- 범위 판정: ❔ 승패 질문 → ❔ 지원 밖 품목 → ❔ 부품 있음(`PARTS_AVAILABLE`) → 🔍 누락 → 🔍 입력 오류 → ❔ 품질보증기간 이내(`WITHIN_WARRANTY`) → ❔ 부품보유기간 지남(`OUTSIDE_PARTS_PERIOD`). 기간 끝나는 날 접수는 계산하고 🔍 `PERIOD_BOUNDARY` (D-8). 제조일을 모르면 구입일 + 부품보유기간 이후면 ❔, 아니면 🔍 `PARTS_PERIOD_UNCONFIRMED` (D-9). 보증서 미확인은 🔍 `CERTIFICATE_UNCONFIRMED` (D-10).
+- 결정 민감도 검사: D-4(끝수 올림/버림) × D-6(내림/half up) × D-7(한도 적용/미적용) = 8조합. 원인 판정은 12.4 4번 문장과 같다. 원인 키 `partial_month`, `rounding`, `cap`.
+- 배지: ❔ → 🔍 계산 안 함 → ⚠️ `OFFER_BELOW_STANDARD_MIN`(제시액 < 8조합 최솟값, 블록 검증 시) → 🔍 → ✅.
+- 쓰는 블록: `items`, `lifespan_rule`, `depreciation`, `resolution_table` (2026-11-15 `verified`·`user_checked` true). 하나라도 false면 `RULE_UNVERIFIED`, ⚠️ 제외, 업체용 문안 `null`.
+- 안내 (계산한 결과): `RECEIVED_DATE_BASIS`, `USED_MONTHS_BASIS` [제안, 2026-11-15 사용자 지시 "사용 개월은 구입일(인도일)부터 수리 접수일까지 월 단위로 센 값입니다."].
+- 인용 카드 `annex3_items`·`annex4`에는 이번 계산에 적용한 칸(품목 행, 품질보증·부품보유기간, 내용연수 개월, 사용 개월)을 덧붙인다. 숫자는 결과 필드와 규칙 JSON 표 값에서만.
+- 고지는 세탁(12.8)과 같은 문장. 문안은 세탁과 같은 템플릿 방식(`backend/guide/appliance.py`).
+
+### 13.3 출력 (`ApplianceResult`)
+
+`badge`, `calculated`, `item_key`, `row_id`, `warranty_months`, `life_months`, `used_months`(결정 값, 끝수 올림), `used_months_full`, `partial_month`, `amount`, `sensitivity_min`, `sensitivity_max`, `sensitivity_causes`, `steps`, `flags`, `missing`, `notices`, `citations`.

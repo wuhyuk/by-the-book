@@ -2,17 +2,19 @@
 // 선택한 품목은 URL·localStorage에 남기지 않는다.
 // /api/config (2026-11-12): analyze_enabled가 false면 두 화면 모두 문장 분석 패널 대신 폼 안내를 보여 주고,
 // survey_url이 있으면 설문 버튼을 보여 준다. 설정을 못 읽으면 패널을 그대로 둔다 (분석 요청의 안내 코드로 처리).
+// 가전 탭은 enabled_features에 appliance가 있을 때만 보인다 (2026-11-15, 꺼짐이면 지금 화면 그대로).
 import { useEffect, useState } from 'react'
 import App from './App'
+import { ApplianceApp } from './ApplianceApp'
 import { fetchConfig } from './api'
 import { LaundryApp } from './LaundryApp'
-import { APP_TEXT, ITEM_TAB_LABEL } from './texts'
-import type { Item } from './types'
+import { APP_TEXT, APPLIANCE_TAB_LABEL, ITEM_TAB_LABEL } from './texts'
+import type { ScreenItem } from './types'
 
-const ITEMS: Item[] = ['gym', 'laundry']
+const BASE_ITEMS: ScreenItem[] = ['gym', 'laundry']
 
 export function Root() {
-  const [item, setItem] = useState<Item>('gym')
+  const [item, setItem] = useState<ScreenItem>('gym')
   const [analyzeOff, setAnalyzeOff] = useState<string | null>(null)
   const [surveyUrl, setSurveyUrl] = useState<string | null>(null)
   // 켜 둔 복원 기능 (2026-11-15). 설정을 못 읽으면 빈 목록 = 지금 화면 그대로
@@ -32,13 +34,14 @@ export function Root() {
   }, [])
 
   const screen = { analyzeOff, onAnalyzeUnavailable: setAnalyzeOff, surveyUrl, features }
+  const items: ScreenItem[] = features.includes('appliance') ? [...BASE_ITEMS, 'appliance'] : BASE_ITEMS
   return (
     <>
       <p className="site-disclaimer" data-testid="site-disclaimer">
         {APP_TEXT.disclaimer}
       </p>
       <nav className="item-tabs" role="tablist" aria-label="품목">
-        {ITEMS.map((i) => (
+        {items.map((i) => (
           <button
             key={i}
             type="button"
@@ -50,13 +53,19 @@ export function Root() {
             onClick={() => setItem(i)}
             data-testid={`tab-${i}`}
           >
-            {ITEM_TAB_LABEL[i]}
+            {i === 'appliance' ? APPLIANCE_TAB_LABEL : ITEM_TAB_LABEL[i]}
           </button>
         ))}
       </nav>
-      {ITEMS.map((i) => (
+      {items.map((i) => (
         <div key={i} role="tabpanel" id={`panel-${i}`} aria-labelledby={`tab-${i}`} hidden={item !== i}>
-          {i === 'gym' ? <App {...screen} /> : <LaundryApp {...screen} />}
+          {i === 'gym' ? (
+            <App {...screen} />
+          ) : i === 'laundry' ? (
+            <LaundryApp {...screen} />
+          ) : (
+            <ApplianceApp surveyUrl={surveyUrl} />
+          )}
         </div>
       ))}
       <footer className="site-footer">
