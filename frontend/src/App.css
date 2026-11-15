@@ -537,6 +537,42 @@
   overflow-wrap: anywhere;
 }
 
+/* 관련 조항 (자동 검색, rag) */
+.clause-panel {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.clause-panel h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.clause-list {
+  margin: 8px 0 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.clause-list li {
+  margin: 0 0 8px;
+}
+
+.clause-list summary {
+  cursor: pointer;
+}
+
+.clause-list blockquote {
+  margin: 6px 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--border);
+  white-space: pre-wrap;
+}
+
 /* 다음 행동 (next_steps) */
 .next-steps {
   margin: 0 0 12px;
