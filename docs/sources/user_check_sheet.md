@@ -80,8 +80,9 @@
 
 - 모두 같음: 해당 블록의 `verification.user_checked`를 `true`, `checked_at`을 확인 날짜로 바꾸고 `method`·`notes`·테스트(`test_*_rule_data.py`)를 함께 갱신한다 (CLAUDE.md 6절). `source.retrieved_at`은 조문 카드 확인일로도 쓰이므로 조문을 다시 확인한 경우가 아니면 바꾸지 않는다 [2026-11-13 수정, 처음 작성 때는 함께 갱신으로 적었음]. 블록: 세탁 `ratio_table`(1번), `lifespan_table`(2·3번), `unproven_fallback`(4번), 헬스장 `industries[].penalty_rule`(5번).
 - 하나라도 다름: 그 블록을 `verified: false`로 둘지 먼저 정한다. 그동안 그 블록을 쓰는 결과는 ✅·강건한 ⚠️를 낼 수 없다 (CLAUDE.md 절대 규칙 2).
-- 이 시트는 표본 확인이다. 표의 나머지 칸은 기계 대조 기록(`laundry_notice.md` 대조 기록, `gym_penalty_notice.md` 별표 재대조)에 의존한다. 2026-11-13 표본 5건이 모두 원문과 같았다. 세탁 `set_allocation`(Set 배분 비율)은 표본에 없어 `user_checked: false` 그대로다.
+- 이 시트는 표본 확인이다. 표의 나머지 칸은 기계 대조 기록(`laundry_notice.md` 대조 기록, `gym_penalty_notice.md` 별표 재대조)에 의존한다. 2026-11-13 표본 5건이 모두 원문과 같았다. 세탁 `set_allocation`(Set 배분 비율)은 표본에 없어 `user_checked: false` 그대로다. → 2026-11-15 사용자가 따로 확인해 `user_checked: true` (아래 표 2026-11-15 행).
 
 | 확인자 | 확인 날짜 | 결과 요약 |
 |---|---|---|
 | 사용자 | 2026-11-13 | 표본 5건 모두 원문과 일치 |
+| 사용자 | 2026-11-15 | 세탁 `set_allocation`(7.①~③) 사용자 확인: 별표 Ⅱ ⑯세탁업 7., PDF 123쪽. 상·하 65/35, 상·중·하 55/35/10(상의/하의/중의), 한복 50/50. 결과 일치 (R2 Q14 (b)) |
