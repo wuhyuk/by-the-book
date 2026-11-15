@@ -263,3 +263,53 @@ export interface ScreenProps {
   /** 켜 둔 복원 기능 (/api/config enabled_features). 세탁 화면만 쓴다 */
   features: readonly string[]
 }
+
+// ---- 가전 P2 (MVP_SPEC 13절, ENABLED_FEATURES=appliance일 때만) ----
+// 문장 분석 대상이 아니라 Item(분석·예시용)에는 넣지 않는다. 탭·문안은 ScreenItem을 쓴다.
+export type ScreenItem = Item | 'appliance'
+
+export interface ApplianceInput {
+  judgment_requested: boolean
+  item_key: string | null
+  item_unlisted: boolean
+  purchase_price: number | null
+  purchase_date: string | null
+  request_date: string | null
+  manufacture_date: string | null
+  parts_unavailable: TriState
+  certificate_confirmed: TriState
+  certificate_warranty_months: number | null
+  certificate_parts_years: number | null
+  provider_offer: number | null
+}
+
+export interface ApplianceResult {
+  badge: string
+  calculated: boolean
+  item_key: string | null
+  row_id: string | null
+  warranty_months: number | null
+  life_months: number | null
+  used_months: number | null
+  used_months_full: number | null
+  partial_month: boolean | null
+  amount: number | null
+  sensitivity_min: number | null
+  sensitivity_max: number | null
+  sensitivity_causes: ('partial_month' | 'rounding' | 'cap')[]
+  steps: Step[]
+  flags: string[]
+  missing: string[]
+  notices: string[]
+  citations: string[]
+}
+
+export interface ApplianceCalculateResponse {
+  result: ApplianceResult
+  display: LaundryDisplay // 같은 모양 (badge, screen_line, other_flags, notices, citations, rule_source, disclaimer, consult)
+}
+
+export interface ApplianceItemOption {
+  key: string
+  label: string
+}
