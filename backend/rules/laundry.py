@@ -29,6 +29,7 @@ from rules.laundry_codes import (
 )
 from rules.laundry_rule import Band, LaundryRule
 from rules.money import div_round_half_up
+from rules.offer_gap import OfferGap, offer_gap_if_enabled, optional_field
 
 C = CommonFlag
 L = LaundryFlag
@@ -172,6 +173,8 @@ class LaundryResult(_Model):
     set_base_raw: str | None = (
         None  # 원 미만 처리 전 배분 기준 가격 (구입가격 × 비율 합 ÷ 100)
     )
+    # 기능 플래그 offer_gap이 켜져 있을 때만 (MVP_SPEC 14.1). 없으면 응답에서 빠진다.
+    offer_gap: OfferGap | None = optional_field()
 
 
 # ---- 범위 판정 ----
@@ -734,6 +737,7 @@ def calculate_damage(
     """범위 판정 → 계산 → 민감도 검사 → 제시액 비교 → 배지 (MVP_SPEC 12.2~12.7, R2 12.10).
 
     features에 SET_PARTIAL이 있으면 Set 일부 손상을 배분으로 계산한다. 없으면 축소 A 그대로.
+    features에 offer_gap이 있으면 제시액 차액(표시용, 14.1)을 붙인다. 배지는 바뀌지 않는다.
     """
     scope = check_scope(inp, rule, features)
     if scope.stop_code is not None:
@@ -836,5 +840,11 @@ def calculate_damage(
         missing=[],
         notices=notices,
         citations=_citations(inp, rule, flags, notices, method, basis),
+        offer_gap=offer_gap_if_enabled(
+            features,
+            offer=inp.provider_offer,
+            amounts=[sens.min, sens.max],
+            flags=flags,
+        ),
         **_set_outputs(inp, basis, features),  # type: ignore[arg-type]
     )
