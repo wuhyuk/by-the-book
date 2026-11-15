@@ -35,6 +35,7 @@ from rules.laundry_codes import (
     order_laundry_flags,
 )
 from rules.laundry_rule import Band, LaundryRule
+from rules.offer_gap import offer_gap_text, optional_field
 
 C = CommonFlag
 L = LaundryFlag
@@ -198,6 +199,8 @@ class LaundryDisplay(_Model):
     rule_source: LaundryRuleSource
     disclaimer: str
     consult: ConsultInfo | None
+    # 제시액 차액 한 줄 (기능 플래그 offer_gap, MVP_SPEC 14.1). 없으면 응답에서 빠진다.
+    offer_gap_text: str | None = optional_field()
 
 
 def flag_line(code: LaundryCode, result: LaundryResult) -> DisplayLine:
@@ -350,6 +353,9 @@ def build_laundry_display(
         consult=ConsultInfo(message=CONSULT_MESSAGE, channels=list(CONSULT_CHANNELS))
         if result.badge == Badge.UNDETERMINABLE
         else None,
+        offer_gap_text=(
+            offer_gap_text(result.offer_gap) if result.offer_gap is not None else None
+        ),
     )
 
 
