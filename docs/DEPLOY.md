@@ -32,13 +32,14 @@
 | `LLM_PROVIDER` | 문장 분석을 쓰면 필수 | (없음) | `gemini` |
 | `LLM_API_KEY` | 문장 분석을 쓰면 필수 | (없음) | Gemini API 키. **대시보드에만 입력**. 로그·응답·예외 메시지에 나오지 않게 코드가 막는다 |
 | `LLM_MODEL` | 문장 분석을 쓰면 필수 | (없음) | `gemini-3.1-flash-lite` (MVP_SPEC 9절 2026-11-08) |
-| `LLM_FALLBACK_MODEL` | 선택 | 비움 | `gemini-3.5-flash-lite`. 기본 모델이 재시도 후에도 429일 때 1회 |
+| `LLM_FALLBACK_MODEL` | 선택 | 비움 | `gemini-3.5-flash-lite`. 기본 모델이 재시도 후에도 429일 때 1회. `llm_resilience`가 켜져 있으면 일시 오류(500·502·503·504, 시간 초과, 연결 실패)의 두 번째 시도에도 쓴다 (4.9) |
 | `LLM_TEMPERATURE` | 선택 | `0` | 줄이 없으면 0. 값을 비우면 temperature를 보내지 않음 |
 | `LLM_MAX_RPM` | 선택 | `12` | 모델별 분당 호출 상한 (무료 한도 RPM 15보다 낮게) |
+| `LLM_TIMEOUT_SECONDS` | 선택 | `20` | 호출 하나의 시간 제한(초). **`llm_resilience`가 켜져 있을 때만** 쓴다 (꺼져 있으면 60초). 1~50 사이 숫자. 아니면 기본값 20을 쓰고 설정 이름만 경고 로그 (4.9) |
 | `ANALYZE_ENABLED` | 선택 | `true` | 문장 분석 스위치. 아래 파싱 규칙 |
 | `DAILY_ANALYZE_LIMIT` | 선택 | `450` | 하루(한국시간) Gemini 호출 상한. 0 이상의 정수. 아니면 기본값 |
 | `SURVEY_URL` | 선택 | 비움 | 만족도 설문 주소 (`https://…`). 비우면 화면에 설문 버튼이 없다. http(s)가 아니면 무시 |
-| `ENABLED_FEATURES` | 선택 | 비움 | 켤 기능 이름 (쉼표 구분). `set_partial`(세탁 세트 의류 일부 손상 배분 계산), `appliance`(가전 탭, 품질보증기간 경과 후 부품 미보유 환급). `offer_gap`(업체 제시액과 기준 금액의 차액 한 줄), `next_steps`(설명 아래 다음 행동: 준비 자료·상담 경로), `rag`(문장 분석에 관련 조항 자동 검색, 4.8). 여러 개는 `set_partial,appliance,offer_gap,next_steps`처럼 쉼표로 함께 쓴다. 비우면 아무것도 켜지 않는다 (4.5·4.7) |
+| `ENABLED_FEATURES` | 선택 | 비움 | 켤 기능 이름 (쉼표 구분). `set_partial`(세탁 세트 의류 일부 손상 배분 계산), `appliance`(가전 탭, 품질보증기간 경과 후 부품 미보유 환급). `offer_gap`(업체 제시액과 기준 금액의 차액 한 줄), `next_steps`(설명 아래 다음 행동: 준비 자료·상담 경로), `rag`(문장 분석에 관련 조항 자동 검색, 4.8), `llm_resilience`(문장 분석 일시 오류 재시도, 4.9). 여러 개는 `set_partial,appliance,offer_gap,next_steps`처럼 쉼표로 함께 쓴다. 비우면 아무것도 켜지 않는다 (4.5·4.7) |
 
 - `ANALYZE_ENABLED` 파싱 (대소문자 무시, 앞뒤 공백 무시): `true`·`1`·`yes`·`on` → 켬, `false`·`0`·`no`·`off` → 끔, **빈 값 → 켬**, **그 밖의 값 → 끔** (오타는 안전하게 끈다. 로그에 설정 이름만 경고).
 - LLM 설정 세 개(`LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL`) 없이 배포하면 `ANALYZE_ENABLED=false`로 둔다. 켜 둔 채 키가 없으면 화면에 문장 입력창이 보이지만 분석 요청은 503("지금은 문장 분석을 쓸 수 없습니다…")으로 끝난다. 폼 계산은 영향 없다.
@@ -74,7 +75,14 @@
 
 ### 4.4 로그
 
-- 입력 문장, 폼 입력값, LLM 응답은 로그에 남기지 않는다 (CLAUDE.md 절대 규칙 6). 실패는 종류 이름만 남는다 (예: `LLM 호출 실패: rate_limited`, `LLM 설정 없음`, `처리하지 못한 오류: RuntimeError`).
+- 입력 문장, 폼 입력값, LLM 응답, 키, 모델 이름은 로그에 남기지 않는다 (CLAUDE.md 절대 규칙 6). 실패는 종류·상태 등만 남는다 (예: `LLM 호출 실패: rate_limited (status=429)`, `LLM 설정 없음`, `처리하지 못한 오류: RuntimeError`).
+- 형식 (2026-11-16, 플래그와 무관): 앱 시작 때 `by_the_book` 로거에 표준 출력 핸들러를 붙인다. 레벨 INFO, 한 줄 형식 `<시각> <레벨> <로거 이름> <메시지>`. 예:
+  - `2026-11-16 21:03:11,402 WARNING by_the_book.llm LLM 시도 실패: kind=http_error status=503 attempt=1 role=primary elapsed=1.60s`
+  - `2026-11-16 21:03:14,950 INFO by_the_book.llm LLM 시도 성공: attempt=2 role=fallback elapsed=2.03s`
+  - `... WARNING by_the_book.api LLM 호출 실패: timeout (status=-)` (요청이 실패로 끝날 때 한 줄)
+  - `... WARNING by_the_book.llm LLM 응답 검증 실패: fields=fields.industry` (스키마 검증 실패, 필드 이름만. 낯선 키는 `?`)
+  - `role`은 `primary`(LLM_MODEL)·`fallback`(LLM_FALLBACK_MODEL). 429 경로는 시도가 3번까지라 `attempt`가 3일 수 있다.
+- Render 로그에서 원인을 찾을 때 `LLM 시도 실패`로 검색하면 시도마다 종류·상태가 보인다.
 - 422 응답은 필드 위치·오류 종류만 돌려주고 입력값을 돌려주지 않는다. 500은 고정 문구만 돌려준다.
 - uvicorn 접근 로그는 끄고 실행한다 (`--no-access-log`, 요청 경로·IP를 남기지 않음). Render 자체의 요청 로그는 Render가 따로 남길 수 있다 **[확인 필요]**. 요청 본문은 POST 본문으로만 보내므로 경로에는 입력이 없다.
 
@@ -120,6 +128,16 @@
 - 확인: `python scripts/smoke_deploy.py https://<배포 주소> --analyze`(Gemini 호출 1건, 사용자가 직접 실행)가 "조항 후보 (rag 켜짐)"을 통과하고 후보·고른 조항 ID를 출력한다.
 - 끄기: `rag`를 지우고 저장·배포한다. `/api/analyze` 응답에 `clauses`가 없고 프롬프트·스키마가 이전과 같다 (smoke "조항 후보 (rag 꺼짐, 키 없음)").
 - 평가: `python eval/run_retrieval_eval.py --misses` (표준 라이브러리만, LLM 호출 없음).
+
+### 4.9 문장 분석 일시 오류 재시도 (`llm_resilience`, 2026-11-16, MVP_SPEC 16절)
+
+- 켜기: `ENABLED_FEATURES`에 `llm_resilience`를 더하고 저장·배포한다. 필요하면 `LLM_TIMEOUT_SECONDS`(기본 20)를 둔다.
+- 동작: Gemini가 500·502·503·504를 돌려주거나 시간 초과·연결 실패이면 1~2초 뒤 **한 번만** 다시 보낸다. 예비 모델(`LLM_FALLBACK_MODEL`)이 있으면 예비 모델로, 없으면 같은 모델로. 호출 하나는 `LLM_TIMEOUT_SECONDS`초, 한 요청의 시도 전체는 약 50초 안에서 끝낸다 (남은 시간이 시간 제한보다 짧으면 두 번째 시도를 하지 않는다). 재시도 호출도 하루 카운터와 분당 간격 제한에 센다.
+- 두 번 모두 일시 오류면 502 `message`가 "AI 서비스가 일시적으로 바쁩니다. 잠시 후 다시 시도하거나 아래 입력 폼에 직접 입력해 주세요."가 된다 (`code`는 `http_error`·`timeout`·`network` 그대로). 400·403 같은 요청 오류, 응답 형식 오류(`bad_response`), 차단(`blocked`)은 재시도하지 않고 기존 문구.
+- 429 처리(재시도 1회 → 예비 모델 1회)는 켜고 끄는 것과 상관없이 그대로다.
+- 끄기: `llm_resilience`를 지우고 저장·배포한다. 호출 시간 제한 60초, 429만 재시도, 502 문구 "문장을 분석하지 못했습니다…"로 돌아간다.
+- 한계: 기본 모델과 예비 모델이 같은 Flash Lite 계열이라 계열 전체가 과부하이면 두 시도가 모두 실패할 수 있다. 모델 이름은 환경변수에서만 읽는다.
+- 확인한 배포 설정 (2026-11-16, 사용자가 Render 환경변수 화면에서 확인, 키 제외): `ANALYZE_ENABLED=true`, `DAILY_ANALYZE_LIMIT=450`, `LLM_MAX_RPM=12`, `LLM_PROVIDER=gemini`, `LLM_MODEL=gemini-3.1-flash-lite`, `LLM_FALLBACK_MODEL=gemini-3.5-flash-lite`, `ENABLED_FEATURES=set_partial,appliance,offer_gap,next_steps` (`rag`·`llm_resilience` 없음), `WEB_CONCURRENCY` 없음(uvicorn 프로세스 1개), `LLM_TIMEOUT_SECONDS` 없음(켜면 기본 20초).
 
 ## 5. 배포 확인
 
