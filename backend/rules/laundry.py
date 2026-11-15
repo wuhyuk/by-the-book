@@ -1,10 +1,16 @@
-"""세탁물 손상·분실 배상 기준 금액 규칙 엔진 (MVP_SPEC 12절, 축소 A).
+"""세탁물 손상·분실 배상 기준 금액 규칙 엔진 (MVP_SPEC 12절, 축소 A + 복원 R2).
 
 순수 함수만 둔다. LLM을 호출하지 않는다. 금액은 int, 비율은 정수 퍼센트이며 float를 쓰지 않는다.
-표 값(배상비율표, 평균 내용연수표, 20배)은 규칙 JSON(LaundryRule)에서 읽는다.
+표 값(배상비율표, 평균 내용연수표, 20배, Set 배분 비율)은 규칙 JSON(LaundryRule)에서 읽는다.
+
+복원 기능은 features로 켠다 (MVP_SPEC 12.10). 지금 아는 이름은 SET_PARTIAL("set_partial", R2 Set 일부
+손상·분실 배분 계산)뿐이다. 꺼져 있으면 12.1~12.9(축소 A) 그대로 동작한다 (승인 L4 ❔ 유지).
+API는 운영 설정 ENABLED_FEATURES(api/settings.py)를 읽어 넘긴다.
 """
 
+from collections.abc import Collection
 from datetime import date
+from fractions import Fraction
 from itertools import product
 from typing import Literal
 
@@ -34,14 +40,24 @@ SET_PARTS: dict[str, tuple[str, ...]] = {
     "top_mid_bottom": ("top", "mid", "bottom"),
     "hanbok": ("top", "bottom"),
 }
+# 복원 기능 이름 (MVP_SPEC 12.10)
+SET_PARTIAL = "set_partial"
+# 한복류 행 (평균 내용연수표 rows[].id). 한복류 행은 Set 유형 none/hanbok만, 그 밖의 행은
+# none/top_bottom/top_mid_bottom만 받는다 (R2 Q5 (c)+(a), 2026-11-15).
+HANBOK_ROW_ID = "hanbok"
+HANBOK_SET_TYPES = ("none", "hanbok")
+OTHER_SET_TYPES = ("none", "top_bottom", "top_mid_bottom")
 
 USE_DAYS_NOTE = "구입일은 세지 않음(고시에 규정 없음)"
 FLOOR_NOTE = "원 미만 내림(고시에 규정 없음)"
 
 Method = Literal["ratio", "fallback"]
-Decision = Literal["use_days", "rounding"]
+Decision = Literal["use_days", "rounding", "set_partial_damage"]
 UseDays = Literal["D0", "D1"]
 Rounding = Literal["floor", "half_up"]
+Scope = Literal["allocate", "whole_set"]
+SetPart = Literal["top", "mid", "bottom"]
+DECISION_ORDER: tuple[Decision, ...] = ("use_days", "rounding", "set_partial_damage")
 
 
 class _Model(BaseModel):
@@ -65,6 +81,11 @@ class LaundryInput(_Model):
     laundry_fee: int | None = None
     set_type: Literal["none", "top_bottom", "top_mid_bottom", "hanbok"] = "none"
     set_part: Literal["top", "mid", "bottom", "whole"] | None = None
+    # R2(set_partial)를 켰을 때만 쓰는 입력 (12.10 R2, 2026-11-15). 폼으로만 받고 문장 분석 대상이 아니다.
+    # 꺼져 있을 때 값이 오면 INVALID_INPUT. 켜져 있을 때는 set_part 대신 damaged_parts를 쓴다.
+    hanbok_kind: Literal["chima_jeogori", "baji_jeogori"] | None = None
+    damaged_parts: list[SetPart] | None = None
+    set_partial_request: bool | None = None
     attachment_only: bool | None = None
     special_agreement: bool | None = None
     customer_partial_fault: bool | None = None
@@ -94,6 +115,18 @@ class Lookup(_Model):
     life_years: int
     band: Band
     amount: int
+
+
+class SetBasis(_Model):
+    """Set 배분 (R2). share_percent는 손상된 벌의 비율 합(규칙 JSON set_allocation), 모든 벌이면 100.
+
+    whole_set_check: 1벌 전체(6.①) 대안을 결정 민감도 검사에 넣는지 (배분을 쓰고 set_partial_request가
+    True가 아닐 때만, R2 Q1 (a)·Q2 (a)).
+    """
+
+    share_percent: int
+    allocated: bool
+    whole_set_check: bool
 
 
 class Sensitivity(_Model):
@@ -131,6 +164,14 @@ class LaundryResult(_Model):
     missing: list[str]
     notices: list[LaundryNotice]
     citations: list[str]
+    # R2(set_partial) 출력 (보고서 vs4_restore_r2_cases.md 3.2, Q13 (a)). 꺼져 있거나 Set이 아니면 None.
+    set_type: str | None = None
+    hanbok_kind: str | None = None
+    damaged_parts: list[str] | None = None
+    set_share_percent: int | None = None
+    set_base_raw: str | None = (
+        None  # 원 미만 처리 전 배분 기준 가격 (구입가격 × 비율 합 ÷ 100)
+    )
 
 
 # ---- 범위 판정 ----
@@ -140,12 +181,58 @@ def _set_part_in_set(inp: LaundryInput) -> bool:
     return inp.set_part in SET_PARTS.get(inp.set_type, ())
 
 
-def _missing(inp: LaundryInput, rule: LaundryRule) -> list[str]:
+def _r2(features: Collection[str]) -> bool:
+    return SET_PARTIAL in features
+
+
+def _r2_fields_given(inp: LaundryInput) -> bool:
+    return (
+        inp.hanbok_kind is not None
+        or inp.damaged_parts is not None
+        or inp.set_partial_request is not None
+    )
+
+
+def _partial(inp: LaundryInput) -> bool:
+    """손상 벌이 모두 그 Set의 벌이고, 전부는 아님 (보고서 3.3 순서 5-2. 중복은 집합으로 본다)."""
+    parts = SET_PARTS.get(inp.set_type)
+    if parts is None or not inp.damaged_parts:
+        return False
+    chosen = set(inp.damaged_parts)
+    return chosen < set(parts)
+
+
+def _all_parts(inp: LaundryInput) -> bool:
+    parts = SET_PARTS.get(inp.set_type)
+    return (
+        parts is not None
+        and bool(inp.damaged_parts)
+        and set(inp.damaged_parts) == set(parts)
+    )
+
+
+def _missing_r2(inp: LaundryInput, missing: set[str]) -> None:
+    """R2 누락 (보고서 3.3 순서 8): 손상 벌, 그리고 입증 가능 + 부분 손상이면 set_partial_request."""
+    if inp.set_type == "none":
+        return
+    if inp.set_type == "hanbok" and inp.hanbok_kind is None:
+        missing.add("hanbok_kind")
+    if not inp.damaged_parts:
+        missing.add("damaged_parts")
+    elif inp.proof_available and _partial(inp) and inp.set_partial_request is None:
+        missing.add("set_partial_request")
+
+
+def _missing(
+    inp: LaundryInput, rule: LaundryRule, features: Collection[str] = ()
+) -> list[str]:
     """12.2 누락 판정. 입증 가능 여부를 모르면 그것만 묻는다."""
     if inp.proof_available is None:
         return ["proof_available"]
     missing: set[str] = set()
-    if inp.set_type != "none" and inp.set_part is None:
+    if _r2(features):
+        _missing_r2(inp, missing)
+    elif inp.set_type != "none" and inp.set_part is None:
         missing.add("set_part")
     if inp.proof_available:
         if inp.item_key is None:
@@ -163,16 +250,40 @@ def _missing(inp: LaundryInput, rule: LaundryRule) -> list[str]:
     return sorted(missing, key=order.index)
 
 
-def _invalid(inp: LaundryInput, rule: LaundryRule) -> bool:
-    """12.1 입력 검증. 계산 경로에서 쓰는 값만 본다."""
-    if inp.provider_offer is not None and inp.provider_offer < 0:
+def _invalid_set_r2(inp: LaundryInput) -> bool:
+    """R2 입력 검증 (보고서 3.3 순서 9): set_part 대신 damaged_parts, 중복·Set에 없는 벌."""
+    if inp.set_part is not None:
+        return True
+    if inp.set_type == "none":
+        return inp.hanbok_kind is not None or inp.damaged_parts is not None
+    if inp.set_type != "hanbok" and inp.hanbok_kind is not None:
+        return True
+    parts = inp.damaged_parts or []
+    if len(parts) != len(set(parts)):
+        return True
+    return not set(parts) <= set(SET_PARTS[inp.set_type])
+
+
+def _invalid_set_off(inp: LaundryInput) -> bool:
+    """축소 A(R2 꺼짐) 입력 검증. R2 입력이 오면 입력 오류 (R1 Q9와 같은 방식)."""
+    if _r2_fields_given(inp):
         return True
     if inp.set_type != "none" and inp.set_part not in (
         *SET_PARTS[inp.set_type],
         "whole",
     ):
         return True
-    if inp.set_type == "none" and inp.set_part is not None:
+    return inp.set_type == "none" and inp.set_part is not None
+
+
+def _invalid(
+    inp: LaundryInput, rule: LaundryRule, features: Collection[str] = ()
+) -> bool:
+    """12.1 입력 검증. 계산 경로에서 쓰는 값만 본다."""
+    if inp.provider_offer is not None and inp.provider_offer < 0:
+        return True
+    r2 = _r2(features)
+    if _invalid_set_r2(inp) if r2 else _invalid_set_off(inp):
         return True
     if not inp.proof_available:
         return inp.laundry_fee is not None and inp.laundry_fee <= 0
@@ -183,14 +294,25 @@ def _invalid(inp: LaundryInput, rule: LaundryRule) -> bool:
     row = rule.lifespan_table.row(inp.item_key)
     if row is None:
         return True
+    if r2:
+        # Set 유형과 품목 행이 맞지 않음 (R2 Q5 (c)+(a))
+        allowed = HANBOK_SET_TYPES if row.id == HANBOK_ROW_ID else OTHER_SET_TYPES
+        if inp.set_type not in allowed:
+            return True
     if row.variants is None:
         # 값이 하나인 행의 variant_key는 무시한다 (결과가 같다, 12.1 Q4 변경)
         return False
     return inp.variant_key is None or row.variant(inp.variant_key) is None
 
 
-def check_scope(inp: LaundryInput, rule: LaundryRule) -> LaundryScope:
-    """MVP_SPEC 12.2 판정 순서 1~9. 먼저 걸리는 것이 이긴다."""
+def check_scope(
+    inp: LaundryInput, rule: LaundryRule, features: Collection[str] = ()
+) -> LaundryScope:
+    """MVP_SPEC 12.2 판정 순서 1~9. 먼저 걸리는 것이 이긴다.
+
+    R2를 켜면 순서 5가 바뀐다 (보고서 3.3): 입증 가능 Set 일부는 계산하고, 입증 불가 Set 일부는
+    ❔ SET_PARTIAL_FALLBACK_UNDEFINED. ③ 밖 한복 조합(5-1)은 이번 범위 밖이라 입력으로 받지 않는다.
+    """
 
     def stop(
         code: LaundryCode | None, missing: list[str] | None = None
@@ -205,16 +327,19 @@ def check_scope(inp: LaundryInput, rule: LaundryRule) -> LaundryScope:
         return stop(L.UNSUPPORTED_DAMAGE)
     if inp.manufacturing_cause_claimed is True:
         return stop(L.MANUFACTURING_CAUSE)
-    if inp.set_type != "none" and _set_part_in_set(inp):
+    if _r2(features):
+        if _partial(inp) and inp.proof_available is False:
+            return stop(L.SET_PARTIAL_FALLBACK_UNDEFINED)
+    elif inp.set_type != "none" and _set_part_in_set(inp):
         return stop(L.SET_PARTIAL_UNSUPPORTED)
     if inp.attachment_only is True:
         return stop(L.ATTACHMENT_UNSUPPORTED)
     if inp.proof_available is True and inp.item_unlisted:
         return stop(L.ITEM_NOT_IN_TABLE)
-    missing = _missing(inp, rule)
+    missing = _missing(inp, rule, features)
     if missing:
         return stop(C.MISSING_REQUIRED, missing)
-    if _invalid(inp, rule):
+    if _invalid(inp, rule, features):
         return stop(C.INVALID_INPUT)
     return stop(None)
 
@@ -240,18 +365,47 @@ def life_years(inp: LaundryInput, rule: LaundryRule) -> int:
     return variant.years
 
 
-def _amount(price: int, ratio_percent: int, rounding: Rounding) -> int:
-    """구입가격 × 배상비율 ÷ 100. 정수 곱 뒤 한 번만 원 미만 처리."""
-    numerator = price * ratio_percent
+def _amount(
+    price: int, ratio_percent: int, rounding: Rounding, share_percent: int = 100
+) -> int:
+    """구입가격 × 비율 합 × 배상비율 ÷ 10,000. 정수 곱 뒤 마지막에 한 번만 원 미만 처리.
+
+    Set이 아니거나 모든 벌이면 비율 합 100이라 구입가격 × 배상비율 ÷ 100과 같다.
+    """
+    numerator = price * share_percent * ratio_percent
     if rounding == "floor":
-        return numerator // 100
-    return div_round_half_up(numerator, 100)
+        return numerator // 10_000
+    return div_round_half_up(numerator, 10_000)
+
+
+def set_basis(
+    inp: LaundryInput, rule: LaundryRule, features: Collection[str] = ()
+) -> SetBasis | None:
+    """R2 Set 배분 (보고서 3.1). 비율은 규칙 JSON set_allocation.shares_percent에서만 읽는다.
+
+    R2가 꺼져 있거나 Set이 아니면 None (기존 계산 그대로).
+    """
+    if not _r2(features) or inp.set_type == "none" or not inp.damaged_parts:
+        return None
+    if _all_parts(inp):
+        # 모든 벌: 1벌 전체(6.①), 범위 결정 없음. set_partial_request는 무시한다 (Q15 (a))
+        return SetBasis(share_percent=100, allocated=False, whole_set_check=False)
+    shares = rule.set_allocation.shares_percent[inp.set_type]
+    return SetBasis(
+        share_percent=sum(shares[p] for p in inp.damaged_parts),
+        allocated=True,
+        whole_set_check=inp.set_partial_request is not True,
+    )
 
 
 def lookup(
-    inp: LaundryInput, rule: LaundryRule, days_mode: UseDays, rounding: Rounding
+    inp: LaundryInput,
+    rule: LaundryRule,
+    days_mode: UseDays,
+    rounding: Rounding,
+    share_percent: int = 100,
 ) -> Lookup:
-    """한 조합(사용일수 산입 × 원 미만 처리)으로 조회하고 배상액을 계산한다."""
+    """한 조합(사용일수 산입 × 원 미만 처리 × 비율 합)으로 조회하고 배상액을 계산한다."""
     assert inp.purchase_date and inp.request_date and inp.purchase_price
     days = use_days(inp.purchase_date, inp.request_date) + (days_mode == "D1")
     life = life_years(inp, rule)
@@ -259,29 +413,63 @@ def lookup(
     return Lookup(
         life_years=life,
         band=band,
-        amount=_amount(inp.purchase_price, band.ratio_percent, rounding),
+        amount=_amount(inp.purchase_price, band.ratio_percent, rounding, share_percent),
     )
 
 
-def sensitivity(inp: LaundryInput, rule: LaundryRule) -> tuple[Lookup, Sensitivity]:
-    """결정 민감도 검사 (12.4). 결정 값 결과와 4조합 검사 결과를 돌려준다."""
-    combos: dict[tuple[UseDays, Rounding], Lookup] = {
-        (d, r): lookup(inp, rule, d, r)
-        for d, r in product(("D0", "D1"), ("floor", "half_up"))
+Combo = tuple[UseDays, Rounding, Scope]
+_BASE_COMBO: Combo = ("D0", "floor", "allocate")
+
+
+def _flip(combo: Combo, decision: Decision) -> Combo:
+    d, r, s = combo
+    if decision == "use_days":
+        return ("D1" if d == "D0" else "D0", r, s)
+    if decision == "rounding":
+        return (d, "half_up" if r == "floor" else "floor", s)
+    return (d, r, "whole_set" if s == "allocate" else "allocate")
+
+
+def _changed(combo: Combo) -> list[Decision]:
+    """결정 값 조합과 다른 결정 (DECISION_ORDER 순서)."""
+    return [
+        x for x, a, b in zip(DECISION_ORDER, combo, _BASE_COMBO, strict=True) if a != b
+    ]
+
+
+def sensitivity(
+    inp: LaundryInput, rule: LaundryRule, basis: SetBasis | None = None
+) -> tuple[Lookup, Sensitivity]:
+    """결정 민감도 검사 (12.4). 결정 값 결과와 4 또는 8조합 검사 결과를 돌려준다.
+
+    결정: 사용일수 산입(D0/D1) × 원 미만 처리(내림/half up) × 범위(배분/1벌 전체, R2 배분을 쓰고
+    set_partial_request가 True가 아닐 때만). 원인은 12.4 4번 문장 그대로: 그 결정 하나만 대안으로
+    바꿨을 때 결과가 달라지는 결정. 어느 결정도 혼자서는 바꾸지 않고 함께 바꿀 때만 달라지면,
+    결과가 달라지는 조합에서 바꾼 결정을 모두 적는다.
+    """
+    share = basis.share_percent if basis is not None else 100
+    scopes: tuple[Scope, ...] = (
+        ("allocate", "whole_set")
+        if basis is not None and basis.whole_set_check
+        else ("allocate",)
+    )
+    combos: dict[Combo, Lookup] = {
+        (d, r, s): lookup(inp, rule, d, r, share if s == "allocate" else 100)
+        for d, r, s in product(("D0", "D1"), ("floor", "half_up"), scopes)
     }
-    base = combos[("D0", "floor")]
+    base = combos[_BASE_COMBO]
 
-    def differs(x: Lookup) -> bool:
-        return x != base  # 내용연수 행·칸·배상액 중 하나라도 다르면
+    def differs(combo: Combo) -> bool:
+        # 내용연수 행·칸·배상액 중 하나라도 다르면 (조합에 없는 대안은 같다고 본다)
+        return combo in combos and combos[combo] != base
 
-    causes: list[Decision] = []
-    if differs(combos[("D1", "floor")]):
-        causes.append("use_days")
-    if differs(combos[("D0", "half_up")]):
-        causes.append("rounding")
-    if not causes and differs(combos[("D1", "half_up")]):
-        causes = ["use_days", "rounding"]
-    alt = combos[("D1", "floor")].band
+    causes: list[Decision] = [
+        x for x in DECISION_ORDER if differs(_flip(_BASE_COMBO, x))
+    ]
+    if not causes:
+        together = {x for c in combos if differs(c) for x in _changed(c)}
+        causes = [x for x in DECISION_ORDER if x in together]
+    alt = combos[("D1", "floor", "allocate")].band
     amounts = [x.amount for x in combos.values()]
     return base, Sensitivity(
         min=min(amounts),
@@ -293,11 +481,16 @@ def sensitivity(inp: LaundryInput, rule: LaundryRule) -> tuple[Lookup, Sensitivi
     )
 
 
-def _blocks_verified(rule: LaundryRule, method: Method) -> bool:
-    """결과가 쓰는 블록만 본다 (12.4)."""
+def _blocks_verified(
+    rule: LaundryRule, method: Method, basis: SetBasis | None = None
+) -> bool:
+    """결과가 쓰는 블록만 본다 (12.4). Set 배분을 쓰면 set_allocation도 본다."""
     if method == "fallback":
         return rule.unproven_fallback.verified
-    return rule.ratio_table.verified and rule.lifespan_table.verified
+    tables = rule.ratio_table.verified and rule.lifespan_table.verified
+    if basis is not None and basis.allocated:
+        return tables and rule.set_allocation.verified
+    return tables
 
 
 def _deduction_claims(inp: LaundryInput) -> list[LaundryCode]:
@@ -343,14 +536,19 @@ def _citations(
     flags: list[LaundryCode],
     notices: list[LaundryNotice],
     method: Method | None,
+    basis: SetBasis | None = None,
 ) -> list[str]:
-    """근거 조항 ID (12.7)."""
+    """근거 조항 ID (12.7). R2: Set이면 laundry_6, 배분을 썼으면 바로 뒤에 laundry_7 (Q12 (a)+(b))."""
     ids: list[str] = []
     if method is not None:
         ids += ["laundry_types", "laundry_1", "laundry_5_1", "cpa16_3"]
         if method == "ratio":
             ids += ["laundry_ratio_table", "laundry_lifespan_table"]
-        if inp.set_type != "none" and inp.set_part == "whole":
+        if basis is not None:
+            ids.append("laundry_6")
+            if basis.allocated:
+                ids.append("laundry_7")
+        elif inp.set_type != "none" and inp.set_part == "whole":
             ids.append("laundry_6")
         if L.PARTIAL_FAULT_CLAIMED in flags or L.DAMAGED_ITEM_RETURN in flags:
             ids.append("laundry_2")
@@ -368,13 +566,15 @@ def _citations(
             if code in notices and _terms_citable(rule, cid)
         ]
     else:
-        by_code = {
-            L.UNSUPPORTED_DAMAGE: "laundry_types",
-            L.SET_PARTIAL_UNSUPPORTED: "laundry_7",
-            L.ATTACHMENT_UNSUPPORTED: "laundry_8",
-            L.ITEM_NOT_IN_TABLE: "cpa_dec9_2",
+        by_code: dict[LaundryCode, tuple[str, ...]] = {
+            L.UNSUPPORTED_DAMAGE: ("laundry_types",),
+            L.SET_PARTIAL_UNSUPPORTED: ("laundry_7",),
+            # 20배(5-1.③)와 배분(7.)의 관계가 정해져 있지 않다는 근거 (보고서 3.2, Q19 (a))
+            L.SET_PARTIAL_FALLBACK_UNDEFINED: ("laundry_5_1", "laundry_7"),
+            L.ATTACHMENT_UNSUPPORTED: ("laundry_8",),
+            L.ITEM_NOT_IN_TABLE: ("cpa_dec9_2",),
         }
-        ids += [by_code[f] for f in flags if f in by_code]
+        ids += [cid for f in flags for cid in by_code.get(f, ())]
     unique = list(dict.fromkeys(ids))
     unknown = set(unique) - rule.clause_ids
     if unknown:
@@ -391,8 +591,57 @@ def _band_text(band: Band) -> str:
     return f"{_won(band.min_days)}~{upper}일"
 
 
+PART_LABELS: dict[str, str] = {"top": "상의", "mid": "중의", "bottom": "하의"}
+# 한복 배정 (보고서 3.1 [해석], Q7 (a)): 저고리 = 상의, 치마·바지 = 하의
+HANBOK_PART_LABELS: dict[str, dict[str, str]] = {
+    "chima_jeogori": {"top": "저고리(상의)", "bottom": "치마(하의)"},
+    "baji_jeogori": {"top": "저고리(상의)", "bottom": "바지(하의)"},
+}
+
+
+def part_labels(inp: LaundryInput) -> list[str]:
+    """손상 벌 이름 (입력 순서 그대로). 숫자는 없다."""
+    names = (
+        HANBOK_PART_LABELS[inp.hanbok_kind]
+        if inp.set_type == "hanbok" and inp.hanbok_kind is not None
+        else PART_LABELS
+    )
+    return [names[p] for p in inp.damaged_parts or []]
+
+
+def set_base_raw(price: int, share_percent: int) -> str:
+    """원 미만 처리 전 배분 기준 가격 = 구입가격 × 비율 합 ÷ 100 (정확한 소수 문자열, 정수 연산)."""
+    value = Fraction(price * share_percent, 100)
+    whole, rem = divmod(value.numerator, value.denominator)
+    if rem == 0:
+        return str(whole)
+    cents = (
+        rem * 100 // value.denominator
+    )  # 분모가 100의 약수라 소수 둘째 자리에서 끝난다
+    return f"{whole}.{cents:02d}".rstrip("0")
+
+
+def _set_step(inp: LaundryInput, basis: SetBasis) -> LaundryStep:
+    assert inp.purchase_price is not None
+    names = "·".join(part_labels(inp))
+    if not basis.allocated:
+        formula = (
+            f"Set 구입가격 {_won(inp.purchase_price)} 전체 (모든 벌 {names}, 고시 6.①)"
+        )
+    else:
+        formula = (
+            f"Set 구입가격 {_won(inp.purchase_price)} × {names} {basis.share_percent}% "
+            "(고시 7. 배분 비율, 원 미만 처리는 마지막에 한 번)"
+        )
+    return LaundryStep(label="Set 배분", formula=formula, amount=None)
+
+
 def _ratio_steps(
-    inp: LaundryInput, rule: LaundryRule, base: Lookup, sens: Sensitivity
+    inp: LaundryInput,
+    rule: LaundryRule,
+    base: Lookup,
+    sens: Sensitivity,
+    basis: SetBasis | None = None,
 ) -> list[LaundryStep]:
     assert inp.purchase_date and inp.request_date and inp.purchase_price
     assert inp.item_key is not None
@@ -422,14 +671,26 @@ def _ratio_steps(
             f"{_band_text(base.band)} 칸 {base.band.ratio_percent}% (배상비율표)",
             amount=None,
         ),
-        LaundryStep(
-            label="배상액",
-            formula=f"{_won(inp.purchase_price)} × {base.band.ratio_percent}%, {FLOOR_NOTE}",
-            amount=base.amount,
-        ),
     ]
+    if basis is not None and basis.allocated:
+        steps.append(_set_step(inp, basis))
+        formula = (
+            f"{_won(inp.purchase_price)} × {basis.share_percent}% × "
+            f"{base.band.ratio_percent}%, {FLOOR_NOTE}"
+        )
+    else:
+        if basis is not None:
+            steps.append(_set_step(inp, basis))
+        formula = (
+            f"{_won(inp.purchase_price)} × {base.band.ratio_percent}%, {FLOOR_NOTE}"
+        )
+    steps.append(LaundryStep(label="배상액", formula=formula, amount=base.amount))
     if sens.sensitive:
-        names = {"use_days": "사용일수 산입", "rounding": "원 미만 처리"}
+        names = {
+            "use_days": "사용일수 산입",
+            "rounding": "원 미만 처리",
+            "set_partial_damage": "Set 배분",
+        }
         cause = "·".join(names[c] for c in sens.causes)
         steps.append(
             LaundryStep(
@@ -450,9 +711,31 @@ def _ratio_steps(
     return steps
 
 
-def calculate_damage(inp: LaundryInput, rule: LaundryRule) -> LaundryResult:
-    """범위 판정 → 계산 → 민감도 검사 → 제시액 비교 → 배지 (MVP_SPEC 12.2~12.7)."""
-    scope = check_scope(inp, rule)
+def _set_outputs(
+    inp: LaundryInput, basis: SetBasis | None, features: Collection[str]
+) -> dict[str, object]:
+    """R2 출력 필드 (보고서 3.2). R2가 꺼져 있거나 Set이 아니면 모두 None."""
+    if not _r2(features) or inp.set_type == "none":
+        return {}
+    out: dict[str, object] = {
+        "set_type": inp.set_type,
+        "hanbok_kind": inp.hanbok_kind,
+        "damaged_parts": list(inp.damaged_parts) if inp.damaged_parts else None,
+    }
+    if basis is not None and inp.purchase_price is not None and inp.proof_available:
+        out["set_share_percent"] = basis.share_percent
+        out["set_base_raw"] = set_base_raw(inp.purchase_price, basis.share_percent)
+    return out
+
+
+def calculate_damage(
+    inp: LaundryInput, rule: LaundryRule, features: Collection[str] = ()
+) -> LaundryResult:
+    """범위 판정 → 계산 → 민감도 검사 → 제시액 비교 → 배지 (MVP_SPEC 12.2~12.7, R2 12.10).
+
+    features에 SET_PARTIAL이 있으면 Set 일부 손상을 배분으로 계산한다. 없으면 축소 A 그대로.
+    """
+    scope = check_scope(inp, rule, features)
     if scope.stop_code is not None:
         flags: list[LaundryCode] = [scope.stop_code]
         return LaundryResult(
@@ -481,17 +764,19 @@ def calculate_damage(inp: LaundryInput, rule: LaundryRule) -> LaundryResult:
             missing=scope.missing,
             notices=[],
             citations=_citations(inp, rule, flags, [], None),
+            **_set_outputs(inp, None, features),  # type: ignore[arg-type]
         )
 
     method: Method = "ratio" if inp.proof_available else "fallback"
+    basis = set_basis(inp, rule, features)
     base: Lookup | None = None
     if method == "ratio":
-        base, sens = sensitivity(inp, rule)
+        base, sens = sensitivity(inp, rule, basis)
         amount = base.amount
         assert inp.purchase_date and inp.request_date
         days: int | None = use_days(inp.purchase_date, inp.request_date)
         fallback_amount = None
-        steps = _ratio_steps(inp, rule, base, sens)
+        steps = _ratio_steps(inp, rule, base, sens, basis)
     else:
         assert inp.laundry_fee is not None
         multiplier = rule.unproven_fallback.laundry_fee_multiplier
@@ -508,7 +793,7 @@ def calculate_damage(inp: LaundryInput, rule: LaundryRule) -> LaundryResult:
         ]
 
     claims = _deduction_claims(inp)
-    verified = _blocks_verified(rule, method)
+    verified = _blocks_verified(rule, method, basis)
     robust: list[LaundryCode] = []
     if (
         inp.provider_offer is not None
@@ -550,5 +835,6 @@ def calculate_damage(inp: LaundryInput, rule: LaundryRule) -> LaundryResult:
         flags=flags,
         missing=[],
         notices=notices,
-        citations=_citations(inp, rule, flags, notices, method),
+        citations=_citations(inp, rule, flags, notices, method, basis),
+        **_set_outputs(inp, basis, features),  # type: ignore[arg-type]
     )
