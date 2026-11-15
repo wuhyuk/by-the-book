@@ -501,7 +501,7 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 | `POST /api/calculate` | 확정된 필드 → 계산 결과(`refund`, `steps`, `badge`, `source`) |
 | `POST /api/guide` | `/api/calculate`와 같은 본문 → 서버가 다시 계산한 결과로 설명 문장·업체용 문안·근거 조항 (`backend/guide/`, LLM 없음, 템플릿) [결정 2026-11-11 사용자]. ❔·계산 안 함이면 업체용 문안 `null`. 계산했어도 결과에 `RULE_UNVERIFIED`(원문 확인이 끝나지 않은 값)가 있으면 업체용 문안 `null`, 설명의 확인 목록은 그대로 [결정 2026-11-13 사용자]. 인용은 엔진이 정한 조항 ID의 카드만 쓰므로 검색 결과에 없는 조항을 인용할 수 없다 (절대 규칙 7) |
 | `POST /api/calculate?item=appliance`, `POST /api/guide?item=appliance`, `GET /api/appliance/items` | 가전 P2 (13절). `ENABLED_FEATURES`에 `appliance`가 있을 때만. 꺼져 있으면 지금과 같은 응답(`item` 쿼리 422 `literal_error`, items 404) [결정 2026-11-15 사용자] |
-| `GET /api/config` | `{analyze_enabled, survey_url, enabled_features}`. `enabled_features` = `ENABLED_FEATURES`(쉼표 구분)에서 아는 이름만 (`set_partial` 12.10, `appliance` 13절, `offer_gap`·`next_steps`·`rag` 14절) [결정 2026-11-15 사용자]. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
+| `GET /api/config` | `{analyze_enabled, survey_url, enabled_features}`. `enabled_features` = `ENABLED_FEATURES`(쉼표 구분)에서 아는 이름만 (`set_partial` 12.10, `appliance` 13절, `offer_gap`·`next_steps`·`rag` 14절, `llm_resilience` 16절) [결정 2026-11-15 사용자]. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
 | `GET /api/sources/{id}` | 조항 ID → 원문·라벨·출처·기준일·`verified`·`user_checked`·`rule_ids` (14.3, 플래그 없음, 읽기 전용). ID는 `[a-z0-9_]{1,64}`만(그 밖 422), 없는 ID는 404 `{"message": "해당 조항 ID를 찾을 수 없습니다."}` [2026-11-16] |
 | `GET /healthz` | 배포 헬스체크 `{"status": "ok"}` (외부 호출 없음). 그 밖의 `/api` 밖 경로는 화면(`frontend/dist`, SPA 폴백), 없는 `/api/*`는 404 JSON (`docs/DEPLOY.md`) |
 
@@ -559,7 +559,7 @@ VS2 기본값 [결정 2026-11-06, 사용자가 바꾸기 전까지 적용]:
 VS3 결정 [2026-11-08 사용자, 근거·결과는 `docs/sources/vs3_report.md`]:
 - 문장 분석은 폼을 새로 채우지 않는다. 비어 있는 칸(또는 이전 분석·기본값으로 채워진 칸)만 문장 값으로 채우고, 사용자가 직접 입력한 값은 유지한다. 문장 값이 다르면 덮어쓰지 않고 "문장에서는 X로 보입니다"로 표시한다.
 - 문장 입력창 바로 아래 상시 문구: "이름·연락처·주소는 입력하지 마세요. 입력한 문장은 외부 AI 서비스(Google)로 전달되며 서비스 개선에 쓰일 수 있습니다. 폼에 직접 입력하는 값은 전달되지 않습니다"
-- 429 처리: 1회 재시도(Retry-After를 따름) → 예비 모델(`LLM_FALLBACK_MODEL`, 기본 비움) 1회 → 실패하면 "잠시 후 다시 시도하거나 폼에 직접 입력" 안내. 무한 재시도 금지. 폼 입력은 항상 쓸 수 있다.
+- 429 처리: 1회 재시도(Retry-After를 따름) → 예비 모델(`LLM_FALLBACK_MODEL`, 기본 비움) 1회 → 실패하면 "잠시 후 다시 시도하거나 폼에 직접 입력" 안내. 무한 재시도 금지. 폼 입력은 항상 쓸 수 있다. 429가 아닌 일시 오류(500·502·503·504, 시간 초과, 연결 실패) 처리는 기능 플래그 `llm_resilience` 뒤에 16절 [결정 2026-11-16 사용자].
 - 호출 간격은 코드가 지킨다 (`LLM_MAX_RPM`, 기본 12, 모델별 무료 한도 RPM 15보다 낮게).
 - 예/아니오 추출값은 필드별 단서 낱말(`backend/llm/grounding.py` `BOOL_CUE_RULES`)과 값의 뜻이 근거 구절에서 확인될 때만 채택한다. 확인되지 않으면 버리지 않고 되묻는다. 계산을 멈추게 하는(❔) 추출값은 채택해도 폼에서 확인을 받는다 [D1 승인 2026-11-08, `vs3_report.md` 4.5·4.6].
 - 개발 중 실제 키 호출은 사용자가 직접 실행하는 스크립트로만 한다. 테스트는 가짜 키로 돈다. 일일 호출 예산은 `vs3_report.md` 4.3.
@@ -1044,3 +1044,39 @@ u = 구입일(인도일)부터 수리 접수일까지 완전한 개월 (D-2, D-3
 - 스크립트(표준 라이브러리만): hit@1·hit@3, 기준선(업종 필터만, 조항 앞쪽 k개)과 비교. pytest 임계값은 두지 않는다.
 - pytest는 합성 미니 코퍼스로 성질만 검사한다 (결정성, 업종 필터, k 상한, 반환 ID가 코퍼스에 있음, 후보 밖 ID 폐기, 마스킹 후 입력, 꺼짐 상태 불변).
 
+## 16. 문장 분석 일시 오류 처리 (`llm_resilience`) [결정 2026-11-16 사용자]
+
+> 기능 플래그 `llm_resilience` (`ENABLED_FEATURES`, `docs/DEPLOY.md` 4.9). 기본 꺼짐. 꺼져 있으면 호출 동작(429만 재시도·예비 모델), 호출 시간 제한 60초, 응답·문구가 변경 전과 같다. `/api/analyze`에만 걸리고 `/api/calculate`·`/api/guide`, `ANALYZE_ENABLED=false` 503, 하루 상한 429, 가드레일 경로는 바뀌지 않는다.
+> 배경: 2026-11-16 배포 서버 실측(rag 켜짐, 문장 7개 6초 간격)에서 6건 실패. 5건이 502 `http_error`(Gemini 대시보드 같은 날 503 약 5건, 429 없음), 1건은 클라이언트 60초 제한. 기존 코드는 429만 재시도·예비 모델로 넘겨 503에서는 예비 모델이 한 번도 쓰이지 않았다.
+
+### 16.1 켜짐 동작 (`backend/llm/resilience.py`)
+
+- 재시도 대상: `LLMError.status`가 500·502·503·504인 HTTP 오류, `TIMEOUT`, `NETWORK`. 그 밖(400·401·403·404 등, `BAD_RESPONSE`, `BLOCKED`, 스키마 검증 실패, `DAILY_LIMIT`)은 재시도·예비 모델 없이 지금처럼 502(또는 해당 응답).
+- 시도는 모두 합쳐 2회. 두 번째 시도는 예비 모델(`LLM_FALLBACK_MODEL`)이 있으면 예비 모델, 없으면 같은 모델. 시도 사이 1~2초(균등 난수 지터).
+- 429: 기존 순서 그대로 (첫 시도가 429면 기본 재시도 → 예비 모델). 두 번째 시도(일시 오류 뒤)가 429면 그 429를 그대로 올리고 429 재시도를 다시 시작하지 않는다. 429 경로 안에서 난 일시 오류도 기존처럼 그대로 올린다.
+- 호출 하나의 시간 제한: `LLM_TIMEOUT_SECONDS` (기본 20초, 1~50 밖이거나 숫자가 아니면 기본값 + 설정 이름만 경고). 켜짐일 때만 쓴다.
+- 전체 대기 상한 `TOTAL_BUDGET_SECONDS = 50` (상수): 두 번째 시도는 `50 − 첫 시도 시작부터 지난 시간 − 지터 대기 − 두 번째 모델의 호출 간격 제한 대기 ≥ 호출 시간 제한`일 때만 시작한다. 아니면 첫 오류를 올린다. 첫 시도의 호출 간격 제한 대기는 지난 시간에 들어간다.
+- 카운터: 재시도·예비 모델 호출도 호출 간격 제한과 하루 상한에 1회씩 센다 (변경 없음).
+- 사용자 문구: 마지막 오류가 일시 오류(위 대상)인 502의 `message`를 "AI 서비스가 일시적으로 바쁩니다. 잠시 후 다시 시도하거나 아래 입력 폼에 직접 입력해 주세요."로 둔다 [승인 2026-11-16]. `code`는 그대로(`http_error`·`timeout`·`network`). 그 밖의 502는 기존 문구. 화면은 서버 `message`를 그대로 보여 준다 (`frontend/src/api.ts`).
+
+### 16.2 로그 (플래그와 무관, `backend/main.py` `configure_logging`)
+
+- 앱 로거 `by_the_book`에 표준 출력 핸들러, 레벨 INFO, 형식 `%(asctime)s %(levelname)s %(name)s %(message)s`.
+- 시도마다: `LLM 시도 실패: kind=<종류> status=<HTTP 상태 또는 -> attempt=<번호> role=<primary|fallback> elapsed=<초>s` (WARNING), `LLM 시도 성공: attempt=<번호> role=<역할> elapsed=<초>s` (INFO). 429 경로는 시도가 3번까지라 `attempt`가 3일 수 있다.
+- 요청 끝: `LLM 호출 실패: <종류> (status=<상태 또는 ->)` (`api/analyze.py`).
+- 스키마 검증 실패: `LLM 응답 검증 실패: fields=<위치>` — 스키마에 있는 이름만, 낯선 키는 `?` (`backend/llm/validation_log.py`).
+- 입력 문장·응답 본문·키·모델 이름은 남기지 않는다 (CLAUDE.md 절대 규칙 6).
+
+### 16.3 최악 대기 시간 (켜짐, 기본값)
+
+| 구간 | 초 |
+|---|---|
+| 첫 시도 호출 간격 제한 대기 (60 ÷ 12) | 최대 5 |
+| 첫 시도 (시간 제한) | 최대 20 |
+| 지터 대기 | 1~2 |
+| 두 번째 시도 호출 간격 제한 대기 | 최대 5 (예비 모델은 따로 세어 보통 0) |
+| 두 번째 시도 (시간 제한) | 최대 20 |
+| 단순 합 | 최대 52 |
+| 상한 적용 | 두 번째 시도는 남은 시간 ≥ 20일 때만 시작 → **약 50초 이하** (httpx 시간 제한은 연결·읽기 단계별이라 수 초 넘을 수 있다) |
+
+꺼짐(변경 전): 429가 아니면 호출 1회, 최대 5 + 60 = 65초. 429 경로는 양쪽 모두 기존과 같다 (최대 약 5 + T + 20 + T + T, T = 호출 시간 제한).
