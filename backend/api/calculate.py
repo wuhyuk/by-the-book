@@ -128,7 +128,7 @@ async def calculate(
         require_appliance(settings)
         appliance = validate_body(ApplianceInput, body)
         arule = load_appliance_rule()
-        aresult = calculate_appliance(appliance, arule)
+        aresult = calculate_appliance(appliance, arule, settings.enabled_features)
         return ApplianceCalculateResponse(
             result=aresult, display=build_appliance_display(aresult, arule, appliance)
         )
@@ -141,7 +141,7 @@ async def calculate(
         )
     inp = validate_body(GymInput, body)
     rule = load_rule(RULE_ID)
-    result = calculate_refund(inp, rule)
+    result = calculate_refund(inp, rule, settings.enabled_features)
     return CalculateResponse(result=result, display=build_display(result, rule))
 
 
