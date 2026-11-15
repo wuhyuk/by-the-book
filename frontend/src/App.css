@@ -76,6 +76,26 @@
   flex-basis: 100%;
 }
 
+/* 세탁 R2: 손상 벌 체크박스 (한 줄에 여러 개, 좁은 화면에서는 줄바꿈) */
+.checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.field .checks label.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+
+.field .checks input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+
 .hint {
   margin: 0;
   font-size: 13px;
