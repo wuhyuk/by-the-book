@@ -14,6 +14,7 @@ import {
   laundryFormKey,
   mergeLaundryExtraction,
   UNLISTED,
+  withoutSetFields,
   type LaundryForm as Form,
 } from './laundryForm'
 import {
@@ -50,7 +51,9 @@ function without(rec: Record<string, string>, form: Form, next: Form): Record<st
   return Object.fromEntries(keys.map((k) => [k, rec[k]]))
 }
 
-export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl }: ScreenProps) {
+export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenProps) {
+  // R2 세트 의류 일부 손상 (ENABLED_FEATURES=set_partial). 꺼져 있으면 지금 화면 그대로
+  const setPartial = features.includes('set_partial')
   // 마지막으로 계산에 보낸 입력 (/api/guide에 그대로 다시 보낸다)
   const [calcInput, setCalcInput] = useState<LaundryInput | null>(null)
   const [items, setItems] = useState<LaundryItemOption[]>([])
@@ -118,7 +121,9 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl }: Scre
       setEvidence({})
       return
     }
-    const ext = data.extraction as LaundryAnalyzeResult | null
+    const raw = data.extraction as LaundryAnalyzeResult | null
+    // R2 켜짐: 세트 관련 값은 폼으로만 받는다 (문장의 set_type·set_part는 채우지 않음)
+    const ext = raw && setPartial ? withoutSetFields(raw) : raw
     if (!ext) {
       setAnalyzeError(ANALYZE_TEXT.filled(0))
       return
@@ -166,7 +171,7 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl }: Scre
   const onSubmit = async () => {
     setError(null)
     setFieldErrors({})
-    const built = buildLaundryInput(form, items)
+    const built = buildLaundryInput(form, items, setPartial)
     if (!built.ok) {
       const errs: Record<string, string> = {}
       for (const f of built.invalidFields) errs[f] = INPUT_ERROR.won
@@ -210,7 +215,7 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl }: Scre
       <header>
         <h1>기준대로</h1>
         <p className="lead">{LAUNDRY_TEXT.lead}</p>
-        <p className="supported">{LAUNDRY_TEXT.supported}</p>
+        <p className="supported">{setPartial ? LAUNDRY_TEXT.supportedSetPartial : LAUNDRY_TEXT.supported}</p>
       </header>
       {analyzeOff === null ? (
         <AnalyzePanel
@@ -241,6 +246,7 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl }: Scre
           <LaundryForm
             form={form}
             items={items}
+            setPartial={setPartial}
             onChange={(next) => {
               const changed = (Object.keys(next) as (keyof Form)[]).filter((k) => next[k] !== form[k])
               if (changed.length > 0) setTouched(new Set([...touched, ...changed]))
