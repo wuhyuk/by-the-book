@@ -20,7 +20,7 @@ from llm.client import LLMError, LLMErrorKind, Turn
 from llm.ratelimit import MinIntervalLimiter
 
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
-TIMEOUT_SECONDS = 60.0
+TIMEOUT_SECONDS = 60.0  # 기본(llm_resilience 꺼짐). 켜짐이면 api/analyze.py가 LLM_TIMEOUT_SECONDS를 넘긴다
 DEFAULT_TEMPERATURE = 0.0
 
 
@@ -50,6 +50,14 @@ class GeminiClient:
     @property
     def model(self) -> str:
         return self._model
+
+    @property
+    def timeout(self) -> float:
+        return self._timeout
+
+    def expected_wait(self) -> float:
+        """다음 호출 전에 호출 간격 제한이 기다릴 초 (llm_resilience 전체 대기 상한 계산용)."""
+        return self._limiter.pending() if self._limiter is not None else 0.0
 
     def build_body(
         self, *, system: str, turns: list[Turn], response_schema: dict[str, Any]
