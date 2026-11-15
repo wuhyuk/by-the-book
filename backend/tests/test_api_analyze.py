@@ -126,6 +126,27 @@ def test_rule_guardrail_skips_llm(use: Any) -> None:
     assert "1372" in g["consult"]["channels"]
 
 
+@pytest.mark.parametrize("item", ["gym", "laundry"])
+@pytest.mark.parametrize(
+    "text",
+    ["고소할 거예요", "소송하려고요", "소송 걸 수 있나요?", "이거 사기 아닌가요?"],
+)
+def test_rule_guardrail_intent_patterns_skip_llm(
+    use: Any, text: str, item: str
+) -> None:
+    """N14 보강 (2026-11-15): 고소·소송 의사, 사기 여부 질문은 LLM 없이 ❔."""
+
+    def never() -> LLMClient:
+        raise AssertionError("LLM을 부르면 안 된다")
+
+    use(never)
+    r = client.post(f"/api/analyze?item={item}", json={"text": text})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["status"] == "guardrail"
+    assert data["guardrail"]["badge"] == Badge.UNDETERMINABLE.value
+
+
 def test_rule_guardrail_works_without_llm_settings(use: Any) -> None:
     def not_configured() -> LLMClient:
         raise LLMConfigError("LLM 설정이 비어 있습니다: LLM_API_KEY")
