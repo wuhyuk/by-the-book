@@ -5,6 +5,7 @@ import { fetchGuide } from '../api'
 import { APP_TEXT, GUIDE_TEXT } from '../texts'
 import type { ApplianceInput, Guide, GymInput, LaundryInput, ScreenItem } from '../types'
 import { CopyBlock } from './CopyBlock'
+import { NextStepsPanel } from './NextStepsPanel'
 
 interface Props {
   item: ScreenItem
@@ -31,7 +32,10 @@ export function GuidePanel({ item, input, surveyUrl }: Props) {
   }, [item, input])
 
   const state: State = loaded && loaded.input === input ? loaded.state : { kind: 'loading' }
-  const mentions1372 = state.kind === 'ok' && state.guide.explanation.some((line) => line.includes('1372'))
+  // 다음 행동(next_steps)이 있으면 그 안의 채널에 1372가 있으므로 아래 1372 한 줄을 다시 쓰지 않는다
+  const mentions1372 =
+    state.kind === 'ok' &&
+    (state.guide.next_steps !== undefined || state.guide.explanation.some((line) => line.includes('1372')))
 
   return (
     <section className="guide-panel" aria-label={GUIDE_TEXT.title} data-testid="guide">
@@ -58,6 +62,7 @@ export function GuidePanel({ item, input, surveyUrl }: Props) {
               testId="guide-company"
             />
           )}
+          {state.guide.next_steps && <NextStepsPanel data={state.guide.next_steps} />}
         </>
       )}
       <div className="result-help">

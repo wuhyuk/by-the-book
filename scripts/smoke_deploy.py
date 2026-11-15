@@ -11,6 +11,10 @@
      SET_PARTIAL_UNSUPPORTED, 있으면 🔍 DECISION_SENSITIVE 136,500~210,000 (L4 재승인 값)
 2-2. 가전 (승인 케이스 A-1, 2026-11-15): enabled_features에 appliance가 없으면 item=appliance가 422,
      있으면 ✅ 920,000 (docs/sources/appliance_cases.md A-1)
+2-3. 제시액 차액·다음 행동 (승인 N2, 2026-11-16, MVP_SPEC 14절): offer_gap이 켜져 있으면 결과에
+     offer_gap(240,000~340,000원, 최솟값보다 40,000원 적음)과 표시 한 줄, 꺼져 있으면 키가 없다.
+     next_steps가 켜져 있으면 /api/guide에 다음 행동(채널 3곳·체크리스트), 꺼져 있으면 키가 없다.
+2-4. GET /api/sources/art5_1 → 200 조항 원문, /api/sources/no_such_clause → 404 (플래그 없음)
 3. POST /api/calculate 승인 케이스 3건 (✅ C1, ⚠️ N2, 🔍 P1) → 배지와 환급액이 승인값과 같은지
 4. POST /api/guide (같은 3건) → 문안에 승인 금액이 있고, 고지 한 줄이 있는지
 5. (--analyze만) POST /api/analyze 문장 1개 → 200(추출) 또는 안내 코드(꺼짐·상한·한도)
@@ -166,6 +170,48 @@ def check_set_partial(base: str, c: Checker, on: bool) -> None:
         c.check("POST /api/calculate 세탁 L4 (Set 일부, 꺼짐 ❔)", ok, f"HTTP {status}")
 
 
+# 승인 N2의 차액 (승인 B 240,000 · A 340,000, 제시액 200,000에서 정수 뺄셈, docs/sources/offer_gap_cases.md)
+N2_OFFER_GAP = {
+    "offer": 200_000, "reference_min": 240_000, "reference_max": 340_000,
+    "gap_to_min": 40_000, "gap_to_max": -140_000, "direction": "below_min",
+}  # fmt: skip
+NEXT_STEPS_CHANNELS = ["ccn_1372", "kca_relief", "klac_132"]
+
+
+def check_offer_gap_next_steps(base: str, c: Checker, features: list[str]) -> None:
+    """제시액 차액(offer_gap)·다음 행동(next_steps). 꺼져 있으면 응답에 새 키가 없어야 한다."""
+    body = CASES[1]["body"]  # N2
+    status, data = request(base, "POST", "/api/calculate", body)
+    r = data.get("result", {}) if isinstance(data, dict) else {}
+    d = data.get("display", {}) if isinstance(data, dict) else {}
+    if "offer_gap" in features:
+        ok = status == 200 and r.get("offer_gap") == N2_OFFER_GAP
+        ok = ok and "40,000원 적습니다" in (d.get("offer_gap_text") or "")
+        c.check("POST /api/calculate N2 차액 (켜짐)", ok, f"HTTP {status}")
+    else:
+        ok = status == 200 and "offer_gap" not in r and "offer_gap_text" not in d
+        c.check("POST /api/calculate N2 차액 (꺼짐, 키 없음)", ok, f"HTTP {status}")
+    status, data = request(base, "POST", "/api/guide", body)
+    ns = data.get("next_steps") if isinstance(data, dict) else None
+    if "next_steps" in features:
+        ok = status == 200 and isinstance(ns, dict)
+        ok = ok and [x.get("id") for x in ns.get("channels", [])] == NEXT_STEPS_CHANNELS
+        ok = ok and bool(ns.get("checklist"))
+        c.check("POST /api/guide N2 다음 행동 (켜짐)", ok, f"HTTP {status}")
+    else:
+        ok = status == 200 and isinstance(data, dict) and "next_steps" not in data
+        c.check("POST /api/guide N2 다음 행동 (꺼짐, 키 없음)", ok, f"HTTP {status}")
+
+
+def check_sources(base: str, c: Checker) -> None:
+    status, data = request(base, "GET", "/api/sources/art5_1")
+    ok = status == 200 and isinstance(data, dict) and bool(data.get("text"))
+    ok = ok and isinstance(data.get("verified"), bool)
+    c.check("GET /api/sources/art5_1", ok, f"HTTP {status}")
+    status, _ = request(base, "GET", "/api/sources/no_such_clause")
+    c.check("GET /api/sources (없는 ID 404)", status == 404, f"HTTP {status}")
+
+
 def run(base: str, analyze: bool) -> int:
     base = base.rstrip("/")
     c = Checker()
@@ -194,6 +240,8 @@ def run(base: str, analyze: bool) -> int:
         )
     check_set_partial(base, c, "set_partial" in features)
     check_appliance(base, c, "appliance" in features)
+    check_offer_gap_next_steps(base, c, features)
+    check_sources(base, c)
 
     for case in CASES:
         status, data = request(base, "POST", "/api/calculate", case["body"])

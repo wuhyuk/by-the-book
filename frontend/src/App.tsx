@@ -46,7 +46,7 @@ function without(rec: Record<string, string>, form: FormState, next: FormState):
 import './App.css'
 
 // 상태는 이 컴포넌트의 useState로만 둔다. 입력값을 URL·localStorage·콘솔에 남기지 않는다.
-function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl }: ScreenProps) {
+function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenProps) {
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
   // 마지막으로 계산에 보낸 입력 (/api/guide에 그대로 다시 보낸다)
   const [calcInput, setCalcInput] = useState<GymInput | null>(null)
@@ -219,7 +219,7 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl }: ScreenProps) {
               {error}
             </p>
           )}
-          {response && <ResultCard data={response} />}
+          {response && <ResultCard data={response} channelsBelow={features.includes('next_steps')} />}
           {response && calcInput && <GuidePanel item="gym" input={calcInput} surveyUrl={surveyUrl} />}
         </div>
       </div>

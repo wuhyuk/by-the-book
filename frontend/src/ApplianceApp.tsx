@@ -16,7 +16,7 @@ import type { ApplianceCalculateResponse, ApplianceInput, ApplianceItemOption } 
 
 type Key = keyof ApplianceForm
 
-export function ApplianceApp({ surveyUrl }: { surveyUrl: string | null }) {
+export function ApplianceApp({ surveyUrl, features }: { surveyUrl: string | null; features: readonly string[] }) {
   const [items, setItems] = useState<ApplianceItemOption[]>([])
   const [itemsError, setItemsError] = useState(false)
   const [form, setForm] = useState<ApplianceForm>(INITIAL_APPLIANCE_FORM)
@@ -194,7 +194,7 @@ export function ApplianceApp({ surveyUrl }: { surveyUrl: string | null }) {
               {error}
             </p>
           )}
-          {response && <ApplianceResultCard data={response} />}
+          {response && <ApplianceResultCard data={response} channelsBelow={features.includes('next_steps')} />}
           {response && calcInput && <GuidePanel item="appliance" input={calcInput} surveyUrl={surveyUrl} />}
         </div>
       </div>

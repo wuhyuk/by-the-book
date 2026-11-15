@@ -13,6 +13,7 @@ from guide.common import (
     company_message_allowed,
     computed_sentence,
     not_calculated_guide,
+    offer_gap_lines,
     review_lines,
     undeterminable_guide,
     won,
@@ -133,6 +134,7 @@ def build_laundry_guide(
             )
         else:
             explanation.append(line.text)
+    explanation += offer_gap_lines(result.offer_gap)
     explanation += review_lines(review)
     if (basis := basis_line(display.citations)) is not None:
         explanation.append(basis)

@@ -18,6 +18,7 @@ from rules.badge import (
 )
 from rules.gym import GymResult
 from rules.loader import GymRule
+from rules.offer_gap import offer_gap_text, optional_field
 
 F = FlagCode
 N = NoticeCode
@@ -217,6 +218,8 @@ class GymDisplay(_Model):
     disclaimer: str
     consult: ConsultInfo | None
     withdrawal_guide: str | None
+    # 제시액 차액 한 줄 (기능 플래그 offer_gap, MVP_SPEC 14.1). 없으면 응답에서 빠진다.
+    offer_gap_text: str | None = optional_field()
 
 
 # ---- 함수 ----
@@ -294,6 +297,9 @@ def build_display(result: GymResult, rule: GymRule) -> GymDisplay:
             else None
         ),
         withdrawal_guide=WITHDRAWAL_GUIDE if F.WITHDRAWAL in ordered else None,
+        offer_gap_text=(
+            offer_gap_text(result.offer_gap) if result.offer_gap is not None else None
+        ),
     )
 
 

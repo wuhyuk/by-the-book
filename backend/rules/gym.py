@@ -4,6 +4,7 @@
 규칙 값(위약금 비율, 계속거래 기간 경계)은 규칙 JSON(GymRule)에서 읽는다.
 """
 
+from collections.abc import Collection
 from datetime import date
 from enum import StrEnum
 from typing import Literal
@@ -22,6 +23,7 @@ from rules.badge import (
 )
 from rules.loader import GymRule
 from rules.money import div_round_half_up, penalty_cap
+from rules.offer_gap import OfferGap, offer_gap_if_enabled, optional_field
 
 F = FlagCode
 N = NoticeCode
@@ -137,6 +139,8 @@ class GymResult(_Model):
     missing: list[str]
     notices: list[NoticeCode]
     citations: list[str]
+    # 기능 플래그 offer_gap이 켜져 있을 때만 (MVP_SPEC 14.1). 없으면 응답에서 빠진다.
+    offer_gap: OfferGap | None = optional_field()
 
 
 # ---- 일수 ----
@@ -560,8 +564,13 @@ def _steps(
     return steps
 
 
-def calculate_refund(inp: GymInput, rule: GymRule) -> GymResult:
-    """범위 판정 → 계산 → 제시액 비교 → 배지 (MVP_SPEC 5.2~5.7)."""
+def calculate_refund(
+    inp: GymInput, rule: GymRule, features: Collection[str] = ()
+) -> GymResult:
+    """범위 판정 → 계산 → 제시액 비교 → 배지 (MVP_SPEC 5.2~5.7).
+
+    features에 offer_gap이 있으면 제시액 차액(표시용, 14.1)을 붙인다. 배지는 바뀌지 않는다.
+    """
     scope = check_scope(inp, rule)
     if scope.stop_code is not None:
         flags = [scope.stop_code]
@@ -626,4 +635,15 @@ def calculate_refund(inp: GymInput, rule: GymRule) -> GymResult:
         missing=[],
         notices=notices,
         citations=_citations(inp, rule, flags, notices, calculated=True),
+        offer_gap=offer_gap_if_enabled(
+            features,
+            offer=inp.provider_offer,
+            amounts=[
+                s.refund
+                for br in results.values()
+                for s in (br.A, br.B)
+                if s is not None
+            ],
+            flags=flags,
+        ),
     )

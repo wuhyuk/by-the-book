@@ -15,7 +15,7 @@ function badgeClass(badge: string): string {
   return 'badge badge-review'
 }
 
-export function ResultCard({ data }: { data: CalculateResponse }) {
+export function ResultCard({ data, channelsBelow = false }: { data: CalculateResponse; channelsBelow?: boolean }) {
   const { result, display } = data
   const refundLabel = result.refund_kind ? REFUND_KIND_LABEL[result.refund_kind] : ''
   const bases = BASIS_ORDER.filter((b) => result.results[b] !== undefined)
@@ -50,11 +50,14 @@ export function ResultCard({ data }: { data: CalculateResponse }) {
         <div className="consult" data-testid="consult">
           <h3>{RESULT_TEXT.consultTitle}</h3>
           <p>{display.consult.message}</p>
-          <ul>
-            {display.consult.channels.map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ul>
+          {/* 다음 행동(next_steps)이 켜져 있으면 창구 목록은 아래 '다음 행동'에 한 번만 보인다 */}
+          {!channelsBelow && (
+            <ul>
+              {display.consult.channels.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
@@ -95,6 +98,12 @@ export function ResultCard({ data }: { data: CalculateResponse }) {
             </p>
           )}
         </div>
+      )}
+
+      {display.offer_gap_text && (
+        <p className="offer-gap" data-testid="offer-gap">
+          {display.offer_gap_text}
+        </p>
       )}
 
       {result.steps.length > 0 && (

@@ -64,7 +64,7 @@ export function Root() {
           ) : i === 'laundry' ? (
             <LaundryApp {...screen} />
           ) : (
-            <ApplianceApp surveyUrl={surveyUrl} />
+            <ApplianceApp surveyUrl={surveyUrl} features={features} />
           )}
         </div>
       ))}

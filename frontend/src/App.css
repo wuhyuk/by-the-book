@@ -528,6 +528,71 @@
   color: var(--muted);
 }
 
+/* 제시액 차액 한 줄 (offer_gap) */
+.offer-gap {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  background: var(--panel);
+  overflow-wrap: anywhere;
+}
+
+/* 다음 행동 (next_steps) */
+.next-steps {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--panel);
+  overflow-wrap: anywhere;
+}
+
+.next-steps summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.next-steps-section h4 {
+  margin: 12px 0 6px;
+  font-size: 15px;
+}
+
+.next-steps .checklist,
+.next-steps .channels {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.next-steps .checklist li,
+.next-steps .channels li {
+  margin: 0 0 8px;
+}
+
+.next-steps .channels p {
+  margin: 2px 0;
+}
+
+.next-steps label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.basis-tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.basis-official {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* 휴대폰 폭: 긴 낱말(주소·숫자)이 가로 스크롤을 만들지 않게 */
 @media (max-width: 480px) {
   .app {

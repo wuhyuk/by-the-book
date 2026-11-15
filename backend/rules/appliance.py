@@ -8,6 +8,7 @@
 """
 
 import calendar
+from collections.abc import Collection
 from datetime import date
 from fractions import Fraction
 from itertools import product
@@ -27,6 +28,7 @@ from rules.appliance_codes import (
 from rules.appliance_rule import ApplianceRule
 from rules.badge import Badge, decide_badge
 from rules.laundry_codes import CommonFlag
+from rules.offer_gap import OfferGap, offer_gap_if_enabled, optional_field
 
 C = CommonFlag
 A = ApplianceFlag
@@ -88,6 +90,8 @@ class ApplianceResult(_Model):
     missing: list[str]
     notices: list[ApplianceNotice]
     citations: list[str]
+    # 기능 플래그 offer_gap이 켜져 있을 때만 (MVP_SPEC 14.1). 없으면 응답에서 빠진다.
+    offer_gap: OfferGap | None = optional_field()
 
 
 # ---- 날짜 (D-5) ----
@@ -376,8 +380,13 @@ def _steps(
     return steps
 
 
-def calculate_appliance(inp: ApplianceInput, rule: ApplianceRule) -> ApplianceResult:
-    """범위 판정 → 계산 → 결정 민감도 검사 → 제시액 비교 → 배지."""
+def calculate_appliance(
+    inp: ApplianceInput, rule: ApplianceRule, features: Collection[str] = ()
+) -> ApplianceResult:
+    """범위 판정 → 계산 → 결정 민감도 검사 → 제시액 비교 → 배지.
+
+    features에 offer_gap이 있으면 제시액 차액(표시용, MVP_SPEC 14.1)을 붙인다. 배지는 바뀌지 않는다.
+    """
     scope = check_scope(inp, rule)
     empty = {
         "row_id": None,
@@ -456,4 +465,10 @@ def calculate_appliance(inp: ApplianceInput, rule: ApplianceRule) -> ApplianceRe
         missing=[],
         notices=[N.RECEIVED_DATE_BASIS, N.USED_MONTHS_BASIS],
         citations=_citations(inp, flags, calculated=True),
+        offer_gap=offer_gap_if_enabled(
+            features,
+            offer=inp.provider_offer,
+            amounts=[sens.min, sens.max],
+            flags=flags,
+        ),
     )

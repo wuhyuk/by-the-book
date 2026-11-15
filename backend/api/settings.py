@@ -6,7 +6,8 @@
   0 이상의 정수가 아니면 기본값을 쓴다 (설정 이름만 경고 로그).
 - SURVEY_URL: 화면에 보여 줄 설문 링크. 없거나 비면 null. http(s) 주소가 아니면 null.
 - ENABLED_FEATURES: 켜 둘 복원 기능 이름 (쉼표 구분, 공백 허용, 없거나 비면 아무것도 켜지 않음).
-  지금 아는 이름은 set_partial(세탁 R2 Set 일부 손상, MVP_SPEC 12.10), appliance(가전 P2, MVP_SPEC 13절)다.
+  지금 아는 이름은 set_partial(세탁 R2 Set 일부 손상, MVP_SPEC 12.10), appliance(가전 P2, MVP_SPEC 13절),
+  offer_gap(제시액 차액), next_steps(다음 행동), rag(조항 검색, 2단계에서 사용)다 (MVP_SPEC 14절, 2026-11-16).
   여러 개는 쉼표로 함께 쓴다 (예: set_partial,appliance). 모르는 이름은 버린다
   (설정 이름만 경고 로그). 2026-11-15 결정.
 
@@ -28,7 +29,7 @@ logger = logging.getLogger("by_the_book.api")
 
 APP_KEYS = ("ANALYZE_ENABLED", "DAILY_ANALYZE_LIMIT", "SURVEY_URL", "ENABLED_FEATURES")
 # 켤 수 있는 기능 이름 (MVP_SPEC 12.10). 엔진에는 이 이름 집합을 넘긴다.
-KNOWN_FEATURES = ("set_partial", "appliance")
+KNOWN_FEATURES = ("set_partial", "appliance", "offer_gap", "next_steps", "rag")
 DEFAULT_DAILY_ANALYZE_LIMIT = 450
 _TRUE = frozenset({"true", "1", "yes", "on"})
 _FALSE = frozenset({"false", "0", "no", "off"})

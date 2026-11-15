@@ -501,7 +501,8 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 | `POST /api/calculate` | 확정된 필드 → 계산 결과(`refund`, `steps`, `badge`, `source`) |
 | `POST /api/guide` | `/api/calculate`와 같은 본문 → 서버가 다시 계산한 결과로 설명 문장·업체용 문안·근거 조항 (`backend/guide/`, LLM 없음, 템플릿) [결정 2026-11-11 사용자]. ❔·계산 안 함이면 업체용 문안 `null`. 계산했어도 결과에 `RULE_UNVERIFIED`(원문 확인이 끝나지 않은 값)가 있으면 업체용 문안 `null`, 설명의 확인 목록은 그대로 [결정 2026-11-13 사용자]. 인용은 엔진이 정한 조항 ID의 카드만 쓰므로 검색 결과에 없는 조항을 인용할 수 없다 (절대 규칙 7) |
 | `POST /api/calculate?item=appliance`, `POST /api/guide?item=appliance`, `GET /api/appliance/items` | 가전 P2 (13절). `ENABLED_FEATURES`에 `appliance`가 있을 때만. 꺼져 있으면 지금과 같은 응답(`item` 쿼리 422 `literal_error`, items 404) [결정 2026-11-15 사용자] |
-| `GET /api/config` | `{analyze_enabled, survey_url, enabled_features}`. `enabled_features` = `ENABLED_FEATURES`(쉼표 구분)에서 아는 이름만 (`set_partial` 12.10, `appliance` 13절) [결정 2026-11-15 사용자]. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
+| `GET /api/config` | `{analyze_enabled, survey_url, enabled_features}`. `enabled_features` = `ENABLED_FEATURES`(쉼표 구분)에서 아는 이름만 (`set_partial` 12.10, `appliance` 13절, `offer_gap`·`next_steps`·`rag` 14절) [결정 2026-11-15 사용자]. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
+| `GET /api/sources/{id}` | 조항 ID → 원문·라벨·출처·기준일·`verified`·`user_checked`·`rule_ids` (14.3, 플래그 없음, 읽기 전용). ID는 `[a-z0-9_]{1,64}`만(그 밖 422), 없는 ID는 404 `{"message": "해당 조항 ID를 찾을 수 없습니다."}` [2026-11-16] |
 | `GET /healthz` | 배포 헬스체크 `{"status": "ok"}` (외부 호출 없음). 그 밖의 `/api` 밖 경로는 화면(`frontend/dist`, SPA 폴백), 없는 `/api/*`는 404 JSON (`docs/DEPLOY.md`) |
 
 `/api/ask`(자유 질의)는 MVP 범위 밖이다.
@@ -980,3 +981,32 @@ u = 구입일(인도일)부터 수리 접수일까지 완전한 개월 (D-2, D-3
 ### 13.3 출력 (`ApplianceResult`)
 
 `badge`, `calculated`, `item_key`, `row_id`, `warranty_months`, `life_months`, `used_months`(결정 값, 끝수 올림), `used_months_full`, `partial_month`, `amount`, `sensitivity_min`, `sensitivity_max`, `sensitivity_causes`, `steps`, `flags`, `missing`, `notices`, `citations`.
+
+## 14. 제시액 차액·다음 행동·조항 조회 [2026-11-16 사용자 지시, 문구·규칙은 제안]
+
+> 기능 플래그 `offer_gap`·`next_steps`(`ENABLED_FEATURES`, `docs/DEPLOY.md` 4.7). 꺼져 있으면 API 응답·화면이 변경 전과 같다 (새 키는 값이 없으면 응답에서 빠진다, Pydantic `exclude_if`). `rag`는 이름만 받아 두고 다음 단계(조항 검색)에서 쓴다. 문구·규칙 목록과 차액 케이스 표는 `docs/sources/offer_gap_cases.md`.
+
+### 14.1 업체 제시액 차액 (`offer_gap`, `backend/rules/offer_gap.py`)
+
+- 붙는 조건: 플래그 켜짐, 계산함(`calculated`, 금액 있음), `provider_offer` 있음, 결과 flags에 `RULE_UNVERIFIED` 없음. ❔·계산 안 함에는 붙지 않는다.
+- 필드 (모두 int, 정수 뺄셈만): `offer`, `reference_min`, `reference_max`, `gap_to_min = reference_min − offer`, `gap_to_max = offer − reference_max`, `direction` (`below_min` offer < min / `above_max` offer > max / `equal` min = max = offer / 그 밖 `within`).
+- 기준 범위: 헬스장 = 모든 기준(일수·횟수)·시나리오(A·B)의 환급액 최솟값~최댓값 (설명·업체용 문안의 금액 범위와 같다) **[제안]**. 세탁(R2 포함)·가전 = 결정 민감도 범위 `sensitivity_min`~`sensitivity_max`.
+- 배지·사유 코드(⚠️ `OFFER_BELOW_B`, `OFFER_BELOW_STANDARD_MIN`, 안내 `OFFER_BETWEEN_A_AND_B`)는 바꾸지 않는다. 차액은 표시용이다.
+- 표시: `display.offer_gap_text`(결과 카드 금액 아래), `/api/guide` 설명에 같은 한 줄(⚠️ 문장 뒤, 확인 목록 앞). 업체용 문안(`company_message`)에는 넣지 않는다. 문구는 `offer_gap_cases.md` 2절.
+- 테스트 기대값: 승인 케이스 중 제시액이 있는 9건의 승인 금액·범위에서 정수 뺄셈으로 도출 (사용자 허용 2026-11-16). 순수 함수는 고정 시드 난수로 성질만 검사한다.
+
+### 14.2 다음 행동 (`next_steps`, `backend/guide/next_steps.py`)
+
+- `/api/guide` 응답의 `next_steps`: `title`, `checklist_title`, `checklist[]`(`text`, `basis` official/general, `basis_label` 공식 안내/일반 안내, `source_url`, `checked_on`), `checklist_note`, `channels_title`, `channels[]`(`id`, `name`, `phone`, `url`, `how`, `source_urls`, `checked_on`, `status` confirmed/needs_check), `disclaimer`.
+- 체크리스트: 품목별 고정 텍스트(숫자·효력 표현 없음). "공식 안내"는 한국소비자원 「피해구제 접수방법」(https://www.kca.go.kr/odr/pg/ma/pgProcssInfo2.do, 2026-11-16 확인)의 증빙서류 안내("계약관련 근거자료(계약서, 영수증 등), 사업자에 이의를 제기한 서면, 전자문서 혹은 게시판 자료 사본(화면 캡처 또는 프린트)")에 해당하는 항목, 나머지는 "일반 안내" **[제안]**.
+- 채널 3곳: 1372 소비자상담센터(☎1372, https://www.ccn.go.kr/index.ccn), 한국소비자원 소비자 피해구제(접수방법 페이지), 대한법률구조공단(☎132, 법률상담 알아보기 페이지). 이름·번호·URL·이용 방법은 2026-11-16 공식 누리집에서 직접 열어 확인한 것만 쓴다. 확인하지 못한 값은 비우고 `needs_check`("확인 필요")로 둔다.
+- 배지별: 계산했고(✅·⚠️·🔍) `RULE_UNVERIFIED`가 아니면 체크리스트 + 채널, ❔·계산 안 함·`RULE_UNVERIFIED`이면 채널만.
+- 중복 정리: 플래그가 켜지면 설명의 1372 안내 줄(`CONSULT_1372_LINE`)을 빼고, 화면은 결과 카드 상담 창구의 목록을 숨기고 메시지("이 결과는 아래 상담 창구에 문의해 주세요.")만 둔다. 문안 영역 아래 1372 한 줄도 숨긴다. 사유 화면 문구 안의 1372 안내(승인 문구)는 그대로 둔다.
+- 고지: 화면 공통 고지(`frontend/src/texts.ts` `APP_TEXT.disclaimer`)와 같은 문장. 체크 표시는 화면에만 두고 저장하지 않는다.
+
+### 14.3 조항 조회 (`GET /api/sources/{id}`, `backend/rules/sources.py`)
+
+- 대상: 세 규칙 JSON의 `clauses`·`related_clauses` (60개 ID, 소비자기본법 두 조문은 세탁·가전 파일에 같은 내용으로 있어 `rule_ids`에 둘 다 적는다). 라벨·원문·출처 표기는 근거 카드(`citation_cards`)와 같다. 서버에서 처음 부를 때 한 번 색인을 만든다.
+- `verified`·`user_checked` **[제안]**: `table_ref`가 있는 표 카드는 그 블록의 `verified`·`verification.user_checked`, `verified_paths`가 있는 고시 밖 원문은 `verified_paths ≥ 2`, 그 밖은 "원문을 확인한 조문만 넣는다"(4절·5.7·10절)에 따라 `verified: true`이고 조항 단위 사용자 대조 기록이 없어 `user_checked: null`.
+- 근거 카드는 이미 원문 전체를 보여 주므로 화면의 "원문 보기" 연결은 이번에 만들지 않았다 (다음 단계 조항 검색 화면에서 쓴다).
+

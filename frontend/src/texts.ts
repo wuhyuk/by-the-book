@@ -1,4 +1,4 @@
-import type { Item } from './types'
+import type { Item } from './types.ts'
 
 // 화면 문구. [스펙]은 docs/MVP_SPEC.md 원문 그대로, [초안]은 승인 대기
 // (docs/sources/vs2_pending_approval.md). 사유·안내·고지 문구는 서버 응답(display)을 쓰고 여기 두지 않는다.
@@ -239,6 +239,16 @@ export const GUIDE_TEXT = {
   copyFailed: '자동 복사를 하지 못했습니다. 아래 글을 길게 눌러(또는 전체 선택해) 직접 복사해 주세요.',
   loading: '문안을 만드는 중…',
   loadFailed: '설명 문안을 불러오지 못했습니다. 위 결과 카드는 그대로 볼 수 있습니다.',
+} as const
+
+// [제안 2026-11-16] 다음 행동 영역 (next_steps 켜짐일 때만). 제목·항목·채널 문구는 서버 응답 그대로 쓴다.
+export const NEXT_STEPS_TEXT = {
+  phone: (n: string) => `전화 ${n} (국번 없이)`,
+  website: '누리집 열기',
+  checkedOn: (d: string) => `확인일 ${d}`,
+  needsCheck: '확인 필요',
+  checkNote: '체크 표시는 이 화면에만 보이며 저장되지 않습니다.',
+  source: '출처',
 } as const
 
 // ---- 가전 P2 (MVP_SPEC 13절, ENABLED_FEATURES=appliance일 때만) ----

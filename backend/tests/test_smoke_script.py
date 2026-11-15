@@ -120,3 +120,23 @@ def test_smoke_appliance_off_expects_422(monkeypatch: pytest.MonkeyPatch) -> Non
     code, out = _run_against_app(monkeypatch, ())
     assert code == 0, out
     assert "가전 (꺼짐 422)" in out
+
+
+# ---- 제시액 차액·다음 행동·조항 조회 (2026-11-16, MVP_SPEC 14절) ----
+
+
+def test_smoke_offer_gap_next_steps_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    code, out = _run_against_app(monkeypatch, ())
+    assert code == 0, out
+    assert "N2 차액 (꺼짐, 키 없음)" in out
+    assert "N2 다음 행동 (꺼짐, 키 없음)" in out
+    assert "GET /api/sources (없는 ID 404)" in out
+
+
+def test_smoke_offer_gap_next_steps_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    code, out = _run_against_app(
+        monkeypatch, ("set_partial", "appliance", "offer_gap", "next_steps")
+    )
+    assert code == 0, out
+    assert "N2 차액 (켜짐)" in out
+    assert "N2 다음 행동 (켜짐)" in out

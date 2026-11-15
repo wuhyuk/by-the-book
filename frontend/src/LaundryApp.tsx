@@ -270,7 +270,7 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
               {error}
             </p>
           )}
-          {response && <LaundryResultCard data={response} />}
+          {response && <LaundryResultCard data={response} channelsBelow={features.includes('next_steps')} />}
           {response && calcInput && <GuidePanel item="laundry" input={calcInput} surveyUrl={surveyUrl} />}
         </div>
       </div>
