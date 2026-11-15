@@ -145,6 +145,35 @@ export interface AnalyzeResponse {
   pii_masked: boolean
   extraction: AnalyzeResult | null
   guardrail: GuardrailDisplay | null
+  clauses?: ClauseSuggestions // 기능 플래그 rag가 켜져 있을 때만 (MVP_SPEC 15.2)
+}
+
+// 자동 검색한 조항 후보 (규칙 JSON에 저장된 값만, 금액 계산에 쓰지 않음)
+export interface ClauseItem {
+  clause_id: string
+  title: string
+  source_name: string
+  retrieved_at: string
+  verified: boolean
+  user_checked: boolean | null
+  excerpt: string
+}
+
+export interface ClauseSuggestions {
+  candidates: ClauseItem[]
+  selected: ClauseItem[]
+}
+
+// GET /api/sources/{id} (MVP_SPEC 14.3)
+export interface ClauseSource {
+  id: string
+  label: string
+  text: string
+  source: { name: string; url: string; retrieved_at: string }
+  retrieved_at: string
+  verified: boolean
+  user_checked: boolean | null
+  rule_ids: string[]
 }
 
 // ---- 세탁 (VS4, backend/rules/laundry.py·laundry_display.py, MVP_SPEC 12절) ----
