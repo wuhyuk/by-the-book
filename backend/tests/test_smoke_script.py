@@ -108,3 +108,15 @@ def test_smoke_passes_with_set_partial_on(monkeypatch: pytest.MonkeyPatch) -> No
     code, out = _run_against_app(monkeypatch, ("set_partial",))
     assert code == 0, out
     assert "세탁 L4 (Set 일부, 켜짐 🔍)" in out
+
+
+def test_smoke_passes_with_appliance_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    code, out = _run_against_app(monkeypatch, ("set_partial", "appliance"))
+    assert code == 0, out
+    assert "가전 A-1 (켜짐 ✅ 920,000)" in out
+
+
+def test_smoke_appliance_off_expects_422(monkeypatch: pytest.MonkeyPatch) -> None:
+    code, out = _run_against_app(monkeypatch, ())
+    assert code == 0, out
+    assert "가전 (꺼짐 422)" in out
