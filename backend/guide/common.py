@@ -10,9 +10,19 @@
   법조문을 근거로 한 의무 주장을 넣지 않는다. 사용자가 입력하지 않은 사실을 만들지 않는다.
 """
 
+from collections.abc import Collection
+
 from pydantic import BaseModel, ConfigDict
 
+from guide.next_steps import (
+    NEXT_STEPS_FEATURE,
+    Item,
+    NextSteps,
+    build_next_steps,
+    checklist_allowed,
+)
 from rules.gym_display import CitationCard, DisplayLine
+from rules.offer_gap import OfferGap, offer_gap_text, optional_field
 
 DISCLAIMER_LINE = "참고용이며 법률 자문이 아닙니다."
 CONSULT_1372_LINE = "1372 소비자상담센터(국번 없이 1372)에 상담해 보세요."
@@ -61,6 +71,38 @@ class Guide(BaseModel):
     explanation: list[str]
     company_message: str | None
     citations: list[CitationCard]
+    # 기능 플래그 next_steps가 켜져 있을 때만 (MVP_SPEC 14.2). 없으면 응답에서 빠진다.
+    next_steps: NextSteps | None = optional_field()
+
+
+def offer_gap_lines(gap: OfferGap | None) -> list[str]:
+    """제시액 차액 한 줄 (기능 플래그 offer_gap, 14.1). 숫자는 엔진 결과 offer_gap에서만."""
+    return [offer_gap_text(gap)] if gap is not None else []
+
+
+def with_next_steps(
+    guide: Guide,
+    item: Item,
+    *,
+    calculated: bool,
+    flags: Collection[str],
+    features: Collection[str],
+) -> Guide:
+    """플래그 next_steps가 켜져 있으면 다음 행동을 붙인다 (꺼져 있으면 guide 그대로).
+
+    다음 행동의 채널에 1372가 있으므로 설명의 1372 안내 줄(CONSULT_1372_LINE)은 뺀다 (중복 방지).
+    """
+    if NEXT_STEPS_FEATURE not in features:
+        return guide
+    return guide.model_copy(
+        update={
+            "explanation": [x for x in guide.explanation if x != CONSULT_1372_LINE],
+            "next_steps": build_next_steps(
+                item,
+                with_checklist=checklist_allowed(calculated=calculated, flags=flags),
+            ),
+        }
+    )
 
 
 def won(n: int) -> str:
