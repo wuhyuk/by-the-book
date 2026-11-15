@@ -8,6 +8,10 @@
 두 스위치는 /api/analyze에만 걸린다. /api/calculate·/api/guide는 영향을 받지 않는다.
 - 입력 문장·마스킹한 문장·LLM 응답은 저장·로그하지 않는다. 로그에는 실패 종류만 남긴다.
 - 응답의 fields는 화면 폼을 미리 채우는 값이다. 계산은 사용자가 폼에서 확인한 뒤 /api/calculate가 한다.
+- 기능 플래그 rag(MVP_SPEC 15.2, 2026-11-16): 가드레일·스위치·하루 상한을 통과한 뒤 마스킹한 문장으로 조항을
+  검색하고(rag/search.py), 기존 추출 호출 한 번에 후보를 넣는다. 응답에 clauses{candidates, selected}를 더한다.
+  항목은 저장된 규칙 JSON 값(ID·제목·출처·기준일·확인 여부·본문 앞부분)뿐이고 LLM이 쓴 문장은 넣지 않는다.
+  꺼져 있으면 프롬프트·스키마·응답이 지금과 같다 (clauses 키 없음).
 """
 
 import logging
@@ -30,7 +34,10 @@ from llm.masking import mask_pii
 from llm.ratelimit import MinIntervalLimiter
 from llm.resilience import RetryingClient
 from llm.usage import DailyCallCounter
+from rag.search import Candidate, search
 from rules.gym_display import GuardrailDisplay, judgment_guardrail_display
+from rules.offer_gap import optional_field
+from rules.sources import find_clause
 
 logger = logging.getLogger("by_the_book.api")
 
@@ -63,6 +70,33 @@ class AnalyzeRequest(BaseModel):
     ]
 
 
+RAG_FEATURE = "rag"
+RAG_K = 5
+
+
+class ClauseItem(BaseModel):
+    """조항 후보 한 줄. 값은 모두 규칙 JSON에 저장된 것이다 (LLM이 쓴 문장 없음)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    clause_id: str
+    title: str
+    source_name: str
+    retrieved_at: str
+    verified: bool
+    user_checked: bool | None
+    excerpt: str
+
+
+class ClauseSuggestions(BaseModel):
+    """자동 검색 후보와 그중 LLM이 고른 조항 (후보 밖 ID·중복은 버린 뒤). 금액 계산에 쓰지 않는다."""
+
+    model_config = ConfigDict(frozen=True)
+
+    candidates: list[ClauseItem]
+    selected: list[ClauseItem]
+
+
 class AnalyzeResponse(BaseModel):
     """status=extracted면 extraction, status=guardrail이면 guardrail이 있다."""
 
@@ -72,6 +106,32 @@ class AnalyzeResponse(BaseModel):
     pii_masked: bool
     extraction: AnalyzeResult | None
     guardrail: GuardrailDisplay | None
+    # 기능 플래그 rag가 켜져 있고 추출했을 때만 (MVP_SPEC 15.2). 없으면 응답에서 빠진다.
+    clauses: ClauseSuggestions | None = optional_field()
+
+
+def _clause_item(c: Candidate) -> ClauseItem:
+    found = find_clause(c.clause_id)
+    assert found is not None  # 검색 대상과 조회 색인은 같은 규칙 JSON에서 만든다
+    return ClauseItem(
+        clause_id=c.clause_id,
+        title=c.title,
+        source_name=found.source.name,
+        retrieved_at=found.retrieved_at,
+        verified=found.verified,
+        user_checked=found.user_checked,
+        excerpt=c.excerpt,
+    )
+
+
+def clause_suggestions(
+    candidates: list[Candidate], selected: list[str] | None
+) -> ClauseSuggestions:
+    items = [_clause_item(c) for c in candidates]
+    by_id = {i.clause_id: i for i in items}
+    return ClauseSuggestions(
+        candidates=items, selected=[by_id[i] for i in selected or [] if i in by_id]
+    )
 
 
 @cache
@@ -144,9 +204,12 @@ def analyze(
     except LLMConfigError:
         logger.warning("LLM 설정 없음")
         return _error(503, NOT_CONFIGURED_MESSAGE, "not_configured")
+    rag = RAG_FEATURE in settings.enabled_features
+    # 검색 입력은 마스킹한 문장만 쓴다 (저장·로그하지 않음)
+    candidates = search(masked, item, RAG_K) if rag else []
     try:
         extract = analyze_laundry_text if item == "laundry" else analyze_text
-        result = extract(masked, client)
+        result = extract(masked, client, candidates or None)
     except LLMError as exc:
         logger.warning("LLM 호출 실패: %s", exc.kind.value)
         if exc.kind == LLMErrorKind.DAILY_LIMIT:
@@ -157,5 +220,11 @@ def analyze(
     if result.judgment_requested:
         return guardrail
     return AnalyzeResponse(
-        status="extracted", pii_masked=pii_masked, extraction=result, guardrail=None
+        status="extracted",
+        pii_masked=pii_masked,
+        extraction=result,
+        guardrail=None,
+        clauses=(
+            clause_suggestions(candidates, result.selected_clause_ids) if rag else None
+        ),
     )
