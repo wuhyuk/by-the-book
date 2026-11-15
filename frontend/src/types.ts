@@ -66,6 +66,17 @@ export interface GymResult {
   missing: string[]
   notices: string[]
   citations: string[]
+  offer_gap?: OfferGap // 기능 플래그 offer_gap이 켜져 있을 때만 (MVP_SPEC 14.1)
+}
+
+// 업체 제시액과 기준 금액의 차액 (서버 엔진이 정수로 계산, 화면은 표시만)
+export interface OfferGap {
+  offer: number
+  reference_min: number
+  reference_max: number
+  gap_to_min: number
+  gap_to_max: number
+  direction: 'below_min' | 'within' | 'above_max' | 'equal'
 }
 
 export interface DisplayLine {
@@ -97,6 +108,7 @@ export interface GymDisplay {
   disclaimer: string
   consult: { message: string; channels: string[] } | null
   withdrawal_guide: string | null
+  offer_gap_text?: string // 제시액 차액 한 줄 (offer_gap 켜짐일 때만)
 }
 
 export interface CalculateResponse {
@@ -195,6 +207,7 @@ export interface LaundryResult {
   damaged_parts: string[] | null
   set_share_percent: number | null
   set_base_raw: string | null
+  offer_gap?: OfferGap
 }
 
 export interface LaundryDisplay {
@@ -214,6 +227,7 @@ export interface LaundryDisplay {
   }
   disclaimer: string
   consult: { message: string; channels: string[] } | null
+  offer_gap_text?: string // 제시액 차액 한 줄 (offer_gap 켜짐일 때만)
 }
 
 export interface LaundryCalculateResponse {
@@ -251,6 +265,37 @@ export interface Guide {
   explanation: string[]
   company_message: string | null
   citations: CitationCard[]
+  next_steps?: NextSteps // 기능 플래그 next_steps가 켜져 있을 때만 (MVP_SPEC 14.2)
+}
+
+// 다음 행동 (서버 고정 텍스트). 체크 표시는 화면에만 두고 저장하지 않는다.
+export interface NextStepsChecklistItem {
+  text: string
+  basis: 'official' | 'general'
+  basis_label: string
+  source_url: string | null
+  checked_on: string | null
+}
+
+export interface NextStepsChannel {
+  id: string
+  name: string
+  phone: string | null
+  url: string | null
+  how: string | null
+  source_urls: string[]
+  checked_on: string | null
+  status: 'confirmed' | 'needs_check'
+}
+
+export interface NextSteps {
+  title: string
+  checklist_title: string
+  checklist: NextStepsChecklistItem[]
+  checklist_note: string | null
+  channels_title: string
+  channels: NextStepsChannel[]
+  disclaimer: string
 }
 
 // 품목 화면 공통 props (Root가 /api/config로 정한다)
@@ -302,6 +347,7 @@ export interface ApplianceResult {
   missing: string[]
   notices: string[]
   citations: string[]
+  offer_gap?: OfferGap
 }
 
 export interface ApplianceCalculateResponse {
