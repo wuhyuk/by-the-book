@@ -156,21 +156,21 @@
       "parts_text": "유사품목에 따름 / 제조일로부터 5년",
       "basis": "별표 Ⅲ 6."
     },
-    "verified": false,
+    "verified": true,
     "verification": {
-      "method": "HWPX 표 추출 ↔ PDF 2~3쪽 이미지 판독 일치. annex1_listed는 별표 Ⅰ 전자제품 품목 목록과 대조한 결과(행 전체가 확인되면 true, 일부만이면 null). 지원 품목은 Q-A7. 사용자 육안 대조 전이라 false",
-      "user_checked": false,
-      "checked_at": "2026-11-02"
+      "method": "HWPX 표 추출 ↔ PDF 2~3쪽 이미지 판독 일치. annex1_listed는 별표 Ⅰ 전자제품 품목 목록과 대조한 결과(행 전체가 확인되면 true, 일부만이면 null). 지원 품목은 Q-A7. 2026-11-15 두 경로 재대조(HWPX·HWP 텍스트 ↔ PDF 텍스트층, 문장 S1~S18·지원 5품목 표 값 일치, docs/sources/appliance_verify_sheet.md 1절)로 verified: true [승인 2026-11-15]. 같은 날 사용자 육안 대조 S1~S18 모두 일치 → user_checked: true (user_check_sheet.md 확인 기록 2026-11-15 행)",
+      "user_checked": true,
+      "checked_at": "2026-11-15"
     }
   },
   "resolution_table": {
     "basis": "별표 Ⅱ ① 전자제품, 사무용기기 (2-1)·(2-2)",
     "line_alignment": "분쟁유형 칸과 해결기준 칸의 줄 대응은 PDF 이미지의 같은 높이 배치를 따른다 (해석)",
-    "verified": false,
+    "verified": true,
     "verification": {
-      "method": "HWPX 텍스트 ↔ PDF 7~8쪽 이미지 판독 일치. 사용자 육안 대조 전이라 false",
-      "user_checked": false,
-      "checked_at": "2026-11-02"
+      "method": "HWPX 텍스트 ↔ PDF 7~8쪽 이미지 판독 일치. 2026-11-15 두 경로 재대조(HWPX·HWP 텍스트 ↔ PDF 텍스트층, 문장 S1~S18·지원 5품목 표 값 일치, docs/sources/appliance_verify_sheet.md 1절)로 verified: true [승인 2026-11-15]. 같은 날 사용자 육안 대조 S1~S18 모두 일치 → user_checked: true (user_check_sheet.md 확인 기록 2026-11-15 행)",
+      "user_checked": true,
+      "checked_at": "2026-11-15"
     }
   },
   "repair_impossible_rule": {
@@ -190,16 +190,17 @@
     "basis": "별표 Ⅳ 품목별 내용연수표",
     "text": "사업자가 품질보증서에 표시한 부품보유기간으로 함. 다만, 그 기간이 [별표Ⅲ]의 부품보유기간에 기재된 기간보다 짧거나 미기재한 경우 [별표Ⅲ]의 부품보유기간으로 함",
     "default_years_unlisted_no_similar": 5,
-    "years_to_months": null,
+    "years_to_months": 12,
     "years_to_months_in_source": false,
     "unlisted_items_rule": null,
     "unlisted_items_note": "의류건조기·의류관리기·태블릿은 별표 Ⅲ에는 있고 별표 Ⅳ 품목 칸에는 없다 (Q-A4)",
-    "verified": false,
+    "verified": true,
     "verification": {
-      "method": "HWPX 병합 칸(r1 c1 rs8) 추출 ↔ PDF 1쪽 이미지 판독 일치. 사용자 육안 대조 전이라 false",
-      "user_checked": false,
-      "checked_at": "2026-11-02"
-    }
+      "method": "HWPX 병합 칸(r1 c1 rs8) 추출 ↔ PDF 1쪽 이미지 판독 일치. 2026-11-15 두 경로 재대조(HWPX·HWP 텍스트 ↔ PDF 텍스트층, 문장 S1~S18·지원 5품목 표 값 일치, docs/sources/appliance_verify_sheet.md 1절)로 verified: true [승인 2026-11-15]. 같은 날 사용자 육안 대조 S1~S18 모두 일치 → user_checked: true (user_check_sheet.md 확인 기록 2026-11-15 행)",
+      "user_checked": true,
+      "checked_at": "2026-11-15"
+    },
+    "years_to_months_basis": "D-1: 내용연수(개월) = 부품보유기간 N년 × 12. 별표 Ⅳ가 '부품보유기간으로 함', 비고가 '월할계산'만 정한다 [해석, 승인 2026-11-15] (docs/sources/appliance_cases.md 3.2)"
   },
   "depreciation": {
     "basis": "별표 Ⅱ ① 비고",
@@ -229,7 +230,13 @@
       "no_parts_after_warranty": {
         "text": "정액 감가 상각한 잔여 금액에 구입가의 10%를 가산하여 환급",
         "rule": "residual_plus_10pct_of_price",
-        "cap": null
+        "cap": null,
+        "cap_decision": {
+          "selected": "purchase_price",
+          "alternative": "none",
+          "in_source": false,
+          "basis": "D-7 원문 5)에는 한도가 없다(4) 분실에만 '(한도：구입가격)'). 기준 금액을 크게 잡지 않도록 구입가 한도를 적용하고 대안(한도 없음)을 결정 민감도 검사에 넣는다 [결정 기본값, 승인 2026-11-15]"
+        }
       },
       "add_on_percent": 10,
       "in_source": "partial",
@@ -244,25 +251,25 @@
       "note": "4)·5)에도 적용할지 원문에 없음 (Q-A6)"
     },
     "used_months": {
-      "start": null,
-      "end": null,
-      "partial_month": null,
+      "start": "purchase_or_delivery_date",
+      "end": "received_date",
+      "count": "same_day_or_month_end",
+      "partial_month": "ceil",
+      "partial_month_alternative": "floor",
       "in_source": false,
-      "basis": "원문은 '사용연수', '월할계산'만 정함 (Q-A1)"
+      "basis": "D-2 시작 = 구입일(인도일이 다르면 인도일), D-3 끝 = 수리 접수일, D-5 같은 날짜(없으면 그 달 말일)에 도달하면 1개월, D-4 1개월 미만 끝수 올림(대안 버림, 결정 민감도 검사) [결정 기본값, 승인 2026-11-15]. 원문은 '월할계산'만 정한다"
     },
     "rounding": {
-      "amount": null,
-      "candidates": [
-        "floor_won",
-        "half_up_won"
-      ],
-      "in_source": false
+      "amount": "floor_won",
+      "alternative": "half_up_won",
+      "in_source": false,
+      "basis": "D-6 계산 끝에 한 번 원 미만 내림 (대안 half up, 결정 민감도 검사) [결정 기본값, 승인 2026-11-15]"
     },
-    "verified": false,
+    "verified": true,
     "verification": {
-      "method": "HWPX 텍스트 ↔ PDF 7~8쪽 이미지 판독 일치. 사용자 육안 대조 전이라 false",
-      "user_checked": false,
-      "checked_at": "2026-11-02"
+      "method": "HWPX 텍스트 ↔ PDF 7~8쪽 이미지 판독 일치. 2026-11-15 두 경로 재대조(HWPX·HWP 텍스트 ↔ PDF 텍스트층, 문장 S1~S18·지원 5품목 표 값 일치, docs/sources/appliance_verify_sheet.md 1절)로 verified: true [승인 2026-11-15]. 같은 날 사용자 육안 대조 S1~S18 모두 일치 → user_checked: true (user_check_sheet.md 확인 기록 2026-11-15 행)",
+      "user_checked": true,
+      "checked_at": "2026-11-15"
     }
   },
   "params": {
@@ -276,6 +283,68 @@
       "rule": "received_date",
       "in_source": true,
       "basis": "별표 Ⅱ ① 비고 '수리 등이 사업자측에 접수된 날을 기준으로 판단함'"
+    },
+    "p2": {
+      "scope": "별표 Ⅱ ① (2-2) 5) 품질보증기간 경과 후 (부품보유기간 이내에 수리용 부품을 보유하지 않아 발생한 피해)",
+      "supported_items": [
+        {
+          "key": "tv",
+          "label": "TV",
+          "row": "tv_fridge",
+          "member": "TV"
+        },
+        {
+          "key": "fridge",
+          "label": "냉장고",
+          "row": "tv_fridge",
+          "member": "냉장고"
+        },
+        {
+          "key": "washer",
+          "label": "세탁기",
+          "row": "washer",
+          "member": "세탁기"
+        },
+        {
+          "key": "vacuum",
+          "label": "전기청소기",
+          "row": "audio_microwave_group",
+          "member": "전기청소기"
+        },
+        {
+          "key": "laptop",
+          "label": "노트북",
+          "row": "pc_group",
+          "member": "노트북"
+        }
+      ],
+      "supported_items_basis": "D-11 별표 Ⅲ에 값이 하나이고 별표 Ⅳ 품목 칸에 있는 가정용 품목 5개. 노트북은 별표 Ⅳ '노트북PC'와 같은 품목으로 본다 [해석, 승인 2026-11-15 Q5 (a)]. 목록은 사용자가 바꿀 수 있다",
+      "period_boundary": {
+        "rule": "boundary_day_calculates_with_review",
+        "in_source": false,
+        "basis": "D-8 접수일 < 기산일 + 기간 → 이내, = → 경계(계산 + 🔍 PERIOD_BOUNDARY), > → 지남 [결정 기본값, 승인 2026-11-15]"
+      },
+      "manufacture_date_unknown": {
+        "rule": "purchase_plus_parts_period_bound",
+        "in_source": false,
+        "basis": "D-9 제조일 ≤ 구입일이므로 접수일 > 구입일 + 부품보유기간이면 ❔ OUTSIDE_PARTS_PERIOD, 아니면 계산 + 🔍 PARTS_PERIOD_UNCONFIRMED [결정 기본값, 승인 2026-11-15]"
+      },
+      "certificate": {
+        "longer_period_applies": true,
+        "longer_period_in_source": true,
+        "unconfirmed_rule": "table_period_with_review",
+        "in_source": false,
+        "basis": "D-10 보증서 기간이 고시보다 길면 보증서 기간 (별표 Ⅳ, 시행령 별표 1 4.가). 보증서를 확인했다고 답하지 않으면 고시 기간으로 계산 + 🔍 CERTIFICATE_UNCONFIRMED [결정 기본값, 승인 2026-11-15]"
+      },
+      "decision_sensitivity": {
+        "applies_to": [
+          "used_months.partial_month",
+          "rounding",
+          "cap_decision"
+        ],
+        "rule": "세탁 12.4와 같은 방식 (8조합, 원인은 12.4 4번 문장)",
+        "in_source": false
+      }
     }
   },
   "notes": [
@@ -283,7 +352,8 @@
     "items.rows는 별표 Ⅲ 5. 1) 완제품 중 가전·전자 관련 행만 옮겼다. 복사기·신발·라켓·헬스기구·우산류·전구류·문구·완구·가발·스마트폰 행과 2) 핵심부품은 제외했다 (스마트폰은 별표 Ⅱ ③ 별도 품목).",
     "members가 null인 행은 annex3_label을 그대로 쓰고 품목 분해를 하지 않았다.",
     "annex1_listed: 별표 Ⅰ 전자제품 품목 목록에 행의 모든 품목이 있으면 true, 일부만 있거나 확인하지 않았으면 null. 예: 가스레인지·망원경은 별표 Ⅰ 전자제품 목록에 없다.",
-    "시행령 별표 1(일반적 기준) 4.가~마는 related_clauses에 원문으로 넣었다 (HWP ↔ PDF 1,931자 일치)."
+    "시행령 별표 1(일반적 기준) 4.가~마는 related_clauses에 원문으로 넣었다 (HWP ↔ PDF 1,931자 일치).",
+    "2026-11-15 P2(5) 품질보증기간 경과 후) 구현: 쓰는 블록 items·resolution_table·lifespan_rule·depreciation을 두 경로 재대조와 사용자 대조(S1~S18 일치)로 verified·user_checked true. repair_impossible_rule과 최상위 verified는 false 그대로 (3)·4)의 가산 대상, 수리 횟수 합산 등 미결). source.retrieved_at(2026-11-02)은 조문 카드 확인일이라 바꾸지 않는다."
   ],
   "clauses": [
     {
