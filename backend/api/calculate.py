@@ -4,14 +4,16 @@
 요청 본문은 입력 모델 그대로다. GymInput은 strict 모델이라 JSON 모드로 검증한다
 (날짜는 ISO 문자열로 받고, 숫자 문자열 "100" 같은 값은 자동 변환하지 않는다).
 요청 본문은 로그에 남기지 않는다.
+세탁 복원 기능(R2 set_partial 등)은 운영 설정 ENABLED_FEATURES로 켠다 (api/settings.py, 2026-11-15).
 """
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from api.settings import AppSettings, get_app_settings
 from rules.gym import GymInput, GymResult, calculate_refund
 from rules.gym_display import GymDisplay, build_display
 from rules.laundry import LaundryInput, LaundryResult, calculate_damage
@@ -74,14 +76,16 @@ def validate_body[T: BaseModel](model: type[T], body: bytes) -> T:
     },
 )
 async def calculate(
-    request: Request, item: Literal["gym", "laundry"] = "gym"
+    request: Request,
+    settings: Annotated[AppSettings, Depends(get_app_settings)],
+    item: Literal["gym", "laundry"] = "gym",
 ) -> CalculateResponse | LaundryCalculateResponse:
     """확정된 입력으로 기준 금액을 계산하고 표시 정보를 붙인다."""
     body = await request.body()
     if item == "laundry":
         laundry = validate_body(LaundryInput, body)
         lrule = load_laundry_rule()
-        lresult = calculate_damage(laundry, lrule)
+        lresult = calculate_damage(laundry, lrule, settings.enabled_features)
         return LaundryCalculateResponse(
             result=lresult, display=build_laundry_display(lresult, lrule, laundry)
         )
