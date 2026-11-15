@@ -12,6 +12,9 @@
   검색하고(rag/search.py), 기존 추출 호출 한 번에 후보를 넣는다. 응답에 clauses{candidates, selected}를 더한다.
   항목은 저장된 규칙 JSON 값(ID·제목·출처·기준일·확인 여부·본문 앞부분)뿐이고 LLM이 쓴 문장은 넣지 않는다.
   꺼져 있으면 프롬프트·스키마·응답이 지금과 같다 (clauses 키 없음).
+- 기능 플래그 llm_resilience(MVP_SPEC 16절, 2026-11-16): 일시 오류(500·502·503·504, 시간 초과, 연결 실패)면
+  두 번째 시도를 한 번 한다 (llm/resilience.py). 호출 하나의 시간 제한은 LLM_TIMEOUT_SECONDS(기본 20초).
+  모든 시도가 일시 오류로 끝나면 502 문구를 BUSY_MESSAGE로 바꾼다 (code는 그대로). 꺼져 있으면 지금과 같다.
 """
 
 import logging
@@ -27,12 +30,13 @@ from api.settings import AppSettings, app_settings, get_app_settings
 from llm.client import LLMClient, LLMError, LLMErrorKind
 from llm.config import LLMConfigError, load_settings
 from llm.extraction import AnalyzeResult, analyze_text
+from llm.gemini import TIMEOUT_SECONDS as LEGACY_TIMEOUT_SECONDS
 from llm.gemini import GeminiClient
 from llm.guardrail import detect_judgment_request
 from llm.laundry_extraction import analyze_laundry_text
 from llm.masking import mask_pii
 from llm.ratelimit import MinIntervalLimiter
-from llm.resilience import RetryingClient
+from llm.resilience import RetryingClient, is_transient
 from llm.usage import DailyCallCounter
 from rag.search import Candidate, search
 from rules.gym_display import GuardrailDisplay, judgment_guardrail_display
@@ -48,6 +52,8 @@ NOT_CONFIGURED_MESSAGE = (
 )
 RATE_LIMITED_MESSAGE = "요청이 많아 문장을 분석하지 못했습니다. 잠시 뒤 다시 시도하거나 아래 입력 폼에 직접 입력해 주세요."
 FAILED_MESSAGE = "문장을 분석하지 못했습니다. 아래 입력 폼에 직접 입력해 주세요."
+# llm_resilience 켜짐 + 일시 오류로 끝난 502 (2026-11-16 승인)
+BUSY_MESSAGE = "AI 서비스가 일시적으로 바쁩니다. 잠시 후 다시 시도하거나 아래 입력 폼에 직접 입력해 주세요."
 DISABLED_CODE = "ANALYZE_DISABLED"
 DISABLED_MESSAGE = "문장 분석은 지금 쓸 수 없습니다. 아래 입력 폼으로 입력해 주세요"
 DAILY_LIMIT_CODE = "ANALYZE_DAILY_LIMIT"
@@ -71,6 +77,7 @@ class AnalyzeRequest(BaseModel):
 
 
 RAG_FEATURE = "rag"
+RESILIENCE_FEATURE = "llm_resilience"
 RAG_K = 5
 
 
@@ -152,8 +159,12 @@ def default_client() -> LLMClient:
     기본 모델과 예비 모델(LLM_FALLBACK_MODEL)은 한도가 모델마다 따로라 간격 제한도 따로 둔다.
     429는 RetryingClient가 1회 재시도 → 예비 모델 1회로 처리한다 (llm/resilience.py).
     하루 호출 수는 RetryingClient가 호출마다 센다 (daily_counter).
+    llm_resilience가 켜져 있으면 일시 오류 재시도를 켜고 호출 시간 제한을 LLM_TIMEOUT_SECONDS로 둔다.
+    꺼져 있으면 시간 제한 60초, 429만 다룬다 (변경 전과 같다). 설정은 프로세스 시작 때 한 번 읽는다.
     """
     s = load_settings()
+    resilient = RESILIENCE_FEATURE in app_settings().enabled_features
+    timeout = s.timeout_seconds if resilient else LEGACY_TIMEOUT_SECONDS
 
     def gemini(model: str) -> GeminiClient:
         return GeminiClient(
@@ -161,10 +172,17 @@ def default_client() -> LLMClient:
             model=model,
             temperature=s.temperature,
             limiter=MinIntervalLimiter(s.max_rpm),
+            timeout=timeout,
         )
 
     fallback = gemini(s.fallback_model) if s.fallback_model else None
-    return RetryingClient(gemini(s.model), fallback, counter=daily_counter())
+    return RetryingClient(
+        gemini(s.model),
+        fallback,
+        counter=daily_counter(),
+        transient_retry=resilient,
+        call_timeout=timeout,
+    )
 
 
 def get_client_provider() -> Callable[[], LLMClient]:
@@ -211,12 +229,17 @@ def analyze(
         extract = analyze_laundry_text if item == "laundry" else analyze_text
         result = extract(masked, client, candidates or None)
     except LLMError as exc:
-        logger.warning("LLM 호출 실패: %s", exc.kind.value)
+        logger.warning(
+            "LLM 호출 실패: %s (status=%s)",
+            exc.kind.value,
+            exc.status if exc.status is not None else "-",
+        )
         if exc.kind == LLMErrorKind.DAILY_LIMIT:
             return _error(429, DAILY_LIMIT_MESSAGE, DAILY_LIMIT_CODE)
         if exc.kind == LLMErrorKind.RATE_LIMITED:
             return _error(429, RATE_LIMITED_MESSAGE, exc.kind.value)
-        return _error(502, FAILED_MESSAGE, exc.kind.value)
+        busy = RESILIENCE_FEATURE in settings.enabled_features and is_transient(exc)
+        return _error(502, BUSY_MESSAGE if busy else FAILED_MESSAGE, exc.kind.value)
     if result.judgment_requested:
         return guardrail
     return AnalyzeResponse(

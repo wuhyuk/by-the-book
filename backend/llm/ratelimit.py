@@ -28,6 +28,13 @@ class MinIntervalLimiter:
         self._last: float | None = None
         self._lock = threading.Lock()
 
+    def pending(self) -> float:
+        """지금 wait()를 부르면 기다릴 초 (기다리지 않고 계산만). 전체 대기 상한 계산용 (llm_resilience)."""
+        with self._lock:
+            if not self.interval or self._last is None:
+                return 0.0
+            return max(0.0, self._last + self.interval - self._clock())
+
     def wait(self) -> float:
         """필요하면 기다린 뒤 이번 호출 시각을 기록한다. 기다린 초를 돌려준다."""
         with self._lock:

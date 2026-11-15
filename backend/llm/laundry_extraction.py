@@ -28,6 +28,7 @@ from llm.grounding import (
     evidence_in_text,
     judgment_grounded,
 )
+from llm.validation_log import log_validation_failure
 from rag.search import Candidate
 
 SYSTEM_PROMPT_FILE = PROMPT_DIR / "laundry_extract_system.md"
@@ -300,7 +301,8 @@ def analyze_laundry_text(
     )
     try:
         raw = RawLaundryExtraction.model_validate_json(out)
-    except ValidationError:
+    except ValidationError as exc:
+        log_validation_failure(exc, (*RawLaundryExtraction.model_fields, *FIELD_NAMES))
         raise LLMError(LLMErrorKind.BAD_RESPONSE) from None
     result = check_extraction(raw, masked_text)
     if selected is None:
