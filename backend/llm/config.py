@@ -5,11 +5,15 @@
 - LLM_TEMPERATURE: 줄이 없으면 0, 값을 비워 두면 temperature를 보내지 않는다, 숫자면 그 값(0~2).
 - LLM_MAX_RPM: 모델별 분당 호출 상한 (코드가 호출 간격을 지킨다). 없거나 비면 12.
 - LLM_FALLBACK_MODEL: 기본 모델이 재시도 후에도 429일 때 1회만 부를 예비 모델. 없거나 비면 쓰지 않는다.
+  기능 플래그 llm_resilience가 켜져 있으면 일시 오류(500·502·503·504, 시간 초과, 연결 실패)의 두 번째 시도에도 쓴다.
+- LLM_TIMEOUT_SECONDS: 호출 하나의 시간 제한(초). llm_resilience가 켜져 있을 때만 쓴다 (꺼져 있으면 60초 그대로).
+  없거나 비면 20. 1~50 사이 숫자가 아니면 기본값을 쓰고 설정 이름만 경고 로그에 남긴다 (2026-11-16).
 
 값은 환경변수가 먼저이고, 없으면 backend/.env 파일에서 위 이름만 읽는다 (새 의존성 없이 직접 파싱).
 키는 SecretStr로 감싸 repr·로그·예외 메시지에 나오지 않게 한다. 오류 메시지에는 설정 이름만 넣는다.
 """
 
+import logging
 import os
 from collections.abc import Mapping
 from pathlib import Path
@@ -18,7 +22,12 @@ from pydantic import BaseModel, ConfigDict, SecretStr
 
 ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 REQUIRED_KEYS = ("LLM_PROVIDER", "LLM_API_KEY", "LLM_MODEL")
-OPTIONAL_KEYS = ("LLM_TEMPERATURE", "LLM_MAX_RPM", "LLM_FALLBACK_MODEL")
+OPTIONAL_KEYS = (
+    "LLM_TEMPERATURE",
+    "LLM_MAX_RPM",
+    "LLM_FALLBACK_MODEL",
+    "LLM_TIMEOUT_SECONDS",
+)
 KEYS = (*REQUIRED_KEYS, *OPTIONAL_KEYS)
 SUPPORTED_PROVIDERS = ("gemini",)
 
@@ -26,6 +35,13 @@ DEFAULT_TEMPERATURE = 0.0
 DEFAULT_MAX_RPM = 12
 MAX_TEMPERATURE = 2.0
 MAX_RPM_LIMIT = 1000
+DEFAULT_TIMEOUT_SECONDS = 20.0  # llm_resilience 켜짐일 때 호출 하나의 시간 제한
+MIN_TIMEOUT_SECONDS = 1.0
+MAX_TIMEOUT_SECONDS = (
+    50.0  # 전체 대기 상한(llm/resilience.py TOTAL_BUDGET_SECONDS)을 넘지 않게
+)
+
+logger = logging.getLogger("by_the_book.llm")
 
 
 class LLMConfigError(Exception):
@@ -41,6 +57,7 @@ class LLMSettings(BaseModel):
     temperature: float | None = DEFAULT_TEMPERATURE  # None = 보내지 않음
     max_rpm: int = DEFAULT_MAX_RPM
     fallback_model: str | None = None
+    timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS  # llm_resilience 켜짐일 때만 쓴다
 
 
 def read_env_file(path: Path, keys: tuple[str, ...] = KEYS) -> dict[str, str]:
@@ -89,6 +106,20 @@ def _max_rpm(raw: str | None) -> int:
     return int(raw)
 
 
+def _timeout_seconds(raw: str | None) -> float:
+    """잘못된 값은 오류로 멈추지 않고 기본값을 쓴다 (설정 이름만 경고)."""
+    if not raw:
+        return DEFAULT_TIMEOUT_SECONDS
+    try:
+        value = float(raw)
+    except ValueError:
+        value = float("nan")
+    if not MIN_TIMEOUT_SECONDS <= value <= MAX_TIMEOUT_SECONDS:
+        logger.warning("LLM_TIMEOUT_SECONDS 값이 맞지 않아 기본값을 씁니다.")
+        return DEFAULT_TIMEOUT_SECONDS
+    return value
+
+
 def load_settings(
     environ: Mapping[str, str] | None = None, env_file: Path | None = ENV_FILE
 ) -> LLMSettings:
@@ -121,4 +152,5 @@ def load_settings(
         temperature=_temperature(raw("LLM_TEMPERATURE")),
         max_rpm=_max_rpm(raw("LLM_MAX_RPM")),
         fallback_model=raw("LLM_FALLBACK_MODEL") or None,
+        timeout_seconds=_timeout_seconds(raw("LLM_TIMEOUT_SECONDS")),
     )
