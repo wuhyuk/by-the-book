@@ -2,13 +2,18 @@
 
 Windows 콘솔·파이프 기본 인코딩(cp949)에서는 배지 기호(✅·⚠️)를 print하다 멈췄다.
 PYTHONIOENCODING=cp949로 그 환경을 재현하고, configure_stdio() 뒤에는 멈추지 않는지 본다.
-서버에 요청하지 않는다 (출력 부분만 확인).
+서버에 요청하지 않는다 (출력 부분은 하위 프로세스, 플래그 확인은 TestClient로 앱을 직접 부른다).
 """
 
+import io
 import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
+
+import pytest
+from fastapi.testclient import TestClient
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
 
@@ -59,3 +64,47 @@ def test_main_configures_stdio_first() -> None:
     body = source.split("def main() -> None:", 1)[1]
     first = next(line.strip() for line in body.splitlines() if line.strip())
     assert first == "configure_stdio()"
+
+
+# ---- 기능 플래그 켜짐/꺼짐 (ENABLED_FEATURES, 2026-11-15) ----
+# 배포 서버 대신 앱을 TestClient로 불러 스크립트의 확인 전체(run)가 통과하는지 본다.
+
+
+def _run_against_app(
+    monkeypatch: pytest.MonkeyPatch, features: tuple[str, ...]
+) -> tuple[int, str]:
+    sys.path.insert(0, str(SCRIPTS))
+    import smoke_deploy
+
+    from api.settings import AppSettings, get_app_settings
+    from main import app
+
+    client = TestClient(app)
+
+    def fake_request(base: str, method: str, path: str, body: Any = None) -> Any:
+        res = client.request(method, path, json=body)
+        return res.status_code, res.json()
+
+    monkeypatch.setattr(smoke_deploy, "request", fake_request)
+    app.dependency_overrides[get_app_settings] = lambda: AppSettings(
+        analyze_enabled=False, enabled_features=features
+    )
+    out = io.StringIO()
+    try:
+        monkeypatch.setattr(sys, "stdout", out)
+        code = smoke_deploy.run("http://test", analyze=False)
+    finally:
+        app.dependency_overrides.pop(get_app_settings, None)
+    return code, out.getvalue()
+
+
+def test_smoke_passes_with_set_partial_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    code, out = _run_against_app(monkeypatch, ())
+    assert code == 0, out
+    assert "세탁 L4 (Set 일부, 꺼짐 ❔)" in out
+
+
+def test_smoke_passes_with_set_partial_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    code, out = _run_against_app(monkeypatch, ("set_partial",))
+    assert code == 0, out
+    assert "세탁 L4 (Set 일부, 켜짐 🔍)" in out
