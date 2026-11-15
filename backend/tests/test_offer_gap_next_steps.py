@@ -132,6 +132,7 @@ def test_known_features() -> None:
         "offer_gap",
         "next_steps",
         "rag",
+        "llm_resilience",
     )
     s = load_app_settings(
         {"ENABLED_FEATURES": "rag, next_steps,offer_gap"}, env_file=None
