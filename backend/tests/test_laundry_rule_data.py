@@ -99,7 +99,8 @@ def test_block_verification_status(rule: LaundryRule) -> None:
     """블록은 기계 대조로 verified: true (Q-S2). 최상위는 false.
 
     2026-11-13 사용자 표본 대조(user_check_sheet.md 1~4번)로 ratio_table·lifespan_table·
-    unproven_fallback은 user_checked: true. set_allocation은 표본에 없어 false 그대로다.
+    unproven_fallback은 user_checked: true. set_allocation은 2026-11-15 사용자 표본 대조
+    (user_check_sheet.md 확인 기록 2026-11-15 행, R2 Q14 (b))로 user_checked: true.
     """
     assert rule.verified is False
     for block in (
@@ -112,7 +113,8 @@ def test_block_verification_status(rule: LaundryRule) -> None:
     for block in (rule.ratio_table, rule.lifespan_table, rule.unproven_fallback):
         assert block.verification.user_checked is True
         assert block.verification.checked_at == "2026-11-13"
-    assert rule.set_allocation.verification.user_checked is False
+    assert rule.set_allocation.verification.user_checked is True
+    assert rule.set_allocation.verification.checked_at == "2026-11-15"
 
 
 def test_decisions_marked_not_in_source(rule: LaundryRule) -> None:
