@@ -984,7 +984,7 @@ u = 구입일(인도일)부터 수리 접수일까지 완전한 개월 (D-2, D-3
 
 ## 14. 제시액 차액·다음 행동·조항 조회 [2026-11-16 사용자 지시, 문구·규칙은 제안]
 
-> 기능 플래그 `offer_gap`·`next_steps`(`ENABLED_FEATURES`, `docs/DEPLOY.md` 4.7). 꺼져 있으면 API 응답·화면이 변경 전과 같다 (새 키는 값이 없으면 응답에서 빠진다, Pydantic `exclude_if`). `rag`는 이름만 받아 두고 다음 단계(조항 검색)에서 쓴다. 문구·규칙 목록과 차액 케이스 표는 `docs/sources/offer_gap_cases.md`.
+> 기능 플래그 `offer_gap`·`next_steps`(`ENABLED_FEATURES`, `docs/DEPLOY.md` 4.7). 꺼져 있으면 API 응답·화면이 변경 전과 같다 (새 키는 값이 없으면 응답에서 빠진다, Pydantic `exclude_if`). `rag`는 15절(조항 검색)에서 쓴다. 문구·규칙 목록과 차액 케이스 표는 `docs/sources/offer_gap_cases.md`.
 
 ### 14.1 업체 제시액 차액 (`offer_gap`, `backend/rules/offer_gap.py`)
 
@@ -1008,5 +1008,39 @@ u = 구입일(인도일)부터 수리 접수일까지 완전한 개월 (D-2, D-3
 
 - 대상: 세 규칙 JSON의 `clauses`·`related_clauses` (60개 ID, 소비자기본법 두 조문은 세탁·가전 파일에 같은 내용으로 있어 `rule_ids`에 둘 다 적는다). 라벨·원문·출처 표기는 근거 카드(`citation_cards`)와 같다. 서버에서 처음 부를 때 한 번 색인을 만든다.
 - `verified`·`user_checked` **[제안]**: `table_ref`가 있는 표 카드는 그 블록의 `verified`·`verification.user_checked`, `verified_paths`가 있는 고시 밖 원문은 `verified_paths ≥ 2`, 그 밖은 "원문을 확인한 조문만 넣는다"(4절·5.7·10절)에 따라 `verified: true`이고 조항 단위 사용자 대조 기록이 없어 `user_checked: null`.
-- 근거 카드는 이미 원문 전체를 보여 주므로 화면의 "원문 보기" 연결은 이번에 만들지 않았다 (다음 단계 조항 검색 화면에서 쓴다).
+- 근거 카드는 이미 원문 전체를 보여 주므로 근거 카드에는 "원문 보기" 연결을 두지 않는다. 15.3 관련 조항 영역이 이 API로 원문을 펼친다.
+- 화면 표시 [결정 2026-11-16 사용자 조건]: `verified`는 기계 대조이므로 "자동 대조 통과"(false면 "자동 대조 미완료")로 쓰고, "확인됨"·"검증됨"처럼 사람이 확인한 것으로 읽히는 말을 쓰지 않는다. `user_checked`가 null이면 "조항 단위 사용자 대조 기록 없음", true면 "사용자 표본 대조 기록 있음", false면 "사용자 대조 전".
+
+## 15. 조항 검색 + LLM 조항 선택 (`rag`) [2026-11-16 사용자 지시, 문구는 제안]
+
+> 기능 플래그 `rag` (`ENABLED_FEATURES`, `docs/DEPLOY.md` 4.8). 꺼져 있으면 `/api/analyze`의 프롬프트·스키마·응답이 변경 전과 같다 (`clauses` 키 없음). 새 의존성 없음 (표준 라이브러리 BM25). 검색 결과는 금액 계산에 쓰지 않는다 (CLAUDE.md 절대 규칙 1). 이 절이 CLAUDE.md 3절·8절 단계 7의 "Chroma + 한국어 임베딩" 계획을 대신한다 (사용자 지시 2026-11-16: 순수 Python BM25, 새 의존성 없음).
+
+### 15.1 검색 (`backend/rag/bm25.py`, `backend/rag/search.py`)
+
+- 대상: 세 규칙 JSON의 `clauses`·`related_clauses` 60개 ID (새 데이터 파일 없음). 문서 본문 = 라벨 + 원문. 업종(gym / laundry / appliance)은 규칙 파일로 정하고, 두 파일에 같은 조문(소비자기본법 제16조 ③, 시행령 제9조 ②)은 두 업종 모두에 든다 (업종별 15·16·31개).
+- 토큰: NFKC → 소문자 → 구두점·기호 제거, 한글 연속 구간의 글자 2-gram + 공백 낱말(길이 2 이상).
+- 점수: BM25 (k1 = 1.2, b = 0.75, idf = ln(1 + (N − df + 0.5)/(df + 0.5))). 업종 필터를 먼저 적용하고 업종마다 색인(통계)을 따로 둔다. 점수 > 0만, 점수 내림차순·조항 ID 오름차순 (결정적, 질의 토큰은 정렬해서 더한다).
+- 인터페이스: `search(masked_text, domain, k=5)` → 후보(조항 ID, 제목 = 라벨, 저장된 본문 앞부분 120자, 점수, 순위). `1 ≤ k ≤ 20`.
+- 색인은 서버 시작 때 한 번 만든다 (`main.py` lifespan, `rag`가 켜져 있을 때). 60개 기준 실측(tracemalloc, 업종 3개 + 전체 색인 4개와 JSON 적재 포함) 약 1.1MB, 어휘 1,863개, (문서, 토큰) 쌍 4,357개 (전체 색인).
+- 개인정보: 입력은 마스킹한 문장만 받고 저장·로그하지 않는다.
+
+### 15.2 `/api/analyze` 연결 (`backend/llm/clause_selection.py`)
+
+- 순서: 마스킹 → 규칙 가드레일 → 분석 스위치 → 하루 상한 → LLM 설정 → **조항 검색(마스킹한 문장, item 업종, k = 5)** → 기존 추출 호출 한 번. 가드레일·스위치·상한에서 멈추면 검색하지 않는다. 호출 횟수는 늘지 않는다.
+- 프롬프트: 기존 system 지시 뒤에 후보 목록(ID·제목·저장된 본문 앞부분)과 규칙(후보 ID만, 없으면 [], 이유 쓰지 않음, 조항 숫자를 fields로 옮기지 않음)을 붙인다. 스키마: 최상위 `clause_ids`(문자열 배열, 후보 ID enum) required. 자유 서술 이유는 받지 않는다.
+- 응답 검증: 후보에 없는 ID는 버리고 중복은 처음 것만. 모두 버려지면 빈 목록. `clause_ids`가 없거나 목록이 아니면 빈 목록 (추출 결과는 그대로). 추출 검증(근거 확인·채움 규칙)은 바뀌지 않는다 — 조항 본문의 숫자는 사용자 문장에 없으므로 근거 확인을 통과하지 못한다.
+- 후보가 0개면 기존 프롬프트·스키마로 호출하고 `clauses = {candidates: [], selected: []}`.
+- 응답 `clauses: {candidates: [...], selected: [...]}`. 항목 = `clause_id`, `title`, `source_name`, `retrieved_at`, `verified`, `user_checked`, `excerpt` (모두 규칙 JSON에 저장된 값, 14.3 조회 색인과 같은 출처). LLM이 쓴 문장은 어디에도 넣지 않는다. 내부 값 `AnalyzeResult.selected_clause_ids`는 응답 JSON에 내보내지 않는다.
+
+### 15.3 화면 (`frontend/src/components/ClausePanel.tsx`)
+
+- 문장 분석 결과(되묻기 안내) 아래 "관련 조항 (자동 검색)": 후보 목록, LLM이 고른 조항에 "AI가 고른 조항" 표시, 항목을 펼치면 `/api/sources/{id}`로 원문·출처·기준일을 불러온다.
+- 안내 문구 [제안]: "자동 검색한 관련 조항입니다. 금액 계산에는 쓰이지 않고, 계산은 아래 기준표로 합니다."
+- 확인 상태 표시는 14.3 화면 표시 결정을 따른다 ("자동 대조 통과", "조항 단위 사용자 대조 기록 없음" 등).
+
+### 15.4 평가 (`docs/sources/rag_eval_set.md`, `eval/run_retrieval_eval.py`)
+
+- 30문장(헬스장 10, 세탁 10, 가전 10), 정답 조항 ID는 **승인 대기**. 승인 전에는 pytest 기대값으로 쓰지 않는다. 가전은 문장 분석이 없어 검색만 평가.
+- 스크립트(표준 라이브러리만): hit@1·hit@3, 기준선(업종 필터만, 조항 앞쪽 k개)과 비교. pytest 임계값은 두지 않는다.
+- pytest는 합성 미니 코퍼스로 성질만 검사한다 (결정성, 업종 필터, k 상한, 반환 ID가 코퍼스에 있음, 후보 밖 ID 폐기, 마스킹 후 입력, 꺼짐 상태 불변).
 
