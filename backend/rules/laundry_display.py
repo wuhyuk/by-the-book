@@ -20,7 +20,13 @@ from rules.gym_display import (
 from rules.gym_display import (
     FLAG_TEXTS as GYM_FLAG_TEXTS,
 )
-from rules.laundry import LaundryInput, LaundryResult
+from rules.laundry import (
+    HANBOK_ROW_ID,
+    HANBOK_SET_TYPES,
+    OTHER_SET_TYPES,
+    LaundryInput,
+    LaundryResult,
+)
 from rules.laundry_codes import (
     CommonFlag,
     LaundryCode,
@@ -56,6 +62,12 @@ FLAG_TEXTS: dict[LaundryCode, str] = {
         "세트 의류의 일부만 손상·분실된 경우는 소비자분쟁해결기준의 기준표에 배상액 배분 "
         "규정이 있으나, 이번 버전에서는 지원하지 않습니다. 1372 또는 한국소비자원에 "
         "문의해 주세요."
+    ),
+    # R2 (보고서 vs4_restore_r2_cases.md 3.2 [제안] 그대로, 2026-11-15 Q19 (a) 승인)
+    L.SET_PARTIAL_FALLBACK_UNDEFINED: (
+        "품명·구입가격·구입일을 입증하기 어려워 세탁요금의 20배를 기준으로 하는 경우, 기준표에는 "
+        "세트 의류의 일부만 손상·분실되었을 때 그 금액을 어떻게 정하는지 나와 있지 않아 이 서비스에서는 "
+        "계산하지 않습니다. 1372 또는 한국소비자원에 문의해 주세요."
     ),
     L.ATTACHMENT_UNSUPPORTED: (
         "탈부착 부속물(털, 칼라, 모자 등)이 손상된 경우는 소비자분쟁해결기준의 기준표에 "
@@ -116,12 +128,32 @@ def _won(n: int) -> str:
     return f"{n:,}"
 
 
+CAUSE_NAMES: dict[str, str] = {
+    "use_days": "사용일수 산입",
+    "rounding": "원 미만 처리",
+    "set_partial_damage": "Set 배분",
+}
+
+
 def sensitivity_text(result: LaundryResult) -> str:
     """DECISION_SENSITIVE 화면 한 줄 (12.4 형식). 숫자는 엔진 결과 필드에서만 가져온다."""
     lo, hi = result.sensitivity_min, result.sensitivity_max
     assert lo is not None and hi is not None
     causes = set(result.sensitivity_causes)
     rng = f"{_won(lo)}원~{_won(hi)}원"
+    if causes == {"set_partial_damage"}:
+        # 12.10 R2 Set 배분 문구 (2026-11-15 승인)
+        return (
+            "세트 의류 일부 손상의 배분 방식(고시 7.의 비율 적용 여부)에 따라 "
+            f"기준 금액이 {rng}으로 달라질 수 있습니다."
+        )
+    if "set_partial_damage" in causes:
+        # 원인이 둘 이상일 때 일반 틀 (12.10, R1 D5, 2026-11-15 승인)
+        names = "·".join(CAUSE_NAMES[c] for c in result.sensitivity_causes)
+        return (
+            f"고시에 정해져 있지 않은 {names}에 따라 기준 금액이 {rng}으로 "
+            "달라질 수 있습니다."
+        )
     if causes == {"use_days"}:
         return (
             "고시에 정해져 있지 않은 사용일수 산입 방식(구입일을 세는지)에 따라 배상비율이 "
@@ -329,6 +361,8 @@ class LaundryItemOption(_Model):
     examples: str | None
     variant_by: str | None
     variants: list[DisplayLine]
+    # 이 품목 행에서 고를 수 있는 Set 유형 (R2 Q5 (c): 화면 제한용. 엔진 검증과 같은 목록)
+    set_types: list[str]
 
 
 def item_options(rule: LaundryRule) -> list[LaundryItemOption]:
@@ -340,6 +374,9 @@ def item_options(rule: LaundryRule) -> list[LaundryItemOption]:
             examples=r.examples,
             variant_by=r.variant_by,
             variants=[DisplayLine(code=v.key, text=v.label) for v in r.variants or []],
+            set_types=list(
+                HANBOK_SET_TYPES if r.id == HANBOK_ROW_ID else OTHER_SET_TYPES
+            ),
         )
         for r in rule.lifespan_table.rows
     ]
