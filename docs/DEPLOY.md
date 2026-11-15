@@ -38,7 +38,7 @@
 | `ANALYZE_ENABLED` | 선택 | `true` | 문장 분석 스위치. 아래 파싱 규칙 |
 | `DAILY_ANALYZE_LIMIT` | 선택 | `450` | 하루(한국시간) Gemini 호출 상한. 0 이상의 정수. 아니면 기본값 |
 | `SURVEY_URL` | 선택 | 비움 | 만족도 설문 주소 (`https://…`). 비우면 화면에 설문 버튼이 없다. http(s)가 아니면 무시 |
-| `ENABLED_FEATURES` | 선택 | 비움 | 켤 복원 기능 이름 (쉼표 구분). 지금은 `set_partial`(세탁 세트 의류 일부 손상 배분 계산)만. 비우면 아무것도 켜지 않는다 (4.5) |
+| `ENABLED_FEATURES` | 선택 | 비움 | 켤 기능 이름 (쉼표 구분). `set_partial`(세탁 세트 의류 일부 손상 배분 계산), `appliance`(가전 탭, 품질보증기간 경과 후 부품 미보유 환급). 둘 다 켜려면 `set_partial,appliance`. 비우면 아무것도 켜지 않는다 (4.5) |
 
 - `ANALYZE_ENABLED` 파싱 (대소문자 무시, 앞뒤 공백 무시): `true`·`1`·`yes`·`on` → 켬, `false`·`0`·`no`·`off` → 끔, **빈 값 → 켬**, **그 밖의 값 → 끔** (오타는 안전하게 끈다. 로그에 설정 이름만 경고).
 - LLM 설정 세 개(`LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL`) 없이 배포하면 `ANALYZE_ENABLED=false`로 둔다. 켜 둔 채 키가 없으면 화면에 문장 입력창이 보이지만 분석 요청은 503("지금은 문장 분석을 쓸 수 없습니다…")으로 끝난다. 폼 계산은 영향 없다.
@@ -93,13 +93,20 @@
 - 값은 쉼표로 구분하고 앞뒤 공백은 무시한다 (`set_partial` = ` set_partial `). 대소문자는 구분한다. 모르는 이름은 무시하고 로그에 설정 이름만 경고한다.
 - 켜고 끄는 것은 세탁 계산·문안(`/api/calculate?item=laundry`, `/api/guide?item=laundry`)과 화면 항목에만 영향이 있다. 헬스장과 문장 분석은 그대로다.
 
+### 4.6 가전 켜고 끄기 (`appliance`, 2026-11-15)
+
+- 켜기: Render → Environment → `ENABLED_FEATURES`에 `appliance`를 넣는다. 세탁 R2도 켜 둔 상태면 `set_partial,appliance`처럼 쉼표로 함께 쓴다. 저장한 뒤 배포(재시작)한다 **[확인 필요: 4.5와 같음]**.
+- 확인: `GET /api/config` → `enabled_features`에 `"appliance"`. 화면 맨 위 탭에 "가전"이 보인다. `python scripts/smoke_deploy.py https://<배포 주소>`가 "가전 A-1 (켜짐 ✅ 920,000)"을 통과한다.
+- 끄기: `ENABLED_FEATURES`에서 `appliance`를 지우고 저장·배포한다. 가전 탭이 사라지고 `item=appliance` 요청은 422, `/api/appliance/items`는 404가 된다 (켜기 전과 같은 응답). smoke 스크립트는 "가전 (꺼짐 422)"를 통과한다.
+- 가전은 폼 입력만 받으므로 문장 분석(Gemini) 호출 수에는 영향이 없다.
+
 ## 5. 배포 확인
 
 ```bash
 python scripts/smoke_deploy.py https://<배포 주소>
 ```
 
-- 확인 항목: `/healthz`, `/api/config`(`enabled_features` 포함), 세탁 Set 일부 손상 1건(승인 L4 입력: 꺼짐이면 ❔, `set_partial` 켜짐이면 🔍 136,500~210,000), 승인 케이스 계산 3건(✅ C1, ⚠️ N2, 🔍 P1)의 배지·환급액, 같은 3건의 `/api/guide` 문안(승인 금액·고지 한 줄·인용).
+- 확인 항목: `/healthz`, `/api/config`(`enabled_features` 포함), 세탁 Set 일부 손상 1건(승인 L4 입력: 꺼짐이면 ❔, `set_partial` 켜짐이면 🔍 136,500~210,000), 가전 1건(승인 A-1: 꺼짐이면 422, `appliance` 켜짐이면 ✅ 920,000), 승인 케이스 계산 3건(✅ C1, ⚠️ N2, 🔍 P1)의 배지·환급액, 같은 3건의 `/api/guide` 문안(승인 금액·고지 한 줄·인용).
 - `--analyze`를 붙이면 문장 하나를 `/api/analyze`로 보낸다 (**Gemini 호출 1건**, 사용자가 직접 실행). 200이면 추출 성공, 아니면 안내 코드(`ANALYZE_DISABLED`, `ANALYZE_DAILY_LIMIT`, `rate_limited`)를 출력한다. 키가 없으면 `not_configured`로 실패한다.
 - 표준 라이브러리만 쓰므로 저장소의 `backend/.venv` 없이도 Python 3.12로 돌릴 수 있다.
 - 시작할 때 출력 인코딩을 UTF-8(`errors="replace"`)로 맞추므로 Windows 콘솔(cp949)에서도 배지 기호(✅·⚠️) 때문에 멈추지 않는다.
