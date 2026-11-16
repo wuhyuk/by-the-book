@@ -13,6 +13,7 @@ import {
   INITIAL_FORM,
   followUpFields,
   mergeExtraction,
+  yearInferredFields,
   type FormState,
 } from './formState'
 import { ANALYZE_TEXT, EXAMPLES, FIELD_LABEL, INPUT_ERROR, ISSUE_TYPE_LABEL, SUPPORTED_INDUSTRIES, VALUE_LABEL } from './texts'
@@ -113,6 +114,8 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenPr
     // 계산을 멈추게 하는 값(❔)은 문장 값으로 채운 경우에만 확인 안내를 붙인다
     const confirm = ext.confirm.filter((f) => merged.filled.includes(f as keyof FormState))
     for (const f of confirm) nextNotes[f] = ANALYZE_TEXT.confirmNote
+    // 연도를 보완해 채운 날짜에는 확인 안내 (플래그 꺼짐이면 응답에 키가 없어 아무것도 붙지 않는다)
+    for (const [f, year] of yearInferredFields(ext, merged.filled)) nextNotes[f] = ANALYZE_TEXT.yearInferredNote(year)
     for (const [f, v] of Object.entries(merged.conflicts)) {
       nextNotes[f] = ANALYZE_TEXT.conflictNote(valueText(f, v as FormState[keyof FormState]))
     }

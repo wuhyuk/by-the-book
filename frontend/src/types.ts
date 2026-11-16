@@ -132,6 +132,8 @@ export interface AnalyzeResult {
   missing: string[]
   confirm: string[]
   judgment_requested: boolean
+  /** 기능 플래그 date_year_infer: 연도 없는 날짜를 코드 규칙으로 보완한 항목 → 그 연도. 꺼져 있으면 키가 없다 */
+  year_inferred?: Record<string, number>
 }
 
 export interface GuardrailDisplay {

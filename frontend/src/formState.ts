@@ -256,6 +256,17 @@ export function followUpFields(
   return { missing, unverified }
 }
 
+/**
+ * 연도를 보완한 항목 중 이번 분석으로 폼에 실제로 채운 항목과 그 연도 (date_year_infer, 2026-11-16).
+ * 응답에 year_inferred가 없으면(플래그 꺼짐) 빈 목록이다.
+ */
+export function yearInferredFields(
+  ext: AnalyzeResult,
+  filled: readonly string[],
+): [string, number][] {
+  return Object.entries(ext.year_inferred ?? {}).filter(([f]) => filled.includes(f))
+}
+
 /** 비어 있는 값: 빈 문자열, "모름"(예/아니오/모름), 체크하지 않음 */
 export function isEmptyValue(name: FieldName, value: FieldValue): boolean {
   if (typeof value === 'boolean') return !value

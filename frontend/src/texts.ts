@@ -115,6 +115,8 @@ export const ANALYZE_TEXT = {
   unverifiedNote: '문장의 값을 확인하지 못해 비워 두었습니다. 직접 입력해 주세요.',
   conflictNote: (value: string) => `문장에서는 ${value}(으)로 보입니다. 입력한 값을 그대로 두었습니다.`,
   evidence: (t: string) => `문장: “${t}”`,
+  // [승인 2026-11-16] date_year_infer로 연도를 보완한 항목 아래 안내
+  yearInferredNote: (year: number) => `문장에 연도가 없어 ${year}년으로 보았습니다. 맞는지 확인해 주세요.`,
   or: '또는 아래 폼에 직접 입력할 수 있습니다.',
 }
 

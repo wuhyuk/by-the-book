@@ -273,7 +273,7 @@ few-shot 4건: P1·U1·S1·S3. 비교 15건 중 7건이 같은 승인 케이스�
 | `academy_law_applies` | true → ❔ `ACADEMY_LAW` | 있음 | 학원 | true: 부정 없어야. false: 받지 않음 → 되묻기. true 채택 시 확인 안내 |
 | `withdrawal_cleared` | true → 🔍 `WITHDRAWAL_STATUS_UNCONFIRMED` 빠짐 (✅ 쪽, 잘못 받으면 가장 위험) | 있음 | 철회 | true: "지났/넘었/대상이 아니" 등 있어야, "아직/안 지/않았" 없어야. false: 부정·"아직" 있어야 (화면은 true만 반영) |
 | `has_refund_limit_clause` | true → 🔍 `REFUND_LIMIT_CLAUSE_UNKNOWN` 빠짐 (✅ 쪽), false → ❔ `NO_REFUND_LIMIT_CLAUSE` | 있음 | 위약금·환불·환급·해지·조항·약관·약정·규정 | true: 부정 없어야. false: 부정 있어야. false 채택 시 확인 안내 |
-| `had_postponement` | true → 🔍 `POSTPONEMENT`, false → 안내만 | 있음 (영향 작음) | 연기·일시정지·정지·홀딩·미뤘·미루 | true: 부정 없어야. false: 부정 있어야 |
+| `had_postponement` | true → 🔍 `POSTPONEMENT`, false → 안내만 | 있음 (영향 작음) | 연기·일시정지·정지·홀딩·미뤘·미루 (false만: 미룬, 2026-11-16 추가) | true: 부정 없어야. false: 부정 있어야 |
 | `is_pt_only` | true → 🔍 `SCOPE_UNCERTAIN_PT_ONLY`, false → 그 🔍 빠짐 (✅ 쪽) | 있음 | PT·피티·퍼스널·개인 트레이닝·개인 레슨 | true: "PT만/단독/만 계약" 등 있어야 ("150만원"의 '만'은 단서 아님), 함께·포함·부정 없어야. false: "같이/함께/포함/패키지" 등 있어야 |
 | `add_on_returned` | true → 반환 가치 가산 + `returned_add_on_value` 필요 | 있음 | 반환·돌려·반납 | true: 부정 없어야. false: 부정 있어야 |
 | `judgment_requested` (상위 플래그) | true → ❔ 가드레일 (LLM 호출 결과로) | 있음 (아무 구절이나 근거로 ❔ 가능) | 판정·판단·맞는지·이길·승소·소송·무효·효력·불법·법적·내용증명·소장·따져 등 | 단서가 없으면 판단 질문으로 보지 않는다 (되묻기 대상 아님, 정규식 가드레일은 그대로) |

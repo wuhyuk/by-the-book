@@ -37,6 +37,7 @@ KNOWN_FEATURES = (
     "next_steps",
     "rag",
     "llm_resilience",
+    "date_year_infer",
 )
 DEFAULT_DAILY_ANALYZE_LIMIT = 450
 _TRUE = frozenset({"true", "1", "yes", "on"})

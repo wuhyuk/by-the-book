@@ -20,6 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from llm.clause_selection import generate_with_clauses
 from llm.client import LLMClient, LLMError, LLMErrorKind, Turn
+from llm.date_infer import infer_years
 from llm.grounding import (
     amounts_in,
     bool_grounded,
@@ -235,6 +236,11 @@ class AnalyzeResult(BaseModel):
     # 기능 플래그 rag: LLM이 후보 중에서 고른 조항 ID (검증 후). 응답 JSON에는 내보내지 않는다
     # (api/analyze.py가 clauses.selected로 따로 만든다). 후보 없이 호출하면 None.
     selected_clause_ids: list[str] | None = Field(default=None, exclude=True)
+    # 기능 플래그 date_year_infer: 연도 없는 날짜를 코드 규칙으로 보완한 필드 → 그 연도.
+    # 꺼져 있거나 보완한 값이 없으면 None이라 응답에서 빠진다 (변경 전 응답과 같다).
+    year_inferred: dict[str, int] | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
 
 
 def _grounded(name: str, value: Any, evidence: str | None, text: str) -> bool:
@@ -313,13 +319,42 @@ def check_extraction(raw: RawExtraction, text: str) -> AnalyzeResult:
     )
 
 
+def apply_year_inference(result: AnalyzeResult, text: str) -> AnalyzeResult:
+    """비어 있는 종료일·도달일만 코드 규칙으로 보완한다 (llm/date_infer.py). 확인된 값은 덮어쓰지 않는다."""
+    fields = dict(result.fields)
+    evidence = dict(result.evidence)
+    years: dict[str, int] = {}
+    for inf in infer_years(text, fields):
+        if inf.field in fields:
+            continue
+        fields[inf.field] = inf.value.isoformat()
+        evidence[inf.field] = inf.evidence
+        years[inf.field] = inf.year
+    if not years:
+        return result
+    return result.model_copy(
+        update={
+            "fields": fields,
+            "evidence": evidence,
+            "unverified": [n for n in result.unverified if n not in years],
+            "missing": questions(fields),
+            "year_inferred": years,
+        }
+    )
+
+
 def analyze_text(
-    masked_text: str, client: LLMClient, candidates: Sequence[Candidate] | None = None
+    masked_text: str,
+    client: LLMClient,
+    candidates: Sequence[Candidate] | None = None,
+    *,
+    infer_year: bool = False,
 ) -> AnalyzeResult:
     """마스킹된 문장을 LLM으로 추출하고 확인한다. 마스킹은 호출하는 쪽(api)이 먼저 한다.
 
     candidates(기능 플래그 rag)가 있으면 같은 호출 한 번에 조항 후보를 넣고 고른 ID를 받는다 (MVP_SPEC 15.2).
     없으면 지금과 같은 프롬프트·스키마다.
+    infer_year(기능 플래그 date_year_infer)는 프롬프트·스키마를 바꾸지 않고, 근거 확인 뒤 코드 규칙으로만 보완한다.
     """
     turns = [*few_shot_turns(), Turn(role="user", text=masked_text)]
     out, selected = generate_with_clauses(
@@ -335,6 +370,8 @@ def analyze_text(
         log_validation_failure(exc, (*RawExtraction.model_fields, *FIELD_NAMES))
         raise LLMError(LLMErrorKind.BAD_RESPONSE) from None
     result = check_extraction(raw, masked_text)
+    if infer_year:
+        result = apply_year_inference(result, masked_text)
     if selected is None:
         return result
     return result.model_copy(update={"selected_clause_ids": selected})
