@@ -27,6 +27,9 @@ _DATE = re.compile(
     r"(?<!\d)(\d{4})\s*(?:-|\.|/|년)\s*(\d{1,2})\s*(?:-|\.|/|월)\s*(\d{1,2})(?!\d)"
 )
 
+# 연도가 있는 날짜 표기 (llm/date_infer.py가 연도 없는 날짜와 구분할 때도 쓴다)
+DATE_PATTERN = _DATE
+
 
 def normalize(text: str) -> str:
     """공백을 하나로 줄인다 (근거 구절 대조용)."""
@@ -118,6 +121,9 @@ class BoolRule:
     true_forbids: tuple[str, ...] = NEGATION_CUES  # 하나라도 있으면 True를 받지 않는다
     false_requires: tuple[str, ...] = NEGATION_CUES  # 하나가 있어야 False를 받는다
     accept_false: bool = True  # False(기본값과 같음)를 받을지
+    # False일 때만 cues 대신 쓸 수 있는 단서. False는 여전히 false_requires(부정)가 있어야 받는다.
+    # True 판정에는 쓰지 않는다 (긍정 표현의 기존 동작 유지).
+    false_cues: tuple[str, ...] = ()
 
 
 _PASSED = (
@@ -155,8 +161,10 @@ BOOL_CUE_RULES: dict[str, BoolRule] = {
         cues=("위약금", "환불", "환급", "해지", "조항", "약관", "약정", "규정"),
     ),
     # True면 🔍 POSTPONEMENT, False면 안내만 바뀐다.
+    # "미룬 적(은) 없어요"는 '미루'·'미뤘'를 담지 않아 False 단서로만 더한다 (2026-11-16, 부정 필요).
     "had_postponement": BoolRule(
         cues=("연기", "일시정지", "정지", "홀딩", "미뤘", "미루"),
+        false_cues=("미룬",),
     ),
     # True면 🔍 SCOPE_UNCERTAIN_PT_ONLY. False를 잘못 받으면 그 🔍가 빠지므로 '함께 쓰는 이용권' 단서가 필요하다.
     # "150만원"의 '만'은 단서가 아니다 ("PT만", "만 계약" 같은 형태만).
@@ -362,12 +370,14 @@ def bool_grounded(name: str, value: bool, evidence: str) -> bool:
     rule = (
         BOOL_CUE_RULES[name] if name in BOOL_CUE_RULES else LAUNDRY_BOOL_CUE_RULES[name]
     )
-    if not _has(evidence, rule.cues):
-        return False
     if value:
+        if not _has(evidence, rule.cues):
+            return False
         if rule.true_requires and not _has(evidence, rule.true_requires):
             return False
         return not _has(evidence, rule.true_forbids)
+    if not _has(evidence, (*rule.cues, *rule.false_cues)):
+        return False
     return rule.accept_false and _has(evidence, rule.false_requires)
 
 
