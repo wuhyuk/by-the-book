@@ -9,6 +9,7 @@ import { GuidePanel } from './components/GuidePanel'
 import { LaundryForm } from './components/LaundryForm'
 import { LaundryResultCard } from './components/LaundryResultCard'
 import {
+  applySetAutofill,
   buildLaundryInput,
   INITIAL_LAUNDRY_FORM,
   laundryFollowUpFields,
@@ -39,6 +40,7 @@ import type {
 
 interface Analysis {
   filledCount: number
+  extraConfirm: string[]
   missing: string[]
   unverified: string[]
   conflicts: string[]
@@ -127,14 +129,16 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
       return
     }
     const raw = data.extraction as LaundryAnalyzeResult | null
-    // R2 켜짐: 세트 관련 값은 폼으로만 받는다 (문장의 set_type·set_part는 채우지 않음)
+    // R2 켜짐: 세트 값은 일반 채우기에서 빼고 applySetAutofill이 상·하 Set + 상의/하의일 때만 채운다
     const ext = raw && setPartial ? withoutSetFields(raw) : raw
     if (!ext) {
       setAnalyzeError(ANALYZE_TEXT.filled(0))
       return
     }
     setGuardrail(null)
-    const merged = mergeLaundryExtraction(form, touched, ext, items)
+    const base = mergeLaundryExtraction(form, touched, ext, items)
+    const set = raw ? applySetAutofill(base, raw, form, touched, items, setPartial) : null
+    const merged = set ? set.merge : base
     setForm(merged.form)
     const formKey = laundryFormKey
     // 되묻기 규칙은 laundryFollowUpFields
@@ -157,14 +161,16 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
     }
     setNotes(nextNotes)
     setEvidence(
-      Object.fromEntries(
-        Object.entries(ext.evidence)
+      Object.fromEntries([
+        ...Object.entries(ext.evidence)
           .filter((e): e is [string, string] => !!e[1] && filled.has(formKey(e[0])))
           .map(([k, t]) => [formKey(k), t]),
-      ),
+        ...Object.entries(set?.evidence ?? {}),
+      ]),
     )
     setAnalysis({
       filledCount: merged.filled.length,
+      extraConfirm: set?.confirm ? [LAUNDRY_TEXT.setConfirm] : [],
       missing,
       unverified,
       conflicts,

@@ -1,7 +1,7 @@
 // 다음 행동 (POST /api/guide의 next_steps, 기능 플래그 next_steps). 문구·항목·채널은 서버 응답 그대로 보여 준다.
 // 체크 표시는 이 화면에만 두고 서버·브라우저 저장소에 저장하지 않는다 (사용자 입력 비저장 원칙).
 import { channelView } from '../nextSteps'
-import { NEXT_STEPS_TEXT } from '../texts'
+import { APP_TEXT, NEXT_STEPS_TEXT } from '../texts'
 import type { NextSteps } from '../types'
 
 export function NextStepsPanel({ data }: { data: NextSteps }) {
@@ -59,7 +59,8 @@ export function NextStepsPanel({ data }: { data: NextSteps }) {
           })}
         </ul>
       </div>
-      <p className="disclaimer">{data.disclaimer}</p>
+      {/* 바로 아래 GuidePanel 공통 고지(APP_TEXT.disclaimer)와 같은 문장이면 한 번만 보이게 여기서는 쓰지 않는다 */}
+      {data.disclaimer !== APP_TEXT.disclaimer && <p className="disclaimer">{data.disclaimer}</p>}
     </details>
   )
 }
