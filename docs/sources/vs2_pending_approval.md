@@ -45,6 +45,7 @@ App (상태 보관: form, submitting, response, fieldErrors, error)
 - 라이브러리 없이 `App`의 `useState`만 쓴다 (MVP_SPEC 9절 확정 2: 상태관리 라이브러리 없음).
 - 폼 값은 문자열로 들고 있다가 제출 때 `buildInput`이 `GymInput`으로 바꾼다. 숨겨진 조건부 항목은 `null`(또는 스키마 기본값)로 보낸다.
 - 입력값은 URL·`localStorage`·`sessionStorage`·쿠키·콘솔에 남기지 않는다. 요청은 POST 본문으로만 보낸다 (`cache: 'no-store'`). 폼과 입력칸은 `autoComplete="off"`.
+  - 2026-11-16: local_history 기능(MVP_SPEC 18절)으로 이 항목에 예외 추가, 사용자 승인
 - 화면은 숫자를 계산하지 않는다. 금액은 서버 응답 값을 `toLocaleString('ko-KR')`로 형식만 바꿔 보여 준다. 입력 문자열을 정수로 바꾸는 것(쉼표 제거, 0 이상 정수 검사)만 한다.
 
 ### 0.4 합리적 기본값으로 진행한 결정 (PR 2-2·2-3)
