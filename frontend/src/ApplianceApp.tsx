@@ -1,9 +1,12 @@
 // 가전 화면 (MVP_SPEC 13절 P2, ENABLED_FEATURES=appliance일 때만 Root가 탭을 보인다).
 // 폼 입력만 받는다 (문장 분석 없음). 상태는 useState로만 두고 입력값을 URL·localStorage·콘솔에 남기지 않는다.
+// 예외: 내 기록(local_history 켜짐)에서 사용자가 "이 결과 저장"을 누른 경우만 이 브라우저 localStorage에 저장한다 (MVP_SPEC 18절).
 import { type FormEvent, type ReactNode, useEffect, useState } from 'react'
 import { calculateAppliance, fetchApplianceItems } from './api'
 import { ApplianceResultCard } from './components/ApplianceResultCard'
 import { GuidePanel } from './components/GuidePanel'
+import { HistorySaveButton } from './components/HistorySaveButton'
+import type { HistoryAccess } from './history/storage'
 import {
   APPLIANCE_UNLISTED,
   buildApplianceInput,
@@ -16,7 +19,15 @@ import type { ApplianceCalculateResponse, ApplianceInput, ApplianceItemOption } 
 
 type Key = keyof ApplianceForm
 
-export function ApplianceApp({ surveyUrl, features }: { surveyUrl: string | null; features: readonly string[] }) {
+export function ApplianceApp({
+  surveyUrl,
+  features,
+  history = null,
+}: {
+  surveyUrl: string | null
+  features: readonly string[]
+  history?: HistoryAccess | null
+}) {
   const [items, setItems] = useState<ApplianceItemOption[]>([])
   const [itemsError, setItemsError] = useState(false)
   const [form, setForm] = useState<ApplianceForm>(INITIAL_APPLIANCE_FORM)
@@ -195,6 +206,9 @@ export function ApplianceApp({ surveyUrl, features }: { surveyUrl: string | null
             </p>
           )}
           {response && <ApplianceResultCard data={response} channelsBelow={features.includes('next_steps')} />}
+          {history && response && calcInput && (
+            <HistorySaveButton history={history} domain="appliance" inputs={calcInput} result={response} />
+          )}
           {response && calcInput && <GuidePanel item="appliance" input={calcInput} surveyUrl={surveyUrl} />}
         </div>
       </div>
