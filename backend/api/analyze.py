@@ -15,6 +15,8 @@
 - 기능 플래그 llm_resilience(MVP_SPEC 16절, 2026-11-16): 일시 오류(500·502·503·504, 시간 초과, 연결 실패)면
   두 번째 시도를 한 번 한다 (llm/resilience.py). 호출 하나의 시간 제한은 LLM_TIMEOUT_SECONDS(기본 20초).
   모든 시도가 일시 오류로 끝나면 502 문구를 BUSY_MESSAGE로 바꾼다 (code는 그대로). 꺼져 있으면 지금과 같다.
+- 기능 플래그 date_year_infer(2026-11-16, 헬스장만): 근거 확인 뒤 연도 없는 종료일·도달일을 코드 규칙으로 보완하고
+  extraction.year_inferred에 연도를 적는다 (llm/date_infer.py). 꺼져 있으면 응답이 지금과 같다.
 """
 
 import logging
@@ -78,6 +80,7 @@ class AnalyzeRequest(BaseModel):
 
 RAG_FEATURE = "rag"
 RESILIENCE_FEATURE = "llm_resilience"
+YEAR_INFER_FEATURE = "date_year_infer"
 RAG_K = 5
 
 
@@ -226,8 +229,11 @@ def analyze(
     # 검색 입력은 마스킹한 문장만 쓴다 (저장·로그하지 않음)
     candidates = search(masked, item, RAG_K) if rag else []
     try:
-        extract = analyze_laundry_text if item == "laundry" else analyze_text
-        result = extract(masked, client, candidates or None)
+        if item == "laundry":
+            result = analyze_laundry_text(masked, client, candidates or None)
+        else:
+            infer = YEAR_INFER_FEATURE in settings.enabled_features
+            result = analyze_text(masked, client, candidates or None, infer_year=infer)
     except LLMError as exc:
         logger.warning(
             "LLM 호출 실패: %s (status=%s)",
