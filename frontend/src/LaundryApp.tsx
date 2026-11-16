@@ -1,4 +1,5 @@
 // 세탁 화면 (VS4). 상태는 이 컴포넌트의 useState로만 둔다. 입력값을 URL·localStorage·콘솔에 남기지 않는다.
+// 예외: 내 기록(local_history 켜짐)에서 사용자가 "이 결과 저장"을 누른 경우만 이 브라우저 localStorage에 저장한다 (MVP_SPEC 18절).
 import { useEffect, useState } from 'react'
 import { ANALYZE_UNAVAILABLE_CODES, analyze, calculateLaundry, fetchLaundryItems } from './api'
 import { AnalyzePanel } from './components/AnalyzePanel'
@@ -6,6 +7,7 @@ import { ClausePanel } from './components/ClausePanel'
 import { FollowUp } from './components/FollowUp'
 import { GuardrailCard } from './components/GuardrailCard'
 import { GuidePanel } from './components/GuidePanel'
+import { HistorySaveButton } from './components/HistorySaveButton'
 import { LaundryForm } from './components/LaundryForm'
 import { LaundryResultCard } from './components/LaundryResultCard'
 import {
@@ -55,7 +57,7 @@ function without(rec: Record<string, string>, form: Form, next: Form): Record<st
   return Object.fromEntries(keys.map((k) => [k, rec[k]]))
 }
 
-export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenProps) {
+export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features, history = null }: ScreenProps) {
   // R2 세트 의류 일부 손상 (ENABLED_FEATURES=set_partial). 꺼져 있으면 지금 화면 그대로
   const setPartial = features.includes('set_partial')
   // 마지막으로 계산에 보낸 입력 (/api/guide에 그대로 다시 보낸다)
@@ -76,6 +78,8 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
   const [guardrail, setGuardrail] = useState<GuardrailDisplay | null>(null)
   const [notes, setNotes] = useState<Record<string, string>>({})
   const [evidence, setEvidence] = useState<Record<string, string>>({})
+  // 폼을 채운 문장 (내 기록이 켜져 있을 때만 둔다)
+  const [sentence, setSentence] = useState<string | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -136,6 +140,7 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
       return
     }
     setGuardrail(null)
+    if (history) setSentence(text)
     const base = mergeLaundryExtraction(form, touched, ext, items)
     const set = raw ? applySetAutofill(base, raw, form, touched, items, setPartial) : null
     const merged = set ? set.merge : base
@@ -283,6 +288,9 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
             </p>
           )}
           {response && <LaundryResultCard data={response} channelsBelow={features.includes('next_steps')} />}
+          {history && response && calcInput && (
+            <HistorySaveButton history={history} domain="laundry" inputs={calcInput} result={response} sentence={sentence} />
+          )}
           {response && calcInput && <GuidePanel item="laundry" input={calcInput} surveyUrl={surveyUrl} />}
         </div>
       </div>

@@ -683,3 +683,93 @@ textarea {
 .screen-line {
   overflow-wrap: anywhere;
 }
+
+/* 내 기록 (local_history, MVP_SPEC 18절). 꺼져 있으면 이 요소들은 그려지지 않는다 */
+.history-bar {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.history-wrap {
+  max-width: 1100px;
+  margin: 8px auto 0;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.history-panel {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.history-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.history-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.history-list {
+  list-style: none;
+  margin: 8px 0 12px;
+  padding: 0;
+}
+
+.history-row {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+
+.history-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.history-meta,
+.history-summary,
+.history-saved-heading {
+  margin: 0;
+}
+
+.history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.history-detail {
+  margin-top: 8px;
+  min-width: 0;
+}
+
+.history-save {
+  margin-top: 12px;
+}
+
+.history-status {
+  margin: 6px 0;
+  min-height: 1em;
+  font-size: 14px;
+}
+
+.history-confirm p {
+  margin: 0 0 6px;
+}

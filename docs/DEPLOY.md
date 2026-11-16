@@ -39,7 +39,7 @@
 | `ANALYZE_ENABLED` | 선택 | `true` | 문장 분석 스위치. 아래 파싱 규칙 |
 | `DAILY_ANALYZE_LIMIT` | 선택 | `450` | 하루(한국시간) Gemini 호출 상한. 0 이상의 정수. 아니면 기본값 |
 | `SURVEY_URL` | 선택 | 비움 | 만족도 설문 주소 (`https://…`). 비우면 화면에 설문 버튼이 없다. http(s)가 아니면 무시 |
-| `ENABLED_FEATURES` | 선택 | 비움 | 켤 기능 이름 (쉼표 구분). `set_partial`(세탁 세트 의류 일부 손상 배분 계산), `appliance`(가전 탭, 품질보증기간 경과 후 부품 미보유 환급). `offer_gap`(업체 제시액과 기준 금액의 차액 한 줄), `next_steps`(설명 아래 다음 행동: 준비 자료·상담 경로), `rag`(문장 분석에 관련 조항 자동 검색, 4.8), `llm_resilience`(문장 분석 일시 오류 재시도, 4.9), `date_year_infer`(헬스장 문장의 연도 없는 종료일·해지일 보완, 4.10). 여러 개는 `set_partial,appliance,offer_gap,next_steps`처럼 쉼표로 함께 쓴다. 비우면 아무것도 켜지 않는다 (4.5·4.7) |
+| `ENABLED_FEATURES` | 선택 | 비움 | 켤 기능 이름 (쉼표 구분). `set_partial`(세탁 세트 의류 일부 손상 배분 계산), `appliance`(가전 탭, 품질보증기간 경과 후 부품 미보유 환급). `offer_gap`(업체 제시액과 기준 금액의 차액 한 줄), `next_steps`(설명 아래 다음 행동: 준비 자료·상담 경로), `rag`(문장 분석에 관련 조항 자동 검색, 4.8), `llm_resilience`(문장 분석 일시 오류 재시도, 4.9), `date_year_infer`(헬스장 문장의 연도 없는 종료일·해지일 보완, 4.10). `local_history`(결과를 사용자 브라우저에만 저장하는 "내 기록", 4.11). 여러 개는 `set_partial,appliance,offer_gap,next_steps`처럼 쉼표로 함께 쓴다. 비우면 아무것도 켜지 않는다 (4.5·4.7) |
 
 - `ANALYZE_ENABLED` 파싱 (대소문자 무시, 앞뒤 공백 무시): `true`·`1`·`yes`·`on` → 켬, `false`·`0`·`no`·`off` → 끔, **빈 값 → 켬**, **그 밖의 값 → 끔** (오타는 안전하게 끈다. 로그에 설정 이름만 경고).
 - LLM 설정 세 개(`LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL`) 없이 배포하면 `ANALYZE_ENABLED=false`로 둔다. 켜 둔 채 키가 없으면 화면에 문장 입력창이 보이지만 분석 요청은 503("지금은 문장 분석을 쓸 수 없습니다…")으로 끝난다. 폼 계산은 영향 없다.
@@ -144,6 +144,14 @@
 - 동작: "2026년 3월 1일부터 8월 31일까지"처럼 종료일·해지일에 연도가 없으면 코드 규칙으로 연도를 붙여 폼에 채우고, 그 칸 아래에 "문장에 연도가 없어 2026년으로 보았습니다. 맞는지 확인해 주세요."를 보여 준다. LLM 호출 수·프롬프트·스키마는 바뀌지 않는다.
 - 끄기: `date_year_infer`를 지우고 저장·배포한다. 연도 없는 날짜는 다시 "문장에서 찾지 못했습니다"로 되묻는다.
 - 확인한 배포 설정 (2026-11-16, 사용자가 Render 환경변수 화면에서 확인, 키 제외): `ANALYZE_ENABLED=true`, `DAILY_ANALYZE_LIMIT=450`, `LLM_MAX_RPM=12`, `LLM_PROVIDER=gemini`, `LLM_MODEL=gemini-3.1-flash-lite`, `LLM_FALLBACK_MODEL=gemini-3.5-flash-lite`, `ENABLED_FEATURES=set_partial,appliance,offer_gap,next_steps` (`rag`·`llm_resilience` 없음), `WEB_CONCURRENCY` 없음(uvicorn 프로세스 1개), `LLM_TIMEOUT_SECONDS` 없음(켜면 기본 20초).
+
+### 4.11 내 기록 켜고 끄기 (`local_history`, 2026-11-16, MVP_SPEC 18절)
+
+- 켜기: `ENABLED_FEATURES` 값 **끝에** `,local_history`를 더하고 (예: `set_partial,appliance,offer_gap,next_steps,local_history`) 저장·배포한다.
+- 동작: 화면 맨 위 "내 기록" 버튼과 결과 아래 "이 결과 저장"이 생긴다. 저장은 사용자의 브라우저 localStorage(`btb.history.v1`)에만 하며 서버로 보내지 않는다. 서버 저장·로그·Gemini 호출 수는 바뀌지 않는다.
+- 확인: `GET /api/config` → `enabled_features`에 `"local_history"`. 세탁 L1 계산 → 저장 → 새로고침 → 내 기록 열기 → 삭제.
+- 끄기: 이름을 지우고 저장·배포한다. 화면이 이전과 같아진다 (버튼·패널 없음). **이미 사용자 브라우저에 저장된 데이터는 남는다** (서버가 지울 수 없다. 다시 켜면 다시 보인다. 사용자는 브라우저의 사이트 데이터 삭제로 지운다).
+- 한계: 같은 브라우저·기기에서만 보이고, 배포 주소가 바뀌면 이전 주소의 기록은 보이지 않는다 (MVP_SPEC 18.3).
 
 ## 5. 배포 확인
 
