@@ -6,6 +6,7 @@ import { FollowUp } from './components/FollowUp'
 import { GuardrailCard } from './components/GuardrailCard'
 import { GuidePanel } from './components/GuidePanel'
 import { GymForm } from './components/GymForm'
+import { HistorySaveButton } from './components/HistorySaveButton'
 import { ResultCard } from './components/ResultCard'
 import {
   buildInput,
@@ -48,7 +49,8 @@ function without(rec: Record<string, string>, form: FormState, next: FormState):
 import './App.css'
 
 // 상태는 이 컴포넌트의 useState로만 둔다. 입력값을 URL·localStorage·콘솔에 남기지 않는다.
-function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenProps) {
+// 예외: 내 기록(local_history 켜짐)에서 사용자가 "이 결과 저장"을 누른 경우만 이 브라우저 localStorage에 저장한다 (MVP_SPEC 18절).
+function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features, history = null }: ScreenProps) {
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
   // 마지막으로 계산에 보낸 입력 (/api/guide에 그대로 다시 보낸다)
   const [calcInput, setCalcInput] = useState<GymInput | null>(null)
@@ -67,6 +69,8 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenPr
   const [evidence, setEvidence] = useState<Record<string, string>>({})
   // 사용자가 폼에서 직접 바꾼 항목. 문장 분석은 이 항목의 값을 덮어쓰지 않는다 (결정 B)
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set())
+  // 폼을 채운 문장 (내 기록이 켜져 있을 때만 둔다)
+  const [sentence, setSentence] = useState<string | null>(null)
 
   const onAnalyze = async (text: string) => {
     setAnalyzeError(null)
@@ -103,6 +107,7 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenPr
       return
     }
     setGuardrail(null)
+    if (history) setSentence(text)
     const merged = mergeExtraction(form, touched, ext)
     setForm(merged.form)
     // 되묻기 안내는 합친 뒤에도 비어 있는 항목에만 붙인다 (규칙은 followUpFields)
@@ -228,6 +233,9 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features }: ScreenPr
             </p>
           )}
           {response && <ResultCard data={response} channelsBelow={features.includes('next_steps')} />}
+          {history && response && calcInput && (
+            <HistorySaveButton history={history} domain="gym" inputs={calcInput} result={response} sentence={sentence} />
+          )}
           {response && calcInput && <GuidePanel item="gym" input={calcInput} surveyUrl={surveyUrl} />}
         </div>
       </div>
