@@ -501,7 +501,7 @@ def decide_badge(*, judgment_requested: bool, out_of_scope: bool, missing_or_inv
 | `POST /api/calculate` | 확정된 필드 → 계산 결과(`refund`, `steps`, `badge`, `source`) |
 | `POST /api/guide` | `/api/calculate`와 같은 본문 → 서버가 다시 계산한 결과로 설명 문장·업체용 문안·근거 조항 (`backend/guide/`, LLM 없음, 템플릿) [결정 2026-11-11 사용자]. ❔·계산 안 함이면 업체용 문안 `null`. 계산했어도 결과에 `RULE_UNVERIFIED`(원문 확인이 끝나지 않은 값)가 있으면 업체용 문안 `null`, 설명의 확인 목록은 그대로 [결정 2026-11-13 사용자]. 인용은 엔진이 정한 조항 ID의 카드만 쓰므로 검색 결과에 없는 조항을 인용할 수 없다 (절대 규칙 7) |
 | `POST /api/calculate?item=appliance`, `POST /api/guide?item=appliance`, `GET /api/appliance/items` | 가전 P2 (13절). `ENABLED_FEATURES`에 `appliance`가 있을 때만. 꺼져 있으면 지금과 같은 응답(`item` 쿼리 422 `literal_error`, items 404) [결정 2026-11-15 사용자] |
-| `GET /api/config` | `{analyze_enabled, survey_url, enabled_features}`. `enabled_features` = `ENABLED_FEATURES`(쉼표 구분)에서 아는 이름만 (`set_partial` 12.10, `appliance` 13절, `offer_gap`·`next_steps`·`rag` 14절, `llm_resilience` 16절) [결정 2026-11-15 사용자]. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
+| `GET /api/config` | `{analyze_enabled, survey_url, enabled_features}`. `enabled_features` = `ENABLED_FEATURES`(쉼표 구분)에서 아는 이름만 (`set_partial` 12.10, `appliance` 13절, `offer_gap`·`next_steps`·`rag` 14절, `llm_resilience` 16절, `date_year_infer` 17절) [결정 2026-11-15 사용자]. `analyze_enabled` = 스위치 `ANALYZE_ENABLED` 켜짐 **그리고** 오늘(KST) 하루 상한 미도달 [결정 2026-11-12 사용자]. `survey_url`은 `SURVEY_URL`(http(s)만, 없으면 null) |
 | `GET /api/sources/{id}` | 조항 ID → 원문·라벨·출처·기준일·`verified`·`user_checked`·`rule_ids` (14.3, 플래그 없음, 읽기 전용). ID는 `[a-z0-9_]{1,64}`만(그 밖 422), 없는 ID는 404 `{"message": "해당 조항 ID를 찾을 수 없습니다."}` [2026-11-16] |
 | `GET /healthz` | 배포 헬스체크 `{"status": "ok"}` (외부 호출 없음). 그 밖의 `/api` 밖 경로는 화면(`frontend/dist`, SPA 폴백), 없는 `/api/*`는 404 JSON (`docs/DEPLOY.md`) |
 
@@ -1080,3 +1080,14 @@ u = 구입일(인도일)부터 수리 접수일까지 완전한 개월 (D-2, D-3
 | 상한 적용 | 두 번째 시도는 남은 시간 ≥ 20일 때만 시작 → **약 50초 이하** (httpx 시간 제한은 연결·읽기 단계별이라 수 초 넘을 수 있다) |
 
 꺼짐(변경 전): 429가 아니면 호출 1회, 최대 5 + 60 = 65초. 429 경로는 양쪽 모두 기존과 같다 (최대 약 5 + T + 20 + T + T, T = 호출 시간 제한).
+
+## 17. 헬스장 문장의 연도 없는 날짜 보완 (`date_year_infer`) [2026-11-16 사용자 지시, 규칙은 제안]
+
+> 기능 플래그 `date_year_infer` (`ENABLED_FEATURES`, `docs/DEPLOY.md` 4.10). 기본 꺼짐. 헬스장 `/api/analyze`에만 걸린다. 꺼져 있으면 프롬프트·스키마·응답·화면이 변경 전과 같다 (`year_inferred` 키 없음). 켜져 있어도 프롬프트·스키마는 같다 (LLM은 지금처럼 연도 없는 날짜를 null로 둔다).
+
+- 위치: 근거 확인(`check_extraction`) 뒤 `backend/llm/date_infer.py`의 결정적 규칙. LLM은 연도를 만들지 않는다. 이미 근거가 확인된 값은 덮어쓰지 않는다.
+- 기준 연도: 근거가 확인된 이용 시작일의 연도. 없으면 문장에 적힌 연도가 정확히 하나일 때 그 연도. 둘 다 아니면 보완하지 않는다.
+- 이용 종료일: "까지"는 바로 앞의 날짜 하나에만 결합한다. 연도 없는 "M월 D일까지"가 하나뿐이면 기준 연도, 시작일보다 앞서면 다음 해. "N개월권·N년권"(N개월 이용권·회원권·짜리·계약 포함)이 있으면 시작일 + N개월 − 1일과 같을 때만 (어긋나거나 시작일이 없거나 기간이 둘 이상이면 비움). 기간만 있고 날짜가 없는 종료일은 계산하지 않는다.
+- 해지 의사 도달일: 해지 단서(해지·그만두·그만 두·탈퇴)는 자기 앞쪽에서 가장 가까운 날짜 하나에만 결합한다. 그 날짜가 연도 없는 "M월 D일"이고(연도 있는 날짜·"까지"·"부터" 날짜면 결합하지 않음) 같은 문장 안이며 날짜 끝에서 단서 끝까지 20글자 이내일 때만이다. 날짜와 단서 사이에 다른 날짜가 끼면 앞 날짜에는 결합하지 않는다. 결합된 날짜가 하나뿐이고 시작일이 있어야 한다. 연도 후보 {시작 연도 − 1, 시작 연도, 시작 연도 + 1} 중 (a) 시작 전 단서(시작도 안·시작 안 한·시작하기 전·시작 전·시작하지 않·시작도 하기 전)가 그 해지일 날짜와 같은 절(쉼표·마침표·물음표·느낌표·줄바꿈으로 나눔) 안, 날짜 앞뒤 30글자 이내에 있으면 시작일 12개월 전 이상·시작일 미만, (b) 아니면(문장 다른 곳의 "시작 전" 포함) 시작일 이상·종료일 이하인 후보가 하나만 남을 때. 0개·2개 이상이면 비움 [결합 범위 2026-11-16 사용자 지시, 글자 수·단서 목록은 제안].
+- 응답: 보완한 필드는 `fields`·`evidence`(문장 원문 구절, 예 "8월 31일까지", "2월 20일에 사정이 생겨서 해지")에 들어가고 `unverified`에서 빠지며 `missing`은 다시 계산한다. `year_inferred: {필드: 연도}`. 화면은 채운 칸 아래에 "문장에 연도가 없어 {YYYY}년으로 보았습니다. 맞는지 확인해 주세요." [승인 2026-11-16].
+- 같은 날 플래그 없이 바꾼 것: 헬스장 `had_postponement`의 아니오 단서에 "미룬"을 더했다 (예 판정에는 쓰지 않고 부정 표현이 함께 있어야 함, `backend/llm/grounding.py` `false_cues`, `docs/sources/vs3_report.md` 4.6).
