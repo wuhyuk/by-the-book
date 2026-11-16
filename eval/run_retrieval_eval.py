@@ -5,7 +5,9 @@
     python eval/run_retrieval_eval.py --set docs/sources/rag_eval_set.md --misses
 
 docs/sources/rag_eval_set.md의 표(ID | 업종 | 문장 | 정답 조항 ID | 상태)를 읽어
-BM25 검색(backend/rag/search.py)과 기준선(업종 필터만 쓰고 조항 앞쪽 k개)의 hit@1, hit@3을 업종별·전체로 출력한다.
+BM25 검색(backend/rag/search.py)과 기준선(업종 필터만 쓰고 조항 앞쪽 k개)의 hit@1, hit@3, hit@5를
+업종별·전체로 출력한다. 실제 흐름은 후보 5개를 LLM에 넘기므로(MVP_SPEC 15.2, k = 5) hit@5가 핵심
+수치다 (2026-11-16 추가). 검색 알고리즘·토큰화·파라미터는 이 스크립트에서 바꾸지 않는다.
 검색 입력은 실제 흐름과 같게 마스킹한 문장이다 (backend/llm/masking.py, 표준 라이브러리만 씀).
 정답 ID가 '승인 대기'면 결과는 승인 전 임시값으로 표시한다. pytest 임계값으로 쓰지 않는다.
 LLM을 부르지 않는다.
@@ -24,7 +26,7 @@ from rag.search import baseline, domain_clauses, search
 
 DEFAULT_SET = ROOT / "docs" / "sources" / "rag_eval_set.md"
 DOMAINS = ("gym", "laundry", "appliance")
-KS = (1, 3)
+KS = (1, 3, 5)
 
 
 @dataclass(frozen=True)
@@ -67,7 +69,9 @@ def main() -> None:
             reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description="조항 검색 평가")
     parser.add_argument("--set", type=Path, default=DEFAULT_SET)
-    parser.add_argument("--misses", action="store_true", help="hit@3을 놓친 문장 출력")
+    parser.add_argument(
+        "--misses", action="store_true", help="hit@5·hit@3을 놓친 문장 출력"
+    )
     args = parser.parse_args()
 
     rows = parse(args.set)
@@ -83,11 +87,9 @@ def main() -> None:
     print(f"평가 문장 {len(rows)}건 (정답 승인 대기 {pending}건)")
     if pending:
         print("※ 정답 ID 승인 전 임시값입니다.")
-    header = (
-        "| 업종 | 문장 수 | BM25 hit@1 | BM25 hit@3 | 기준선 hit@1 | 기준선 hit@3 |"
-    )
-    print("\n" + header)
-    print("|---|---|---|---|---|---|")
+    names = [f"{label} hit@{k}" for label in ("BM25", "기준선") for k in KS]
+    print("\n| 업종 | 문장 수 | " + " | ".join(names) + " |")
+    print("|---|---|" + "---|" * len(names))
     for name in (*DOMAINS, "전체"):
         sel = [r for r in rows if name == "전체" or r.domain == name]
         if not sel:
@@ -100,10 +102,13 @@ def main() -> None:
         print(f"| {name} | {len(sel)} | " + " | ".join(cells) + " |")
 
     if args.misses:
-        print("\nBM25 hit@3을 놓친 문장:")
-        for r in rows:
-            if not hit(bm[r.id], r.gold, 3):
-                print(f"- {r.id} 정답 {list(r.gold)} / 상위 3 {bm[r.id]}")
+        for k in (5, 3):
+            print(f"\nBM25 hit@{k}을 놓친 문장:")
+            missed = [r for r in rows if not hit(bm[r.id], r.gold, k)]
+            for r in missed:
+                print(f"- {r.id} 정답 {list(r.gold)} / 상위 {kmax} {bm[r.id]}")
+            if not missed:
+                print("- 없음")
 
 
 if __name__ == "__main__":

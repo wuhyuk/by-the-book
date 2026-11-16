@@ -40,7 +40,7 @@
 | Backend | Python 3.12, FastAPI, Pydantic v2, pytest |
 | Frontend | React + TypeScript, Vite |
 | LLM | 무료 티어 API, `backend/llm/`의 어댑터 뒤에 둔다 (모델 교체 가능) |
-| 검색 | MVP(품목 1개)에서는 품목 ID로 규칙 파일을 직접 조회한다. 업종 필터 + 키워드 → Chroma + 한국어 임베딩 검색은 품목이 2개 이상이 되는 단계 7에서 도입한다 |
+| 검색 | 계산은 품목 ID로 규칙 파일을 직접 조회한다. 조항 검색은 순수 Python BM25 조항 검색 + LLM 조항 ID 선택(MVP_SPEC 15절, 기능 플래그 `rag`)이며 계산에 쓰지 않는다. Chroma + 한국어 임베딩 대신 이 방식을 고른 이유: Render 무료 인스턴스 메모리 512MB, 새 의존성 없음 [결정 2026-11-16 사용자] |
 | 저장 | SQLite (평가 결과만). 사용자 입력은 저장하지 않는다 |
 
 새 의존성은 추가하기 전에 이유를 설명하고 승인을 받는다.
@@ -51,7 +51,7 @@
 backend/
   api/        FastAPI 라우터 (얇게 유지, 로직 금지)
   llm/        LLM 어댑터, 프롬프트 파일
-  rag/        청킹·임베딩·검색
+  rag/        BM25 조항 검색 (MVP_SPEC 15절)
   rules/      품목별 계산 엔진 (순수 함수, LLM 호출 금지)
   data/rules/ 규칙 JSON (source{name, url, retrieved_at}, verified 필수)
   tests/
@@ -77,6 +77,7 @@ docs/         MVP_SPEC.md 등
 - Python은 타입 힌트 필수, `ruff check`와 `ruff format` 기본 설정. TypeScript는 `strict`.
 - 금액은 `int`(원 단위)로 다루고 `float`를 쓰지 않는다. 반올림 규칙은 규칙 파일에 명시한다.
 - 규칙 JSON을 바꾸면 해당 테스트와 `source`(`source.retrieved_at` 포함)를 같이 갱신한다.
+  - 예외: 사용자가 표 값만 원문과 대조해 확인한 경우(`verification.user_checked`만 바뀜)에는 `source.retrieved_at`을 원래 날짜로 둔다. 확인일은 `verification.checked_at`, `notes`, `docs/sources/user_check_sheet.md`에 적는다 [결정 2026-11-13 사용자, MVP_SPEC 9절 2026-11-02 3번].
 - 비밀값(`.env`, API 키)은 절대 커밋하지 않는다. 필요한 키는 `.env.example`에 이름만 적는다.
 
 ## 7. Git
