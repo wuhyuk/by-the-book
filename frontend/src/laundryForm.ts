@@ -354,3 +354,64 @@ const SET_PARTS: Record<LaundryInput['set_type'], readonly string[]> = {
   top_mid_bottom: ['whole', 'top', 'mid', 'bottom'],
   hanbok: ['whole', 'top', 'bottom'],
 }
+
+// ---- R2 켜짐: 문장 분석의 세트 단서 → 폼 (2026-11-16) ----
+// 자동 입력은 상·하 Set(top_bottom) + 손상 부분 상의/하의 하나일 때만. 한복·상중하·부분 불명·전부 손상·
+// 일부 의뢰 여부는 채우지 않고 "확인이 필요한 항목"에 한 줄을 더한다. 사용자가 이미 고른 세트 칸은 덮어쓰지 않는다.
+// 계산 요청은 기존 변환(buildLaundryInput, R2 켜짐이면 set_part: null)을 그대로 쓴다.
+
+const SET_FIELDS = ['set_type', 'set_part'] as const
+
+export interface SetAutofill {
+  merge: LaundryMerge
+  /** 폼 칸 이름 → 근거 구절 (set_type → set_type, set_part → damaged_parts) */
+  evidence: Record<string, string>
+  /** 세트 단서가 있는데 자동으로 채우지 않았으면 true → 확인 안내 한 줄 */
+  confirm: boolean
+}
+
+/** 세트 단서: 근거 확인된 값(세트 아님 제외) 또는 확인 안 됨·누락 목록의 세트 항목. */
+function hasSetClue(raw: LaundryAnalyzeResult): boolean {
+  const type = raw.fields.set_type
+  const part = raw.fields.set_part
+  if (typeof type === 'string' && type !== 'none') return true
+  if (typeof part === 'string') return true
+  return [...raw.unverified, ...raw.missing].some((f) => (SET_FIELDS as readonly string[]).includes(f))
+}
+
+export function applySetAutofill(
+  merged: LaundryMerge,
+  raw: LaundryAnalyzeResult,
+  form: LaundryForm,
+  touched: ReadonlySet<string>,
+  items: LaundryItemOption[],
+  setPartial: boolean,
+): SetAutofill {
+  const none: SetAutofill = { merge: merged, evidence: {}, confirm: false }
+  if (!setPartial || !hasSetClue(raw)) return none
+  // 사용자가 세트 칸(세트 아님 포함)이나 손상 벌을 직접 고쳤으면 그대로 둔다
+  if (isUserLaundryValue('set_type', form.set_type, touched) || touched.has('damaged_parts')) return none
+  const type = raw.fields.set_type
+  const part = raw.fields.set_part
+  // 품목 행이 고를 수 있는 Set 유형에 상·하가 없으면 채우지 않는다 (laundryVisibility와 같은 기준)
+  const rowAllows = laundryVisibility(merged.form, items, true).setTypes.includes('top_bottom')
+  if (type !== 'top_bottom' || (part !== 'top' && part !== 'bottom') || !rowAllows) {
+    return { ...none, confirm: true }
+  }
+  const nextForm: LaundryForm = {
+    ...merged.form,
+    set_type: 'top_bottom',
+    set_part: '',
+    hanbok_kind: '',
+    damaged_parts: [part],
+    set_partial_request: 'unknown',
+  }
+  const evidence: Record<string, string> = {}
+  if (raw.evidence.set_type) evidence.set_type = raw.evidence.set_type
+  if (raw.evidence.set_part) evidence.damaged_parts = raw.evidence.set_part
+  return {
+    merge: { ...merged, form: nextForm, filled: [...merged.filled, 'set_type', 'damaged_parts'] },
+    evidence,
+    confirm: false,
+  }
+}
