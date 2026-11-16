@@ -1,5 +1,6 @@
 // 백엔드 /api/calculate 요청·응답 타입 (backend/rules/gym.py, gym_display.py, api/calculate.py).
 // 화면은 이 응답 값을 그대로 표시만 한다. 금액을 새로 계산하지 않는다.
+import type { HistoryAccess } from './history/storage.ts'
 
 export type TriState = boolean | null
 
@@ -338,6 +339,8 @@ export interface ScreenProps {
   surveyUrl: string | null
   /** 켜 둔 복원 기능 (/api/config enabled_features). 세탁 화면만 쓴다 */
   features: readonly string[]
+  /** 내 기록 (local_history). null이면 꺼짐(저장 버튼 없음), storage가 null이면 이 브라우저에서 저장 불가 */
+  history?: HistoryAccess | null
 }
 
 // ---- 가전 P2 (MVP_SPEC 13절, ENABLED_FEATURES=appliance일 때만) ----
