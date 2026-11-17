@@ -341,3 +341,17 @@ export const HISTORY_TEXT = {
   notRenderable: '저장된 결과를 화면에 그릴 수 없어 요약만 보여 드립니다.',
   domain: { gym: '헬스장·요가·필라테스', laundry: '세탁', appliance: '가전' },
 } as const
+
+// [제안 2026-11-17] 결과 카드 팝업 (기능 플래그 result_cards). 카드 안의 문구·숫자는 계산 응답·설명 응답 그대로 쓴다.
+export const RESULT_CARDS_TEXT = {
+  dialogTitle: '계산 결과 카드',
+  summary: '요약·주의 안내',
+  steps: '계산 과정',
+  citations: '근거 조항',
+  next: '다음 행동',
+  close: '닫기',
+  prev: '이전',
+  nextCard: '다음',
+  reopen: '결과 카드 다시 열기',
+  position: (i: number, n: number) => `${i}/${n}`,
+} as const
