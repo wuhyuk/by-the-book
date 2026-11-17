@@ -204,7 +204,18 @@ export function ApplianceApp({
               {submitting ? APPLIANCE_TEXT.submitting : APPLIANCE_TEXT.submit}
             </button>
           </form>
-          {cardsOn && <ResultCardsLayer response={response} toSource={applianceCardSource} nextSteps={cards.nextSteps} />}
+          {cardsOn && (
+            <ResultCardsLayer
+              response={response}
+              toSource={applianceCardSource}
+              nextSteps={cards.nextSteps}
+              saveAction={
+                history?.storage && response && calcInput ? (
+                  <HistorySaveButton history={history} domain="appliance" inputs={calcInput} result={response} placement="dialog" />
+                ) : null
+              }
+            />
+          )}
         </div>
         <div className="output">
           {error && (
