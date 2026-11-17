@@ -135,6 +135,7 @@ def test_known_features() -> None:
         "llm_resilience",
         "date_year_infer",
         "local_history",
+        "result_cards",
     )
     s = load_app_settings(
         {"ENABLED_FEATURES": "rag, next_steps,offer_gap"}, env_file=None
