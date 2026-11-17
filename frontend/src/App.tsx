@@ -230,7 +230,18 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features, history = 
             notes={notes}
             evidence={evidence}
           />
-          {cardsOn && <ResultCardsLayer response={response} toSource={gymCardSource} nextSteps={cards.nextSteps} />}
+          {cardsOn && (
+            <ResultCardsLayer
+              response={response}
+              toSource={gymCardSource}
+              nextSteps={cards.nextSteps}
+              saveAction={
+                history?.storage && response && calcInput ? (
+                  <HistorySaveButton history={history} domain="gym" inputs={calcInput} result={response} sentence={sentence} placement="dialog" />
+                ) : null
+              }
+            />
+          )}
         </div>
         <div className="output">
           {guardrail && <GuardrailCard data={guardrail} />}
