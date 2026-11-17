@@ -1,7 +1,7 @@
 // 결과 카드 팝업 (기능 플래그 result_cards, 기본 꺼짐). 인라인 결과 카드는 그대로 두고 그 위에 겹쳐 보이는 층이다.
 // 새 계산 결과가 오면 열리고, 닫으면 이 자리에 "결과 카드 다시 열기" 버튼이 남는다. 세 품목 화면이 같이 쓴다.
 // 카드 내용은 src/results/cards.ts가 응답 값을 골라 담은 것 그대로다 (금액을 새로 계산하지 않는다).
-import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { channelView } from '../nextSteps'
 import { buildResultCards, type CardSource, type ResultCardData } from '../results/cards'
@@ -14,6 +14,8 @@ interface Props<T> {
   toSource: (response: T) => CardSource
   /** 설명 응답(/api/guide)의 다음 행동. 아직 없으면 null */
   nextSteps?: NextSteps | null
+  /** 닫기 버튼 앞에 둘 "이 결과 저장" (local_history 켜짐 + 저장소 사용 가능일 때만 화면이 넘긴다) */
+  saveAction?: ReactNode
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), summary, input:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -167,7 +169,7 @@ function CardBody({ card }: { card: ResultCardData }) {
   }
 }
 
-export function ResultCardsLayer<T extends object>({ response, toSource, nextSteps = null }: Props<T>) {
+export function ResultCardsLayer<T extends object>({ response, toSource, nextSteps = null, saveAction = null }: Props<T>) {
   // 사용자가 닫은 응답. 새 응답이 오면 이 값과 달라져 다시 열린다
   const [closedFor, setClosedFor] = useState<T | null>(null)
   const [pos, setPos] = useState<{ for: T | null; index: number }>({ for: null, index: 0 })
@@ -281,8 +283,9 @@ export function ResultCardsLayer<T extends object>({ response, toSource, nextSte
         data-testid="rc-dialog"
       >
         <div className="rc-head">
-          <div className="rc-titlebar">
+          <div className={saveAction ? 'rc-titlebar rc-titlebar-save' : 'rc-titlebar'}>
             <h2 id={titleId}>{RESULT_CARDS_TEXT.dialogTitle}</h2>
+            {saveAction}
             <button type="button" className="copy-button rc-close" onClick={close} data-testid="rc-close">
               {RESULT_CARDS_TEXT.close}
             </button>
