@@ -10,6 +10,9 @@ import { GuidePanel } from './components/GuidePanel'
 import { HistorySaveButton } from './components/HistorySaveButton'
 import { LaundryForm } from './components/LaundryForm'
 import { LaundryResultCard } from './components/LaundryResultCard'
+import { ResultCardsLayer } from './components/ResultCardsLayer'
+import { laundryCardSource } from './results/cards'
+import { useGuideNextSteps } from './results/useGuideNextSteps'
 import {
   applySetAutofill,
   buildLaundryInput,
@@ -80,6 +83,9 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
   const [evidence, setEvidence] = useState<Record<string, string>>({})
   // 폼을 채운 문장 (내 기록이 켜져 있을 때만 둔다)
   const [sentence, setSentence] = useState<string | null>(null)
+  // 결과 카드 팝업 (기능 플래그 result_cards, 기본 꺼짐). 꺼져 있으면 아무것도 그리지 않는다
+  const cardsOn = features.includes('result_cards')
+  const cards = useGuideNextSteps(calcInput, cardsOn)
 
   useEffect(() => {
     let alive = true
@@ -279,6 +285,7 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
             notes={notes}
             evidence={evidence}
           />
+          {cardsOn && <ResultCardsLayer response={response} toSource={laundryCardSource} nextSteps={cards.nextSteps} />}
         </div>
         <div className="output">
           {guardrail && <GuardrailCard data={guardrail} />}
@@ -291,7 +298,7 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
           {history && response && calcInput && (
             <HistorySaveButton history={history} domain="laundry" inputs={calcInput} result={response} sentence={sentence} />
           )}
-          {response && calcInput && <GuidePanel item="laundry" input={calcInput} surveyUrl={surveyUrl} />}
+          {response && calcInput && <GuidePanel item="laundry" input={calcInput} surveyUrl={surveyUrl} onLoaded={cards.onLoaded} />}
         </div>
       </div>
     </main>
