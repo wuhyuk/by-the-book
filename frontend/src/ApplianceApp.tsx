@@ -6,6 +6,9 @@ import { calculateAppliance, fetchApplianceItems } from './api'
 import { ApplianceResultCard } from './components/ApplianceResultCard'
 import { GuidePanel } from './components/GuidePanel'
 import { HistorySaveButton } from './components/HistorySaveButton'
+import { ResultCardsLayer } from './components/ResultCardsLayer'
+import { applianceCardSource } from './results/cards'
+import { useGuideNextSteps } from './results/useGuideNextSteps'
 import type { HistoryAccess } from './history/storage'
 import {
   APPLIANCE_UNLISTED,
@@ -34,6 +37,9 @@ export function ApplianceApp({
   const [submitting, setSubmitting] = useState(false)
   const [response, setResponse] = useState<ApplianceCalculateResponse | null>(null)
   const [calcInput, setCalcInput] = useState<ApplianceInput | null>(null)
+  // 결과 카드 팝업 (기능 플래그 result_cards, 기본 꺼짐). 꺼져 있으면 아무것도 그리지 않는다
+  const cardsOn = features.includes('result_cards')
+  const cards = useGuideNextSteps(calcInput, cardsOn)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
 
@@ -198,6 +204,7 @@ export function ApplianceApp({
               {submitting ? APPLIANCE_TEXT.submitting : APPLIANCE_TEXT.submit}
             </button>
           </form>
+          {cardsOn && <ResultCardsLayer response={response} toSource={applianceCardSource} nextSteps={cards.nextSteps} />}
         </div>
         <div className="output">
           {error && (
@@ -209,7 +216,7 @@ export function ApplianceApp({
           {history && response && calcInput && (
             <HistorySaveButton history={history} domain="appliance" inputs={calcInput} result={response} />
           )}
-          {response && calcInput && <GuidePanel item="appliance" input={calcInput} surveyUrl={surveyUrl} />}
+          {response && calcInput && <GuidePanel item="appliance" input={calcInput} surveyUrl={surveyUrl} onLoaded={cards.onLoaded} />}
         </div>
       </div>
     </main>

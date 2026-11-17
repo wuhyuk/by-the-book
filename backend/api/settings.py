@@ -39,6 +39,7 @@ KNOWN_FEATURES = (
     "llm_resilience",
     "date_year_infer",
     "local_history",
+    "result_cards",
 )
 DEFAULT_DAILY_ANALYZE_LIMIT = 450
 _TRUE = frozenset({"true", "1", "yes", "on"})

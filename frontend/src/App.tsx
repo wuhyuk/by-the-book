@@ -8,6 +8,9 @@ import { GuidePanel } from './components/GuidePanel'
 import { GymForm } from './components/GymForm'
 import { HistorySaveButton } from './components/HistorySaveButton'
 import { ResultCard } from './components/ResultCard'
+import { ResultCardsLayer } from './components/ResultCardsLayer'
+import { gymCardSource } from './results/cards'
+import { useGuideNextSteps } from './results/useGuideNextSteps'
 import {
   buildInput,
   COUNT_FIELDS,
@@ -71,6 +74,9 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features, history = 
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set())
   // 폼을 채운 문장 (내 기록이 켜져 있을 때만 둔다)
   const [sentence, setSentence] = useState<string | null>(null)
+  // 결과 카드 팝업 (기능 플래그 result_cards, 기본 꺼짐). 꺼져 있으면 아무것도 그리지 않는다
+  const cardsOn = features.includes('result_cards')
+  const cards = useGuideNextSteps(calcInput, cardsOn)
 
   const onAnalyze = async (text: string) => {
     setAnalyzeError(null)
@@ -224,6 +230,7 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features, history = 
             notes={notes}
             evidence={evidence}
           />
+          {cardsOn && <ResultCardsLayer response={response} toSource={gymCardSource} nextSteps={cards.nextSteps} />}
         </div>
         <div className="output">
           {guardrail && <GuardrailCard data={guardrail} />}
@@ -236,7 +243,7 @@ function App({ analyzeOff, onAnalyzeUnavailable, surveyUrl, features, history = 
           {history && response && calcInput && (
             <HistorySaveButton history={history} domain="gym" inputs={calcInput} result={response} sentence={sentence} />
           )}
-          {response && calcInput && <GuidePanel item="gym" input={calcInput} surveyUrl={surveyUrl} />}
+          {response && calcInput && <GuidePanel item="gym" input={calcInput} surveyUrl={surveyUrl} onLoaded={cards.onLoaded} />}
         </div>
       </div>
     </main>
