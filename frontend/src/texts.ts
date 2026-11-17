@@ -213,11 +213,9 @@ export const SET_PART_LABEL: Record<string, Record<string, string>> = {
 export const EXAMPLES: Record<Item, readonly string[]> = {
   gym: [
     '헬스장 6개월권을 2026년 3월 1일부터 2026년 8월 31일까지 쓰기로 하고 60만원을 결제했어요. 2026년 5월 10일에 해지하겠다고 매장에 말했어요.',
-    '필라테스 30회권을 90만원에 결제했고 2026년 4월 1일부터 9월 30일까지 쓸 수 있어요. 8회 수업을 들은 뒤 2026년 6월 1일에 그만두겠다고 했는데 업체가 30만원만 돌려준대요.',
   ],
   laundry: [
     '세탁소에 맡긴 겨울 코트가 줄어들어서 왔어요. 2025년 12월 1일에 30만원에 샀고 2026년 10월 5일에 세탁을 맡겼어요.',
-    '세탁소에서 셔츠를 잃어버렸대요. 언제 얼마에 샀는지 증명할 자료가 없고 세탁요금은 5천원이었어요.',
   ],
 }
 
@@ -342,4 +340,18 @@ export const HISTORY_TEXT = {
   notCalculated: '계산하지 않음',
   notRenderable: '저장된 결과를 화면에 그릴 수 없어 요약만 보여 드립니다.',
   domain: { gym: '헬스장·요가·필라테스', laundry: '세탁', appliance: '가전' },
+} as const
+
+// [제안 2026-11-17] 결과 카드 팝업 (기능 플래그 result_cards). 카드 안의 문구·숫자는 계산 응답·설명 응답 그대로 쓴다.
+export const RESULT_CARDS_TEXT = {
+  dialogTitle: '계산 결과 카드',
+  summary: '요약·주의 안내',
+  steps: '계산 과정',
+  citations: '근거 조항',
+  next: '다음 행동',
+  close: '닫기',
+  prev: '이전',
+  nextCard: '다음',
+  reopen: '결과 카드 다시 열기',
+  position: (i: number, n: number) => `${i}/${n}`,
 } as const

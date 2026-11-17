@@ -51,48 +51,51 @@ export function Root() {
   const items: ScreenItem[] = features.includes('appliance') ? [...BASE_ITEMS, 'appliance'] : BASE_ITEMS
   return (
     <>
-      <p className="site-disclaimer" data-testid="site-disclaimer">
-        {APP_TEXT.disclaimer}
-      </p>
-      {history?.storage && (
-        <div className="history-bar">
-          <button
-            type="button"
-            className="copy-button"
-            aria-expanded={historyOpen}
-            aria-controls="history-panel"
-            onClick={() => {
-              if (!historyOpen) setHistoryRev(historyRev + 1)
-              setHistoryOpen(!historyOpen)
-            }}
-            data-testid="history-open"
-          >
-            {historyOpen ? HISTORY_TEXT.close : HISTORY_TEXT.open}
-          </button>
-        </div>
-      )}
-      {history?.storage && historyOpen && (
-        <div id="history-panel" className="history-wrap">
-          <HistoryPanel key={historyRev} storage={history.storage} onClose={() => setHistoryOpen(false)} />
-        </div>
-      )}
-      <nav className="item-tabs" role="tablist" aria-label="품목">
-        {items.map((i) => (
-          <button
-            key={i}
-            type="button"
-            role="tab"
-            id={`tab-${i}`}
-            aria-selected={item === i}
-            aria-controls={`panel-${i}`}
-            className={item === i ? 'item-tab item-tab-active' : 'item-tab'}
-            onClick={() => setItem(i)}
-            data-testid={`tab-${i}`}
-          >
-            {i === 'appliance' ? APPLIANCE_TAB_LABEL : ITEM_TAB_LABEL[i]}
-          </button>
-        ))}
-      </nav>
+      {/* 상단 띠 (면책·내 기록·품목 탭). 스타일용 래퍼라 순서·동작은 그대로다 */}
+      <div className="site-top">
+        <p className="site-disclaimer" data-testid="site-disclaimer">
+          {APP_TEXT.disclaimer}
+        </p>
+        {history?.storage && (
+          <div className="history-bar">
+            <button
+              type="button"
+              className="copy-button"
+              aria-expanded={historyOpen}
+              aria-controls="history-panel"
+              onClick={() => {
+                if (!historyOpen) setHistoryRev(historyRev + 1)
+                setHistoryOpen(!historyOpen)
+              }}
+              data-testid="history-open"
+            >
+              {historyOpen ? HISTORY_TEXT.close : HISTORY_TEXT.open}
+            </button>
+          </div>
+        )}
+        {history?.storage && historyOpen && (
+          <div id="history-panel" className="history-wrap">
+            <HistoryPanel key={historyRev} storage={history.storage} onClose={() => setHistoryOpen(false)} />
+          </div>
+        )}
+        <nav className="item-tabs" role="tablist" aria-label="품목">
+          {items.map((i) => (
+            <button
+              key={i}
+              type="button"
+              role="tab"
+              id={`tab-${i}`}
+              aria-selected={item === i}
+              aria-controls={`panel-${i}`}
+              className={item === i ? 'item-tab item-tab-active' : 'item-tab'}
+              onClick={() => setItem(i)}
+              data-testid={`tab-${i}`}
+            >
+              {i === 'appliance' ? APPLIANCE_TAB_LABEL : ITEM_TAB_LABEL[i]}
+            </button>
+          ))}
+        </nav>
+      </div>
       {items.map((i) => (
         <div key={i} role="tabpanel" id={`panel-${i}`} aria-labelledby={`tab-${i}`} hidden={item !== i}>
           {i === 'gym' ? (
