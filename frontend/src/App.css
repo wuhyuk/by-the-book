@@ -1401,6 +1401,58 @@ summary:focus-visible {
   flex: none;
 }
 
+/* 팝업 안 "이 결과 저장" (local_history 켜짐일 때만). 순서는 제목 · 저장 · 닫기, 상태 문구는 아래 한 줄 전체.
+   두 버튼은 줄바꿈하지 않고, 좁은 폭에서는 제목이 줄바꿈된다 */
+.rc-titlebar-save {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: var(--space-2);
+}
+
+.rc-titlebar-save h2 {
+  grid-row: 1;
+  grid-column: 1;
+  overflow-wrap: anywhere;
+}
+
+.rc-titlebar-save .rc-save {
+  display: contents;
+}
+
+.rc-titlebar-save .rc-save-button {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+.rc-titlebar-save .rc-close {
+  grid-row: 1;
+  grid-column: 3;
+}
+
+.rc-save-button,
+.rc-titlebar-save .rc-close {
+  white-space: nowrap;
+  padding: 0 var(--space-3);
+}
+
+/* 보조 버튼 중에서도 저장은 옅은 강조 배경으로 닫기와 구분한다 */
+.rc-save-button {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.rc-save-status {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--fs-md);
+}
+
+.rc-save-status:not(:empty) {
+  margin-top: var(--space-2);
+}
+
 .rc-status {
   display: flex;
   flex-wrap: wrap;
