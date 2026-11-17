@@ -285,7 +285,18 @@ export function LaundryApp({ analyzeOff, onAnalyzeUnavailable, surveyUrl, featur
             notes={notes}
             evidence={evidence}
           />
-          {cardsOn && <ResultCardsLayer response={response} toSource={laundryCardSource} nextSteps={cards.nextSteps} />}
+          {cardsOn && (
+            <ResultCardsLayer
+              response={response}
+              toSource={laundryCardSource}
+              nextSteps={cards.nextSteps}
+              saveAction={
+                history?.storage && response && calcInput ? (
+                  <HistorySaveButton history={history} domain="laundry" inputs={calcInput} result={response} sentence={sentence} placement="dialog" />
+                ) : null
+              }
+            />
+          )}
         </div>
         <div className="output">
           {guardrail && <GuardrailCard data={guardrail} />}
